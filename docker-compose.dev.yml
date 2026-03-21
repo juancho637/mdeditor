@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      target: dev
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/.env:/app/apps/api/.env
+    restart: "no"
+
+  web:
+    build:
+      target: dev
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/public:/app/apps/web/public
+    environment:
+      API_INTERNAL_URL: http://api:3000
+    ports:
+      !override
+      - "3001:3001"
+    restart: "no"
