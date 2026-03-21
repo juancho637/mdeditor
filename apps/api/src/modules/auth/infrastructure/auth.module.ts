@@ -8,11 +8,13 @@ import { AuthService } from './services/auth.service';
 import { SetupController } from './api/setup.controller';
 import { StatusController } from './api/status.controller';
 import { HealthController } from './api/health.controller';
+import { SignInController } from './api/sign-in.controller';
+import { RefreshTokenController } from './api/refresh-token.controller';
 import {
   AuthUseCasesEnum,
   AuthServiceInterface,
 } from '../domain';
-import { SetupUseCase } from '../application';
+import { SetupUseCase, SignInUseCase, RefreshTokenUseCase } from '../application';
 import {
   UsersProvidersEnum,
   UserRepositoryInterface,
@@ -38,7 +40,7 @@ import {
       }),
     }),
   ],
-  controllers: [SetupController, StatusController, HealthController],
+  controllers: [SetupController, StatusController, HealthController, SignInController, RefreshTokenController],
   providers: [
     JwtStrategy,
     JwtAuthGuard,
@@ -62,6 +64,36 @@ import {
         authService: AuthServiceInterface,
         exception: ExceptionServiceInterface,
       ) => new SetupUseCase(userRepository, createUserUseCase, authService, exception),
+    },
+    {
+      inject: [
+        UsersProvidersEnum.USER_REPOSITORY,
+        AuthUseCasesEnum.AUTH_SERVICE,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
+      provide: AuthUseCasesEnum.SIGN_IN_USE_CASE,
+      useFactory: (
+        userRepository: UserRepositoryInterface,
+        authService: AuthServiceInterface,
+        exception: ExceptionServiceInterface,
+      ) => new SignInUseCase(userRepository, authService, exception),
+    },
+    {
+      inject: [
+        JwtService,
+        UsersProvidersEnum.USER_REPOSITORY,
+        AuthUseCasesEnum.AUTH_SERVICE,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+        ConfigService,
+      ],
+      provide: AuthUseCasesEnum.REFRESH_TOKEN_USE_CASE,
+      useFactory: (
+        jwtService: JwtService,
+        userRepository: UserRepositoryInterface,
+        authService: AuthServiceInterface,
+        exception: ExceptionServiceInterface,
+        configService: ConfigService,
+      ) => new RefreshTokenUseCase(jwtService, userRepository, authService, exception, configService),
     },
   ],
   exports: [AuthUseCasesEnum.SETUP_USE_CASE, JwtAuthGuard],

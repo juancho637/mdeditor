@@ -32,3 +32,33 @@ export async function postSetup(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function postSignIn(data: {
+  email: string;
+  password: string;
+}): Promise<Response> {
+  return fetch(`${API_URL}/api/auth/sign-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function postRefresh(refreshToken: string): Promise<Response> {
+  return fetch(`${API_URL}/api/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+}
+
+export async function setupAndSignIn(data: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<{ access_token: string; refresh_token: string }> {
+  await postSetup(data);
+  const res = await postSignIn({ email: data.email, password: data.password });
+  const json = await res.json();
+  return json.data;
+}

@@ -62,6 +62,14 @@ export class AuthV1Repository implements AuthRepository {
     return mapSignInResponse(response.data);
   }
 
+  async refreshToken(refreshToken: string): Promise<SignInResponse> {
+    const response = await apiClient.post<SignInWireResponse>(
+      '/api/auth/refresh',
+      { refresh_token: refreshToken },
+    );
+    return mapSignInResponse(response.data);
+  }
+
   async getStatus(): Promise<AuthStatusResponse> {
     const response = await apiClient.get<AuthStatusWireResponse>(
       '/api/auth/status',

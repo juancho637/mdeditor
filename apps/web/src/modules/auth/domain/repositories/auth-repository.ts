@@ -9,5 +9,6 @@ import type {
 export interface AuthRepository {
   setup(data: SetupRequest): Promise<SetupResponse>;
   signIn(data: SignInRequest): Promise<SignInResponse>;
+  refreshToken(refreshToken: string): Promise<SignInResponse>;
   getStatus(): Promise<AuthStatusResponse>;
 }

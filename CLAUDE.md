@@ -25,6 +25,7 @@ apps/
 │   │   │   ├── database/infrastructure/        # TypeORM + migraciones
 │   │   │   ├── exception/domain/               # ExceptionServiceInterface
 │   │   │   ├── exception/infrastructure/       # ExceptionService + filters
+│   │   │   ├── throttler/infrastructure/       # @nestjs/throttler (rate limiting)
 │   │   │   └── helpers/                        # decorators, interceptors, middleware, types compartidos
 │   │   └── modules/        # Módulos de negocio (auth, users, ...)
 │   ├── test/               # E2E tests (Jest + Supertest)
@@ -90,7 +91,7 @@ modules/{feature}/
 
 Solo abstraer lo que la capa de aplicación consume:
 - `exception/` → tiene `domain/` (interface) + `infrastructure/` (implementación) porque los use cases dependen de ExceptionServiceInterface.
-- `configuration/`, `database/` → solo `infrastructure/` (ningún use case las consume directamente).
+- `configuration/`, `database/`, `throttler/` → solo `infrastructure/` (ningún use case las consume directamente). Toda configuración de infraestructura nueva va aquí como módulo wrapper.
 - `helpers/` → decorators, interceptors, middleware, types compartidos.
 - **NO wrappear** bcrypt, Logger nativo de NestJS, ni @nestjs/jwt. Uso directo.
 
