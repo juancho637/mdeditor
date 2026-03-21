@@ -155,6 +155,105 @@ chore: update docker compose for dev hot reload
 - **API E2E**: Jest + Supertest en `apps/api/test/` (requiere PostgreSQL)
 - **Playwright E2E**: `e2e/` en la raíz (requiere `make dev` corriendo)
 
+### Flujo de testing en cada story
+
+```
+1. Pre-check  → make test + make test-e2e    (verificar codebase sano)
+2. Desarrollar story
+3. Post-check → make test + make test-e2e    (verificar cero regresiones)
+4. QA         → generar nuevos tests en e2e/ (happy + fail path, API + UI)
+5. Run all    → make test + make test-e2e    (suite completa)
+```
+
+Los tests Playwright deben cubrir:
+- **Happy path**: flujo completo del usuario
+- **Fail path**: validaciones, errores de API mostrados en UI, rutas protegidas
+- **API directo**: status codes, validación de DTOs, error codes
+
+## Flujo de desarrollo de stories
+
+Cada historia de usuario (HU) sigue este ciclo completo. **Todos los pasos son obligatorios.**
+
+### Requisito previo
+
+`make dev` debe estar corriendo (Docker con PostgreSQL + API + Web).
+
+### Ciclo de ejecución
+
+```
+ 1. Pre-check       → make test + make test-e2e
+                       Verificar que el codebase está sano ANTES de empezar.
+                       Si fallan, NO empezar — corregir primero.
+
+ 2. Create Story    → /bmad-create-story
+                       Crear story spec desde la épica con contexto completo.
+
+ 3. Validate Story  → Validar ACs, tasks, dev notes contra checklist.
+
+ 4. Git             → git checkout -b feat/{story-key} develop
+
+ 5. Dev Story       → /bmad-dev-story
+                       Implementar código siguiendo tasks de la story.
+
+ 6. Post-check      → make test + make test-e2e
+                       Verificar cero regresiones tras implementar.
+                       Si fallan, corregir antes de continuar.
+
+ 7. QA              → Generar nuevos tests Playwright en e2e/ para la story.
+                       - Happy path: flujo completo del usuario
+                       - Fail path: validaciones, errores de API en UI, rutas protegidas
+                       - API directo: status codes, DTOs, error codes
+                       Correr suite completa: make test + make test-e2e
+
+ 8. Code Review     → /bmad-code-review
+                       Revisar código adversarialmente.
+                       Corregir patches encontrados.
+
+ 9. Commits         → Conventional Commits en la rama feat/.
+                       feat:, fix:, test:, docs:, chore:
+                       SIN Co-Authored-By.
+
+10. Reportar        → Resumen de lo implementado + resultado de tests.
+```
+
+### Reglas del ciclo
+
+- **No saltar pasos.** Pre-check y post-check son obligatorios.
+- **No desarrollar sobre código roto.** Si pre-check falla, arreglar primero.
+- **Tests cubren happy + fail path.** No solo el camino feliz.
+- **Una rama por story.** `feat/{story-key}` desde develop.
+- **Sin intervención.** El ciclo se ejecuta completo sin pausas ni confirmaciones. Solo se detiene ante un blocker técnico real.
+
+### Ejemplo
+
+```bash
+# El desarrollador dice "siguiente story" y Claude ejecuta:
+
+# 1. Pre-check
+make test && make test-e2e
+
+# 2-3. Create + Validate story
+# (automático via BMad skills)
+
+# 4. Rama
+git checkout -b feat/1-2-login-gestion-sesion develop
+
+# 5. Implementar
+# (automático via /bmad-dev-story)
+
+# 6. Post-check
+make test && make test-e2e
+
+# 7. QA — nuevos tests + suite completa
+# (genera tests en e2e/ + corre make test-e2e)
+
+# 8. Code review
+# (automático via /bmad-code-review)
+
+# 9. Commits
+git add ... && git commit -m "feat: add login and session management"
+```
+
 ## BMad (opcional)
 
 Si usas Claude Code con BMad para gestión de stories:
