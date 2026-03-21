@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>markdown — Direcciones de Diseño UX</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #FFFFFF;
+    --bg-secondary: #F7F7F5;
+    --fg: #1A1A1A;
+    --fg-secondary: #6B6B6B;
+    --muted: #F0F0EE;
+    --border: #E8E8E5;
+    --primary: #2F81F7;
+    --primary-fg: #FFFFFF;
+    --destructive: #DC3545;
+    --success: #28A745;
+    --warning: #F59E0B;
+    --radius: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --cursor-1: #2F81F7;
+    --cursor-2: #28A745;
+    --cursor-3: #8B5CF6;
+    --cursor-ai: #9333EA;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #0A0A0A;
+    color: #E8E8E5;
+    line-height: 1.5;
+  }
+
+  /* ===== NAV ===== */
+  .top-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,10,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #222;
+    padding: 12px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .top-nav h1 { font-size: 16px; font-weight: 600; color: #fff; }
+  .top-nav h1 span { color: var(--primary); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    background: transparent; color: #9B9B9B; transition: all 0.2s;
+  }
+  .nav-tab:hover { background: #1a1a1a; color: #fff; }
+  .nav-tab.active { background: var(--primary); color: #fff; }
+  .theme-toggle {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #333;
+    background: transparent; color: #9B9B9B; cursor: pointer;
+    font-family: inherit; font-size: 13px; transition: all 0.2s;
+  }
+  .theme-toggle:hover { border-color: #555; color: #fff; }
+
+  /* ===== CONTENT ===== */
+  .main { padding-top: 64px; }
+  .direction { display: none; }
+  .direction.active { display: block; }
+
+  .direction-header {
+    padding: 48px 32px 32px;
+    max-width: 1400px; margin: 0 auto;
+  }
+  .direction-header h2 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .direction-header p { font-size: 15px; color: #9B9B9B; max-width: 700px; line-height: 1.6; }
+  .direction-tags { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .direction-tag {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    background: rgba(47,129,247,0.15); color: var(--primary);
+  }
+
+  /* ===== MOCKUP FRAME ===== */
+  .mockup-container {
+    padding: 0 32px 64px; max-width: 1400px; margin: 0 auto;
+  }
+  .mockup-frame {
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid #333; background: #fff;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  }
+  .mockup-frame.dark { background: #191919; }
+
+  /* Browser chrome */
+  .browser-bar {
+    height: 36px; background: #F0F0EE; border-bottom: 1px solid #E8E8E5;
+    display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  }
+  .dark .browser-bar { background: #202020; border-color: #333; }
+  .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .browser-dot.r { background: #FF5F57; }
+  .browser-dot.y { background: #FFBD2E; }
+  .browser-dot.g { background: #28C840; }
+  .browser-url {
+    flex: 1; margin-left: 12px; height: 22px; border-radius: 4px;
+    background: #E8E8E5; display: flex; align-items: center;
+    padding: 0 10px; font-size: 11px; color: #6B6B6B;
+  }
+  .dark .browser-url { background: #2C2C2C; color: #9B9B9B; }
+
+  /* ===== SHARED MOCKUP STYLES ===== */
+  .m-header {
+    height: 48px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; border-bottom: 1px solid #E8E8E5;
+  }
+  .dark .m-header { border-color: #333; }
+  .m-header-left { display: flex; align-items: center; gap: 12px; }
+  .m-header-right { display: flex; align-items: center; gap: 8px; }
+  .m-logo { font-size: 14px; font-weight: 700; color: #1A1A1A; }
+  .dark .m-logo { color: #E8E8E5; }
+  .m-breadcrumb { font-size: 12px; color: #6B6B6B; }
+  .dark .m-breadcrumb { color: #9B9B9B; }
+  .m-breadcrumb span { color: var(--primary); }
+
+  .m-avatar {
+    width: 24px; height: 24px; border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 10px;
+    font-weight: 600; color: #fff; flex-shrink: 0;
+  }
+  .m-avatar-group { display: flex; gap: -4px; }
+  .m-avatar-group .m-avatar { margin-left: -6px; border: 2px solid #fff; }
+  .dark .m-avatar-group .m-avatar { border-color: #191919; }
+  .m-avatar-group .m-avatar:first-child { margin-left: 0; }
+
+  .m-badge {
+    padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .m-badge.saved { background: rgba(40,167,69,0.1); color: var(--success); }
+  .dark .m-badge.saved { background: rgba(63,185,80,0.15); color: #3FB950; }
+
+  .m-btn {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+    border: 1px solid #E8E8E5; background: #fff; color: #1A1A1A; cursor: pointer;
+  }
+  .dark .m-btn { border-color: #333; background: #2C2C2C; color: #E8E8E5; }
+  .m-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .m-body { display: flex; min-height: 480px; }
+
+  /* Sidebar */
+  .m-sidebar {
+    width: 260px; border-right: 1px solid #E8E8E5; background: #F7F7F5;
+    padding: 12px 0; flex-shrink: 0; overflow: hidden;
+  }
+  .dark .m-sidebar { background: #202020; border-color: #333; }
+  .m-sidebar-section { padding: 8px 16px; }
+  .m-sidebar-title {
+    font-size: 11px; font-weight: 600; color: #6B6B6B; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .dark .m-sidebar-title { color: #9B9B9B; }
+  .m-sidebar-item {
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; color: #1A1A1A;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+  }
+  .dark .m-sidebar-item { color: #E8E8E5; }
+  .m-sidebar-item:hover { background: #E8E8E5; }
+  .dark .m-sidebar-item:hover { background: #2C2C2C; }
+  .m-sidebar-item.active { background: rgba(47,129,247,0.1); color: var(--primary); }
+  .m-sidebar-item .icon { font-size: 14px; width: 18px; text-align: center; }
+  .m-sidebar-nested { padding-left: 20px; }
+  .m-sidebar-search {
+    margin: 4px 12px 8px; padding: 6px 10px; border-radius: 6px;
+    border: 1px solid #E8E8E5; background: #fff; font-size: 12px; color: #6B6B6B;
+    width: calc(100% - 24px);
+  }
+  .dark .m-sidebar-search { border-color: #333; background: #2C2C2C; color: #9B9B9B; }
+
+  /* Content area */
+  .m-content { flex: 1; padding: 40px; overflow: hidden; }
+  .m-content-centered { max-width: 900px; margin: 0 auto; }
+
+  .m-doc-title { font-size: 32px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+  .dark .m-doc-title { color: #E8E8E5; }
+  .m-doc-meta { font-size: 12px; color: #6B6B6B; margin-bottom: 24px; }
+  .dark .m-doc-meta { color: #9B9B9B; }
+  .m-doc-h2 { font-size: 24px; font-weight: 600; color: #1A1A1A; margin: 24px 0 12px; }
+  .dark .m-doc-h2 { color: #E8E8E5; }
+  .m-doc-h3 { font-size: 20px; font-weight: 600; color: #1A1A1A; margin: 20px 0 8px; }
+  .dark .m-doc-h3 { color: #E8E8E5; }
+  .m-doc-p { font-size: 16px; color: #1A1A1A; line-height: 1.7; margin-bottom: 16px; }
+  .dark .m-doc-p { color: #E8E8E5; }
+  .m-doc-list { font-size: 16px; color: #1A1A1A; line-height: 1.7; margin: 0 0 16px 24px; }
+  .dark .m-doc-list { color: #E8E8E5; }
+  .m-doc-code {
+    background: #F0F0EE; padding: 2px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+  }
+  .dark .m-doc-code { background: #2C2C2C; }
+  .m-doc-codeblock {
+    background: #F7F7F5; border: 1px solid #E8E8E5; border-radius: 8px;
+    padding: 16px; margin-bottom: 16px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.6; color: #1A1A1A; overflow-x: auto;
+  }
+  .dark .m-doc-codeblock { background: #202020; border-color: #333; color: #E8E8E5; }
+
+  /* Toolbar */
+  .m-toolbar {
+    height: 40px; border-bottom: 1px solid #E8E8E5; display: flex;
+    align-items: center; padding: 0 16px; gap: 2px; background: #FAFAFA;
+  }
+  .dark .m-toolbar { background: #1E1E1E; border-color: #333; }
+  .m-toolbar-btn {
+    width: 32px; height: 28px; border-radius: 4px; border: none;
+    background: transparent; color: #6B6B6B; cursor: pointer;
+    font-size: 13px; font-weight: 600; display: flex; align-items: center;
+    justify-content: center; font-family: inherit;
+  }
+  .dark .m-toolbar-btn { color: #9B9B9B; }
+  .m-toolbar-btn:hover { background: #E8E8E5; color: #1A1A1A; }
+  .dark .m-toolbar-btn:hover { background: #2C2C2C; color: #E8E8E5; }
+  .m-toolbar-sep { width: 1px; height: 20px; background: #E8E8E5; margin: 0 4px; }
+  .dark .m-toolbar-sep { background: #333; }
+
+  /* Mode tabs */
+  .m-mode-tabs { display: flex; gap: 2px; }
+  .m-mode-tab {
+    padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 500;
+    border: none; background: transparent; color: #6B6B6B; cursor: pointer;
+    font-family: inherit;
+  }
+  .dark .m-mode-tab { color: #9B9B9B; }
+  .m-mode-tab.active { background: var(--primary); color: #fff; }
+
+  /* Split view */
+  .m-split { display: flex; flex: 1; min-height: 440px; }
+  .m-split-editor {
+    flex: 1; padding: 20px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.6; color: #1A1A1A;
+    border-right: 1px solid #E8E8E5; background: #FAFAFA;
+  }
+  .dark .m-split-editor { color: #E8E8E5; border-color: #333; background: #1A1A1A; }
+  .m-split-preview { flex: 1; padding: 40px; overflow: hidden; }
+  .m-split-handle {
+    width: 4px; background: #E8E8E5; cursor: col-resize; flex-shrink: 0;
+  }
+  .dark .m-split-handle { background: #333; }
+
+  /* Cursor remoto */
+  .m-cursor {
+    position: relative; display: inline;
+  }
+  .m-cursor-flag {
+    position: absolute; top: -18px; left: 0; padding: 1px 6px;
+    border-radius: 3px; font-size: 10px; font-weight: 500; color: #fff;
+    white-space: nowrap; font-family: 'Inter', sans-serif;
+  }
+  .m-cursor-line {
+    width: 2px; height: 18px; display: inline-block; vertical-align: text-bottom;
+  }
+
+  /* Syntax highlighting simulation */
+  .syn-h { color: var(--primary); font-weight: 600; }
+  .syn-bold { color: #8B5CF6; }
+  .syn-link { color: #28A745; }
+  .syn-code { color: #F59E0B; }
+  .syn-list { color: #EC4899; }
+
+  /* ===== MODE LABELS ===== */
+  .mode-label {
+    display: flex; gap: 16px; margin-top: 16px;
+  }
+  .mode-card {
+    flex: 1; padding: 16px; background: #111; border: 1px solid #222;
+    border-radius: 8px;
+  }
+  .mode-card h4 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .mode-card p { font-size: 12px; color: #9B9B9B; line-height: 1.5; }
+
+  /* ===== COMPARISON VIEW ===== */
+  .comparison-bar {
+    display: flex; justify-content: center; padding: 24px; gap: 8px;
+  }
+  .compare-btn {
+    padding: 6px 16px; border-radius: 6px; border: 1px solid #333;
+    background: transparent; color: #9B9B9B; cursor: pointer;
+    font-family: inherit; font-size: 13px; transition: all 0.2s;
+  }
+  .compare-btn:hover { border-color: #555; color: #fff; }
+  .compare-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .top-nav { padding: 12px 16px; }
+    .nav-tabs { display: none; }
+    .direction-header { padding: 32px 16px 24px; }
+    .mockup-container { padding: 0 16px 48px; }
+    .mode-label { flex-direction: column; }
+  }
+
+  /* ===== ICON HELPERS ===== */
+  .icon-sm { font-size: 14px; opacity: 0.6; }
+
+  /* History panel */
+  .m-history {
+    width: 280px; border-left: 1px solid #E8E8E5; background: #F7F7F5;
+    padding: 16px; flex-shrink: 0;
+  }
+  .dark .m-history { background: #202020; border-color: #333; }
+  .m-history-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; }
+  .dark .m-history-title { color: #E8E8E5; }
+  .m-history-item {
+    padding: 8px 0; border-bottom: 1px solid #E8E8E5; font-size: 12px;
+  }
+  .dark .m-history-item { border-color: #333; }
+  .m-history-item .author { font-weight: 500; color: #1A1A1A; }
+  .dark .m-history-item .author { color: #E8E8E5; }
+  .m-history-item .time { color: #6B6B6B; }
+  .dark .m-history-item .time { color: #9B9B9B; }
+  .m-history-item .change { color: #6B6B6B; margin-top: 2px; }
+  .dark .m-history-item .change { color: #9B9B9B; }
+
+  /* Connection banner */
+  .m-connection {
+    padding: 6px 16px; font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 6px; justify-content: center;
+  }
+  .m-connection.ok { background: rgba(40,167,69,0.08); color: var(--success); }
+  .m-connection.reconnecting { background: rgba(245,158,11,0.08); color: var(--warning); }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <h1><span>markdown</span> — Direcciones de Diseño</h1>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showDirection(0)">1. Notion Classic</button>
+    <button class="nav-tab" onclick="showDirection(1)">2. HackMD Focus</button>
+    <button class="nav-tab" onclick="showDirection(2)">3. Minimal Zen</button>
+    <button class="nav-tab" onclick="showDirection(3)">4. Dashboard Pro</button>
+    <button class="nav-tab" onclick="showDirection(4)">5. Collaborative First</button>
+    <button class="nav-tab" onclick="showDirection(5)">6. Hybrid Smart</button>
+  </div>
+  <button class="theme-toggle" onclick="toggleAllThemes()">Light / Dark</button>
+</nav>
+
+<div class="main">
+
+<!-- ===== DIRECTION 1: NOTION CLASSIC ===== -->
+<div class="direction active" id="dir-0">
+  <div class="direction-header">
+    <h2>1. Notion Classic</h2>
+    <p>Layout limpio con sidebar prominente y máxima prioridad al contenido. Inspirado directamente en la elegancia y simplicidad de Notion. El sidebar es la columna vertebral de la navegación, y el contenido respira con márgenes amplios.</p>
+    <div class="direction-tags">
+      <span class="direction-tag">Sidebar prominente</span>
+      <span class="direction-tag">Contenido centrado</span>
+      <span class="direction-tag">Márgenes amplios</span>
+      <span class="direction-tag">Navegación clara</span>
+    </div>
+    <div class="mode-label">
+      <div class="mode-card"><h4>Fortaleza</h4><p>Navegación intuitiva para equipos con muchos documentos. La jerarquía de carpetas es visible y clara.</p></div>
+      <div class="mode-card"><h4>Ideal para</h4><p>Diego consultando documentos y navegando entre carpetas de proyectos.</p></div>
+      <div class="mode-card"><h4>Referente</h4><p>Notion — sidebar con tree view, contenido limpio centrado.</p></div>
+    </div>
+  </div>
+  <div class="mockup-container">
+    <div class="mockup-frame" id="frame-0">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <div class="browser-url">localhost:3000/docs/producto/product-brief</div>
+      </div>
+      <div class="m-header">
+        <div class="m-header-left">
+          <span class="m-logo">M</span>
+          <span class="m-breadcrumb">Producto <span>/</span> <span>Product Brief</span></span>
+        </div>
+        <div class="m-header-right">
+          <span class="m-badge saved">● Guardado</span>
+          <div class="m-mode-tabs">
+            <button class="m-mode-tab">Editor</button>
+            <button class="m-mode-tab">Híbrido</button>
+            <button class="m-mode-tab active">Preview</button>
+          </div>
+          <div class="m-avatar-group">
+            <span class="m-avatar" style="background:var(--cursor-1)">C</span>
+            <span class="m-avatar" style="background:var(--cursor-2)">V</span>
+            <span class="m-avatar" style="background:var(--cursor-3)">D</span>
+          </div>
+        </div>
+      </div>
+      <div class="m-body">
+        <div class="m-sidebar">
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-item" style="color:var(--fg-secondary);font-size:12px;gap:4px">
+              <span>⌘K</span> Buscar...
+            </div>
+          </div>
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-title">Workspace</div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Producto</div>
+            <div class="m-sidebar-nested">
+              <div class="m-sidebar-item active"><span class="icon">📄</span> Product Brief</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> PRD</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> UX Design Spec</div>
+            </div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Marketing</div>
+            <div class="m-sidebar-nested">
+              <div class="m-sidebar-item"><span class="icon">📄</span> Brand Guidelines</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> Content Strategy</div>
+            </div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Desarrollo</div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Operaciones</div>
+          </div>
+        </div>
+        <div class="m-content">
+          <div class="m-content-centered">
+            <div class="m-doc-title">Product Brief: markdown</div>
+            <div class="m-doc-meta">Última edición por Carlos · hace 2 horas · 3 colaboradores</div>
+            <div class="m-doc-h2">Resumen Ejecutivo</div>
+            <div class="m-doc-p">Markdown es una plataforma web colaborativa de edición de documentos en markdown, diseñada para equipos pequeños que necesitan una fuente única de verdad para su documentación.</div>
+            <div class="m-doc-h2">Visión Central</div>
+            <div class="m-doc-h3">Declaración del Problema</div>
+            <div class="m-doc-p">Los equipos pequeños multidisciplinarios generan cada vez más documentación a través de herramientas de IA en formato markdown. Sin embargo, compartir y colaborar sobre estos documentos es un proceso fragmentado.</div>
+            <div class="m-doc-list">
+              <li>Pérdida de cambios entre versiones locales</li>
+              <li>Versiones desactualizadas generan desalineación</li>
+              <li>Solo los miembros técnicos pueden editar markdown</li>
+            </div>
+            <div class="m-doc-h3">Solución Propuesta</div>
+            <div class="m-doc-p">Una aplicación web self-hosted con tres modos de interacción, donde todo el contenido es markdown por debajo, complementado con colaboración en tiempo real e integración <span class="m-doc-code">MCP</span>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIRECTION 2: HACKMD FOCUS ===== -->
+<div class="direction" id="dir-1">
+  <div class="direction-header">
+    <h2>2. HackMD Focus</h2>
+    <p>Editor-first con el split view como protagonista. El toolbar de markdown siempre visible y accesible. Optimizado para la experiencia de edición, especialmente en modo híbrido. El sidebar se mantiene compacto para dar máximo espacio al editor.</p>
+    <div class="direction-tags">
+      <span class="direction-tag">Editor protagonista</span>
+      <span class="direction-tag">Split view central</span>
+      <span class="direction-tag">Toolbar siempre visible</span>
+      <span class="direction-tag">Sidebar compacto</span>
+    </div>
+    <div class="mode-label">
+      <div class="mode-card"><h4>Fortaleza</h4><p>La experiencia de edición más potente. Valentina ve inmediatamente el resultado de cada acción del toolbar.</p></div>
+      <div class="mode-card"><h4>Ideal para</h4><p>Valentina editando con toolbar + preview simultáneo. Carlos escribiendo markdown puro.</p></div>
+      <div class="mode-card"><h4>Referente</h4><p>HackMD — split view con toolbar funcional y sync scroll.</p></div>
+    </div>
+  </div>
+  <div class="mockup-container">
+    <div class="mockup-frame" id="frame-1">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <div class="browser-url">localhost:3000/docs/producto/product-brief</div>
+      </div>
+      <div class="m-header">
+        <div class="m-header-left">
+          <span class="m-logo">M</span>
+          <span class="m-breadcrumb">Producto / <span>Product Brief</span></span>
+        </div>
+        <div class="m-header-right">
+          <span class="m-badge saved">● Guardado</span>
+          <div class="m-mode-tabs">
+            <button class="m-mode-tab">Editor</button>
+            <button class="m-mode-tab active">Híbrido</button>
+            <button class="m-mode-tab">Preview</button>
+          </div>
+          <div class="m-avatar-group">
+            <span class="m-avatar" style="background:var(--cursor-1)">C</span>
+            <span class="m-avatar" style="background:var(--cursor-2)">V</span>
+          </div>
+        </div>
+      </div>
+      <div class="m-toolbar">
+        <button class="m-toolbar-btn" title="Header">H</button>
+        <button class="m-toolbar-btn" title="Negrita"><b>B</b></button>
+        <button class="m-toolbar-btn" title="Cursiva"><i>I</i></button>
+        <button class="m-toolbar-btn" title="Tachado"><s>S</s></button>
+        <span class="m-toolbar-sep"></span>
+        <button class="m-toolbar-btn" title="Lista">☰</button>
+        <button class="m-toolbar-btn" title="Lista numerada">1.</button>
+        <button class="m-toolbar-btn" title="Checklist">☑</button>
+        <span class="m-toolbar-sep"></span>
+        <button class="m-toolbar-btn" title="Link">🔗</button>
+        <button class="m-toolbar-btn" title="Imagen">🖼</button>
+        <button class="m-toolbar-btn" title="Código">&lt;/&gt;</button>
+        <button class="m-toolbar-btn" title="Tabla">⊞</button>
+        <span class="m-toolbar-sep"></span>
+        <button class="m-toolbar-btn" title="Cita">❝</button>
+        <button class="m-toolbar-btn" title="Línea">—</button>
+      </div>
+      <div class="m-body" style="min-height:440px">
+        <div class="m-sidebar" style="width:200px;font-size:12px">
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-item" style="font-size:11px"><span class="icon">📁</span> Producto</div>
+            <div class="m-sidebar-nested">
+              <div class="m-sidebar-item active" style="font-size:11px"><span class="icon">📄</span> Product Brief</div>
+              <div class="m-sidebar-item" style="font-size:11px"><span class="icon">📄</span> PRD</div>
+            </div>
+            <div class="m-sidebar-item" style="font-size:11px"><span class="icon">📁</span> Marketing</div>
+            <div class="m-sidebar-item" style="font-size:11px"><span class="icon">📁</span> Desarrollo</div>
+          </div>
+        </div>
+        <div class="m-split">
+          <div class="m-split-editor">
+            <span class="syn-h"># Product Brief: markdown</span><br><br>
+            <span class="syn-h">## Resumen Ejecutivo</span><br><br>
+            Markdown es una plataforma web<br>
+            colaborativa de edición de documentos<br>
+            en markdown, diseñada para equipos<br>
+            pequeños que necesitan una<br>
+            <span class="syn-bold">**fuente única de verdad**</span> para su<br>
+            documentación.<br><br>
+            <span class="syn-h">## Visión Central</span><br><br>
+            <span class="syn-h">### Declaración del Problema</span><br><br>
+            Los equipos pequeños generan cada<br>
+            vez más documentación a través de<br>
+            herramientas de IA.<br><br>
+            <span class="syn-list">- </span>Pérdida de cambios<br>
+            <span class="syn-list">- </span>Versiones desactualizadas<br>
+            <span class="syn-list">- </span>Cuello de botella operativo<br><br>
+            <span style="position:relative;display:inline">
+              <span class="m-cursor-line" style="background:var(--cursor-2)"></span>
+              <span class="m-cursor-flag" style="background:var(--cursor-2)">Valentina</span>
+            </span>
+          </div>
+          <div class="m-split-handle"></div>
+          <div class="m-split-preview">
+            <div class="m-doc-title" style="font-size:28px">Product Brief: markdown</div>
+            <div class="m-doc-h2" style="font-size:22px">Resumen Ejecutivo</div>
+            <div class="m-doc-p" style="font-size:15px">Markdown es una plataforma web colaborativa de edición de documentos en markdown, diseñada para equipos pequeños que necesitan una <strong>fuente única de verdad</strong> para su documentación.</div>
+            <div class="m-doc-h2" style="font-size:22px">Visión Central</div>
+            <div class="m-doc-h3" style="font-size:18px">Declaración del Problema</div>
+            <div class="m-doc-p" style="font-size:15px">Los equipos pequeños generan cada vez más documentación a través de herramientas de IA.</div>
+            <div class="m-doc-list" style="font-size:15px">
+              <li>Pérdida de cambios</li>
+              <li>Versiones desactualizadas</li>
+              <li>Cuello de botella operativo</li>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIRECTION 3: MINIMAL ZEN ===== -->
+<div class="direction" id="dir-2">
+  <div class="direction-header">
+    <h2>3. Minimal Zen</h2>
+    <p>Ultra minimalista. El sidebar está oculto por defecto y todo el espacio es para el documento. La interfaz desaparece completamente — solo queda el contenido. El header se reduce al mínimo posible. Modo de concentración total.</p>
+    <div class="direction-tags">
+      <span class="direction-tag">Sidebar oculto</span>
+      <span class="direction-tag">Full-width contenido</span>
+      <span class="direction-tag">Chrome mínimo</span>
+      <span class="direction-tag">Modo concentración</span>
+    </div>
+    <div class="mode-label">
+      <div class="mode-card"><h4>Fortaleza</h4><p>Máxima inmersión en el contenido. Cero distracciones. La herramienta realmente desaparece.</p></div>
+      <div class="mode-card"><h4>Ideal para</h4><p>Carlos escribiendo concentrado. Diego leyendo documentos largos sin distracciones.</p></div>
+      <div class="mode-card"><h4>Referente</h4><p>iA Writer, Typora — editores que priorizan el contenido sobre la interfaz.</p></div>
+    </div>
+  </div>
+  <div class="mockup-container">
+    <div class="mockup-frame" id="frame-2">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <div class="browser-url">localhost:3000/docs/producto/product-brief</div>
+      </div>
+      <div class="m-header" style="border-bottom-color:transparent;height:40px">
+        <div class="m-header-left">
+          <span class="m-logo" style="font-size:12px;cursor:pointer" title="Abrir sidebar">☰</span>
+          <span class="m-breadcrumb" style="font-size:11px">Product Brief</span>
+        </div>
+        <div class="m-header-right">
+          <span class="m-badge saved" style="font-size:10px">●</span>
+          <div class="m-avatar-group">
+            <span class="m-avatar" style="background:var(--cursor-1);width:20px;height:20px;font-size:9px">C</span>
+            <span class="m-avatar" style="background:var(--cursor-2);width:20px;height:20px;font-size:9px">V</span>
+          </div>
+        </div>
+      </div>
+      <div class="m-content" style="padding:48px 80px;min-height:480px">
+        <div class="m-content-centered" style="max-width:720px">
+          <div class="m-doc-title" style="font-size:36px;margin-bottom:12px">Product Brief: markdown</div>
+          <div class="m-doc-meta">Última edición hace 2 horas</div>
+          <div class="m-doc-h2" style="margin-top:40px">Resumen Ejecutivo</div>
+          <div class="m-doc-p">Markdown es una plataforma web colaborativa de edición de documentos en markdown, diseñada para equipos pequeños que necesitan una fuente única de verdad para su documentación.</div>
+          <div class="m-doc-p">El producto resuelve el problema crítico de equipos que generan documentación con herramientas de IA pero no tienen forma eficiente de compartir, editar colaborativamente y sincronizar esos documentos.</div>
+          <div class="m-doc-h2" style="margin-top:40px">Visión Central</div>
+          <div class="m-doc-h3">Declaración del Problema</div>
+          <div class="m-doc-p">Los equipos pequeños multidisciplinarios generan cada vez más documentación a través de herramientas de IA en formato markdown. Sin embargo, compartir y colaborar sobre estos documentos es un proceso fragmentado: cada persona mantiene archivos locales.</div>
+          <div class="m-doc-h3">Impacto del Problema</div>
+          <div class="m-doc-list">
+            <li>Pérdida de cambios entre versiones locales</li>
+            <li>Versiones desactualizadas generan desalineación</li>
+            <li>Solo los miembros técnicos pueden editar markdown</li>
+            <li>Flujo de IA interrumpido</li>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIRECTION 4: DASHBOARD PRO ===== -->
+<div class="direction" id="dir-3">
+  <div class="direction-header">
+    <h2>4. Dashboard Pro</h2>
+    <p>Header más robusto con breadcrumbs prominentes, barra de búsqueda siempre visible, y sidebar con búsqueda integrada. Diseñado para equipos que manejan muchos documentos y necesitan acceso rápido a todo. Prioriza la eficiencia de navegación.</p>
+    <div class="direction-tags">
+      <span class="direction-tag">Header robusto</span>
+      <span class="direction-tag">Búsqueda prominente</span>
+      <span class="direction-tag">Sidebar con filtros</span>
+      <span class="direction-tag">Navegación eficiente</span>
+    </div>
+    <div class="mode-label">
+      <div class="mode-card"><h4>Fortaleza</h4><p>Máxima eficiencia para encontrar y navegar entre documentos. Búsqueda siempre a un clic.</p></div>
+      <div class="mode-card"><h4>Ideal para</h4><p>Equipos con cientos de documentos que necesitan encontrar información rápido.</p></div>
+      <div class="mode-card"><h4>Referente</h4><p>Confluence + Linear — navegación robusta con búsqueda integrada.</p></div>
+    </div>
+  </div>
+  <div class="mockup-container">
+    <div class="mockup-frame" id="frame-3">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <div class="browser-url">localhost:3000/docs/producto/product-brief</div>
+      </div>
+      <div class="m-header" style="height:52px">
+        <div class="m-header-left" style="gap:16px">
+          <span class="m-logo">markdown</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="m-breadcrumb" style="padding:3px 8px;background:#F0F0EE;border-radius:4px">Workspace</span>
+            <span class="m-breadcrumb">›</span>
+            <span class="m-breadcrumb" style="padding:3px 8px;background:#F0F0EE;border-radius:4px">Producto</span>
+            <span class="m-breadcrumb">›</span>
+            <span class="m-breadcrumb" style="padding:3px 8px;background:rgba(47,129,247,0.1);border-radius:4px;color:var(--primary)">Product Brief</span>
+          </div>
+        </div>
+        <div class="m-header-right" style="gap:12px">
+          <input class="m-sidebar-search" style="width:200px;margin:0" placeholder="⌘K  Buscar documentos..." />
+          <span class="m-badge saved">● Guardado</span>
+          <div class="m-avatar-group">
+            <span class="m-avatar" style="background:var(--cursor-1)">C</span>
+            <span class="m-avatar" style="background:var(--cursor-2)">V</span>
+            <span class="m-avatar" style="background:var(--cursor-3)">D</span>
+          </div>
+          <button class="m-btn">⚙</button>
+        </div>
+      </div>
+      <div style="display:flex;height:44px;align-items:center;padding:0 16px;border-bottom:1px solid #E8E8E5;gap:8px;background:#FAFAFA">
+        <div class="m-mode-tabs">
+          <button class="m-mode-tab">Editor</button>
+          <button class="m-mode-tab">Híbrido</button>
+          <button class="m-mode-tab active">Preview</button>
+        </div>
+        <span style="flex:1"></span>
+        <button class="m-btn" style="font-size:11px">📋 Historial</button>
+        <button class="m-btn" style="font-size:11px">↗ Exportar</button>
+        <button class="m-btn" style="font-size:11px">⋯</button>
+      </div>
+      <div class="m-body">
+        <div class="m-sidebar">
+          <input class="m-sidebar-search" placeholder="Filtrar documentos..." />
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-title">Recientes</div>
+            <div class="m-sidebar-item active"><span class="icon">📄</span> Product Brief <span style="font-size:10px;color:#6B6B6B;margin-left:auto">2h</span></div>
+            <div class="m-sidebar-item"><span class="icon">📄</span> PRD <span style="font-size:10px;color:#6B6B6B;margin-left:auto">1d</span></div>
+            <div class="m-sidebar-item"><span class="icon">📄</span> Content Strategy <span style="font-size:10px;color:#6B6B6B;margin-left:auto">3d</span></div>
+          </div>
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-title">Carpetas</div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Producto <span style="font-size:10px;color:#6B6B6B;margin-left:auto">3</span></div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Marketing <span style="font-size:10px;color:#6B6B6B;margin-left:auto">5</span></div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Desarrollo <span style="font-size:10px;color:#6B6B6B;margin-left:auto">12</span></div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Operaciones <span style="font-size:10px;color:#6B6B6B;margin-left:auto">4</span></div>
+          </div>
+        </div>
+        <div class="m-content">
+          <div class="m-content-centered">
+            <div class="m-doc-title">Product Brief: markdown</div>
+            <div class="m-doc-meta">Por Carlos · 18 mar 2026 · 3 colaboradores · 1,240 palabras</div>
+            <div class="m-doc-h2">Resumen Ejecutivo</div>
+            <div class="m-doc-p">Markdown es una plataforma web colaborativa de edición de documentos en markdown, diseñada para equipos pequeños que necesitan una fuente única de verdad.</div>
+            <div class="m-doc-h2">Visión Central</div>
+            <div class="m-doc-p">Los equipos pequeños multidisciplinarios generan cada vez más documentación a través de herramientas de IA en formato markdown.</div>
+            <div class="m-doc-codeblock">const mcpServer = new MCPServer({<br>&nbsp;&nbsp;documents: '/api/docs',<br>&nbsp;&nbsp;auth: 'api-key',<br>&nbsp;&nbsp;permissions: 'inherit-user'<br>});</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIRECTION 5: COLLABORATIVE FIRST ===== -->
+<div class="direction" id="dir-4">
+  <div class="direction-header">
+    <h2>5. Collaborative First</h2>
+    <p>La presencia de usuarios como elemento central. Avatares, actividad reciente, y estado de edición siempre visibles. El panel de historial integrado muestra quién está haciendo qué. Diseñado para que la colaboración sea el protagonista visual.</p>
+    <div class="direction-tags">
+      <span class="direction-tag">Presencia central</span>
+      <span class="direction-tag">Historial integrado</span>
+      <span class="direction-tag">Actividad visible</span>
+      <span class="direction-tag">Cursor de IA</span>
+    </div>
+    <div class="mode-label">
+      <div class="mode-card"><h4>Fortaleza</h4><p>La colaboración se siente como una experiencia social. Siempre sabes quién está haciendo qué.</p></div>
+      <div class="mode-card"><h4>Ideal para</h4><p>Equipos que colaboran frecuentemente en tiempo real. Sesiones de edición conjunta.</p></div>
+      <div class="mode-card"><h4>Referente</h4><p>Figma — presencia de usuarios como feature principal, no secundaria.</p></div>
+    </div>
+  </div>
+  <div class="mockup-container">
+    <div class="mockup-frame" id="frame-4">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <div class="browser-url">localhost:3000/docs/producto/product-brief</div>
+      </div>
+      <div class="m-header">
+        <div class="m-header-left">
+          <span class="m-logo">M</span>
+          <span class="m-breadcrumb">Producto / <span>Product Brief</span></span>
+        </div>
+        <div class="m-header-right" style="gap:12px">
+          <span class="m-badge saved">● Guardado</span>
+          <div class="m-mode-tabs">
+            <button class="m-mode-tab active">Preview</button>
+            <button class="m-mode-tab">Híbrido</button>
+            <button class="m-mode-tab">Editor</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(47,129,247,0.08);border-radius:6px">
+            <span class="m-avatar" style="background:var(--cursor-1);width:22px;height:22px;font-size:9px;border:none">C</span>
+            <span style="font-size:11px;color:var(--primary);font-weight:500">Carlos</span>
+            <span class="m-avatar" style="background:var(--cursor-2);width:22px;height:22px;font-size:9px;border:none;margin-left:4px">V</span>
+            <span style="font-size:11px;color:var(--cursor-2);font-weight:500">Valentina</span>
+            <span class="m-avatar" style="background:var(--cursor-ai);width:22px;height:22px;font-size:9px;border:none;margin-left:4px">🤖</span>
+            <span style="font-size:11px;color:var(--cursor-ai);font-weight:500">Claude</span>
+          </div>
+        </div>
+      </div>
+      <div class="m-body">
+        <div class="m-sidebar" style="width:240px">
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-title">Carpetas</div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Producto</div>
+            <div class="m-sidebar-nested">
+              <div class="m-sidebar-item active"><span class="icon">📄</span> Product Brief</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> PRD</div>
+            </div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Marketing</div>
+          </div>
+        </div>
+        <div class="m-content" style="padding:32px 40px">
+          <div class="m-content-centered">
+            <div class="m-doc-title">Product Brief: markdown</div>
+            <div class="m-doc-meta">3 personas editando ahora</div>
+            <div class="m-doc-h2">Resumen Ejecutivo</div>
+            <div class="m-doc-p">Markdown es una plataforma web colaborativa de edición de documentos en markdown, diseñada para equipos pequeños que necesitan una fuente única de verdad para su documentación.</div>
+            <div class="m-doc-p" style="position:relative">
+              <span style="border-left:2px solid var(--cursor-2);padding-left:8px">El producto resuelve el problema crítico de equipos que generan documentación con herramientas de IA.</span>
+              <span style="position:absolute;top:-14px;left:0;font-size:10px;color:var(--cursor-2);font-weight:500;background:rgba(40,167,69,0.1);padding:1px 6px;border-radius:3px">Valentina editando</span>
+            </div>
+            <div class="m-doc-h2">Visión Central</div>
+            <div class="m-doc-p" style="position:relative">
+              <span style="border-left:2px solid var(--cursor-ai);padding-left:8px">Los equipos pequeños multidisciplinarios generan cada vez más documentación a través de herramientas de IA en formato markdown.</span>
+              <span style="position:absolute;top:-14px;left:0;font-size:10px;color:var(--cursor-ai);font-weight:500;background:rgba(147,51,234,0.1);padding:1px 6px;border-radius:3px">🤖 Claude editando vía MCP</span>
+            </div>
+            <div class="m-doc-list">
+              <li>Pérdida de cambios entre versiones</li>
+              <li>Versiones desactualizadas</li>
+              <li>Cuello de botella operativo</li>
+            </div>
+          </div>
+        </div>
+        <div class="m-history">
+          <div class="m-history-title">Actividad en vivo</div>
+          <div class="m-history-item">
+            <div><span class="author" style="color:var(--cursor-ai)">🤖 Claude (MCP)</span> <span class="time">· ahora</span></div>
+            <div class="change">Editando sección "Visión Central"</div>
+          </div>
+          <div class="m-history-item">
+            <div><span class="author" style="color:var(--cursor-2)">Valentina</span> <span class="time">· hace 1 min</span></div>
+            <div class="change">Editando "Resumen Ejecutivo"</div>
+          </div>
+          <div class="m-history-item">
+            <div><span class="author" style="color:var(--cursor-1)">Carlos</span> <span class="time">· hace 5 min</span></div>
+            <div class="change">Creó el documento vía MCP</div>
+          </div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid #E8E8E5">
+            <div class="m-history-title">Historial</div>
+            <div class="m-history-item">
+              <div><span class="author">Carlos</span> <span class="time">· 14:32</span></div>
+              <div class="change">Agregó sección "Métricas"</div>
+            </div>
+            <div class="m-history-item">
+              <div><span class="author">Diego</span> <span class="time">· 11:05</span></div>
+              <div class="change">Corrigió "Alcance del MVP"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIRECTION 6: HYBRID SMART ===== -->
+<div class="direction" id="dir-5">
+  <div class="direction-header">
+    <h2>6. Hybrid Smart</h2>
+    <p>Combinación inteligente de todas las direcciones. El sidebar de Notion, el split view de HackMD, la presencia de Figma, y la limpieza del Minimal Zen. La interfaz se adapta según el modo activo: en preview es minimalista, en híbrido muestra toolbar y split, en editor maximiza el espacio de código.</p>
+    <div class="direction-tags">
+      <span class="direction-tag">Lo mejor de cada uno</span>
+      <span class="direction-tag">Adaptativo por modo</span>
+      <span class="direction-tag">Equilibrio perfecto</span>
+      <span class="direction-tag">Diseño inteligente</span>
+    </div>
+    <div class="mode-label">
+      <div class="mode-card"><h4>Fortaleza</h4><p>Cada modo tiene su propia personalidad optimizada, pero se sienten parte de la misma app.</p></div>
+      <div class="mode-card"><h4>Ideal para</h4><p>Los 3 perfiles simultáneamente. Cada uno usa su modo ideal sin comprometer la experiencia de los demás.</p></div>
+      <div class="mode-card"><h4>Referente</h4><p>Notion + HackMD + Figma — lo mejor de cada uno, combinado inteligentemente.</p></div>
+    </div>
+  </div>
+  <div class="mockup-container">
+    <div class="mockup-frame" id="frame-5">
+      <div class="browser-bar">
+        <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+        <div class="browser-url">localhost:3000/docs/producto/product-brief</div>
+      </div>
+      <div class="m-header">
+        <div class="m-header-left">
+          <span class="m-logo">M</span>
+          <span class="m-breadcrumb">Producto / <span>Product Brief</span></span>
+        </div>
+        <div class="m-header-right" style="gap:10px">
+          <span class="m-badge saved">● Guardado</span>
+          <div class="m-mode-tabs">
+            <button class="m-mode-tab">Editor</button>
+            <button class="m-mode-tab active">Híbrido</button>
+            <button class="m-mode-tab">Preview</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="m-avatar" style="background:var(--cursor-1);width:24px;height:24px;font-size:10px">C</span>
+            <span class="m-avatar" style="background:var(--cursor-2);width:24px;height:24px;font-size:10px;margin-left:-8px;border:2px solid #fff">V</span>
+            <span class="m-avatar" style="background:var(--cursor-ai);width:24px;height:24px;font-size:10px;margin-left:-8px;border:2px solid #fff">🤖</span>
+          </div>
+          <button class="m-btn" style="font-size:11px">📋</button>
+        </div>
+      </div>
+      <div class="m-toolbar">
+        <button class="m-toolbar-btn" title="Header">H</button>
+        <button class="m-toolbar-btn" title="Negrita"><b>B</b></button>
+        <button class="m-toolbar-btn" title="Cursiva"><i>I</i></button>
+        <span class="m-toolbar-sep"></span>
+        <button class="m-toolbar-btn" title="Lista">☰</button>
+        <button class="m-toolbar-btn" title="Checklist">☑</button>
+        <span class="m-toolbar-sep"></span>
+        <button class="m-toolbar-btn" title="Link">🔗</button>
+        <button class="m-toolbar-btn" title="Imagen">🖼</button>
+        <button class="m-toolbar-btn" title="Código">&lt;/&gt;</button>
+        <button class="m-toolbar-btn" title="Tabla">⊞</button>
+        <span class="m-toolbar-sep"></span>
+        <button class="m-toolbar-btn" title="Cita">❝</button>
+      </div>
+      <div class="m-body" style="min-height:420px">
+        <div class="m-sidebar" style="width:240px">
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-item" style="color:#6B6B6B;font-size:12px;gap:4px">⌘K Buscar...</div>
+          </div>
+          <div class="m-sidebar-section">
+            <div class="m-sidebar-title">Workspace</div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Producto</div>
+            <div class="m-sidebar-nested">
+              <div class="m-sidebar-item active"><span class="icon">📄</span> Product Brief</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> PRD</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> UX Spec</div>
+            </div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Marketing</div>
+            <div class="m-sidebar-nested">
+              <div class="m-sidebar-item"><span class="icon">📄</span> Brand Guide</div>
+              <div class="m-sidebar-item"><span class="icon">📄</span> Content Plan</div>
+            </div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Desarrollo</div>
+            <div class="m-sidebar-item"><span class="icon">📁</span> Operaciones</div>
+          </div>
+        </div>
+        <div class="m-split">
+          <div class="m-split-editor">
+            <span class="syn-h"># Product Brief: markdown</span><br><br>
+            <span class="syn-h">## Resumen Ejecutivo</span><br><br>
+            Markdown es una plataforma web<br>
+            colaborativa de edición de<br>
+            documentos en markdown, diseñada<br>
+            para equipos pequeños que necesitan<br>
+            una <span class="syn-bold">**fuente única de verdad**</span><br>
+            para su documentación.<br><br>
+            <span style="position:relative;display:inline">
+              <span class="m-cursor-line" style="background:var(--cursor-2)"></span>
+              <span class="m-cursor-flag" style="background:var(--cursor-2)">Valentina</span>
+            </span><br><br>
+            <span class="syn-h">## Visión Central</span><br><br>
+            <span class="syn-h">### Declaración del Problema</span><br><br>
+            Los equipos pequeños generan<br>
+            documentación a través de<br>
+            herramientas de IA.<br><br>
+            <span class="syn-list">- </span>Pérdida de cambios<br>
+            <span class="syn-list">- </span>Versiones desactualizadas<br>
+            <span class="syn-list">- </span>Cuello de botella<br><br>
+            <span style="position:relative;display:inline">
+              <span class="m-cursor-line" style="background:var(--cursor-ai)"></span>
+              <span class="m-cursor-flag" style="background:var(--cursor-ai)">🤖 Claude</span>
+            </span><br><br>
+            <span class="syn-h">### Solución Propuesta</span><br><br>
+            Una aplicación web self-hosted con<br>
+            tres modos de interacción y<br>
+            integración <span class="syn-code">`MCP`</span> nativa.
+          </div>
+          <div class="m-split-handle"></div>
+          <div class="m-split-preview" style="padding:32px">
+            <div class="m-doc-title" style="font-size:28px">Product Brief: markdown</div>
+            <div class="m-doc-h2" style="font-size:20px">Resumen Ejecutivo</div>
+            <div class="m-doc-p" style="font-size:15px">Markdown es una plataforma web colaborativa de edición de documentos en markdown, diseñada para equipos pequeños que necesitan una <strong>fuente única de verdad</strong> para su documentación.</div>
+            <div class="m-doc-h2" style="font-size:20px">Visión Central</div>
+            <div class="m-doc-h3" style="font-size:17px">Declaración del Problema</div>
+            <div class="m-doc-p" style="font-size:15px">Los equipos pequeños generan documentación a través de herramientas de IA.</div>
+            <div class="m-doc-list" style="font-size:15px">
+              <li>Pérdida de cambios</li>
+              <li>Versiones desactualizadas</li>
+              <li>Cuello de botella</li>
+            </div>
+            <div class="m-doc-h3" style="font-size:17px">Solución Propuesta</div>
+            <div class="m-doc-p" style="font-size:15px">Una aplicación web self-hosted con tres modos de interacción y integración <span class="m-doc-code">MCP</span> nativa.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+  function showDirection(idx) {
+    document.querySelectorAll('.direction').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('dir-' + idx).classList.add('active');
+    document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  let isDark = false;
+  function toggleAllThemes() {
+    isDark = !isDark;
+    document.querySelectorAll('.mockup-frame').forEach(f => {
+      if (isDark) f.classList.add('dark');
+      else f.classList.remove('dark');
+    });
+  }
+</script>
+
+</body>
+</html>
