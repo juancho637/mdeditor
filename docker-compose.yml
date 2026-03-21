@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME:-markdown}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-markdown_secret}
+      POSTGRES_DB: ${DATABASE_NAME:-markdown}
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-markdown}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - apps/api/.env
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - apps/web/.env
+    environment:
+      API_INTERNAL_URL: http://api:3000
+    ports:
+      - "3001:3000"
+
+volumes:
+  postgres_data:

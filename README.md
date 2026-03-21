@@ -1,124 +1,131 @@
-# Turborepo starter
+# markdown
 
-This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
+Plataforma colaborativa de documentos markdown en tiempo real. Self-hosted, open source.
 
-## Using this example
+## Requisitos
 
-Run the following command:
+- [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/)
+- [Node.js](https://nodejs.org/) >= 18 (solo para desarrollo nativo)
+- [pnpm](https://pnpm.io/) 8.15.5 (solo para desarrollo nativo)
 
-```bash
-npx create-turbo@latest -e with-nestjs
-```
-
-## What's inside?
-
-This Turborepo includes the following packages & apps:
-
-### Apps and Packages
-
-```shell
-.
-├── apps
-│   ├── api                       # NestJS app (https://nestjs.com).
-│   └── web                       # Next.js app (https://nextjs.org).
-└── packages
-    ├── @repo/api                 # Shared `NestJS` resources.
-    ├── @repo/eslint-config       # `eslint` configurations (includes `prettier`)
-    ├── @repo/jest-config         # `jest` configurations
-    ├── @repo/typescript-config   # `tsconfig.json`s used throughout the monorepo
-    └── @repo/ui                  # Shareable stub React component library.
-```
-
-Each package and application are mostly written in [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This `Turborepo` has some additional tools already set for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type-safety
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-- [Jest](https://prettier.io) & [Playwright](https://playwright.dev/) for testing
-
-### Commands
-
-This `Turborepo` already configured useful commands for all your apps and packages.
-
-#### Build
+## Quick Start
 
 ```bash
-# Will build all the app & packages with the supported `build` script.
-pnpm run build
+# Clonar el repositorio
+git clone <repo-url> && cd markdown
 
-# ℹ️ If you plan to only build apps individually,
-# Please make sure you've built the packages first.
+# Copiar variables de entorno
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+
+# Levantar todo con Docker (hot reload)
+make dev
 ```
 
-#### Develop
+Accede a `http://localhost:3001` y crea tu cuenta de administrador.
+
+## Comandos
+
+| Comando | Descripcion |
+|---------|-------------|
+| `make dev` | Levantar en desarrollo con hot reload |
+| `make dev-build` | Rebuild de imagenes (tras cambiar Dockerfile o dependencias) |
+| `make up` | Levantar en modo produccion |
+| `make down` | Apagar todos los servicios |
+| `make db` | Solo PostgreSQL (para desarrollo nativo) |
+| `make logs` | Ver logs de todos los servicios |
+| `make test` | Unit tests (API) |
+| `make test-e2e` | E2E tests con Playwright (requiere `make dev` corriendo) |
+
+## Desarrollo nativo (sin Docker para apps)
+
+Si prefieres correr las apps fuera de Docker para un debug mas directo:
 
 ```bash
-# Will run the development server for all the app & packages with the supported `dev` script.
-pnpm run dev
+# Solo la base de datos en Docker
+make db
+
+# Terminal 1: API
+cd apps/api && npx nest start --watch
+
+# Terminal 2: Web
+cd apps/web && npx next dev --turbopack --port 3001
 ```
 
-#### test
+## Tech Stack
+
+| Capa | Tecnologia |
+|------|------------|
+| **Backend** | NestJS 11, TypeORM 0.3, PostgreSQL 16 |
+| **Frontend** | Next.js 16, React 19, Tailwind CSS v4, Zustand |
+| **Auth** | JWT (access + refresh tokens), bcrypt, Passport |
+| **Testing** | Jest, Supertest, Playwright |
+| **Infra** | Docker, Docker Compose, Turborepo |
+
+## Arquitectura
+
+El proyecto sigue Clean Architecture con separacion estricta de capas:
+
+```
+apps/
+├── api/                     # NestJS — REST API
+│   └── src/
+│       ├── common/          # Exception service, helpers, config, database
+│       └── modules/         # Modulos de negocio (auth, users, ...)
+│           └── {feature}/
+│               ├── domain/          # Types, interfaces, error codes
+│               ├── application/     # Use cases (logica de negocio pura)
+│               └── infrastructure/  # Controllers, repositories, DTOs
+│
+├── web/                     # Next.js — Frontend
+│   └── src/
+│       ├── common/          # API client, componentes UI
+│       └── modules/         # Modulos con patron MVVM
+│           └── {feature}/
+│               ├── domain/          # Entities, repository interfaces
+│               └── infrastructure/  # Repositories, hooks, components, state
+│
+e2e/                         # Tests E2E con Playwright
+```
+
+Para mas detalle sobre patrones y convenciones, ver [CLAUDE.md](CLAUDE.md).
+
+## Variables de entorno
+
+### Backend (`apps/api/.env`)
+
+| Variable | Descripcion | Default |
+|----------|-------------|---------|
+| `DATABASE_HOST` | Host de PostgreSQL | `localhost` |
+| `DATABASE_PORT` | Puerto de PostgreSQL | `5432` |
+| `DATABASE_USERNAME` | Usuario de PostgreSQL | `markdown` |
+| `DATABASE_PASSWORD` | Password de PostgreSQL | `markdown_secret` |
+| `DATABASE_NAME` | Nombre de la base de datos | `markdown` |
+| `JWT_SECRET` | Secret para access tokens | (requerido) |
+| `JWT_REFRESH_SECRET` | Secret para refresh tokens | (requerido) |
+| `JWT_EXPIRATION` | Expiracion del access token | `15m` |
+| `JWT_REFRESH_EXPIRATION` | Expiracion del refresh token | `7d` |
+| `CORS_ORIGIN` | Origen permitido para CORS | `http://localhost:3001` |
+| `API_PORT` | Puerto del API | `3000` |
+
+### Frontend (`apps/web/.env`)
+
+| Variable | Descripcion | Default |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_URL` | URL del API (browser) | `http://localhost:3000` |
+| `API_INTERNAL_URL` | URL interna del API (server-side proxy) | `http://localhost:3000` |
+
+## Testing
 
 ```bash
-# Will launch a test suites for all the app & packages with the supported `test` script.
-pnpm run test
+# Unit tests
+make test
 
-# You can launch e2e testes with `test:e2e`
-pnpm run test:e2e
-
-# See `@repo/jest-config` to customize the behavior.
+# E2E tests (con la app corriendo)
+make dev          # en una terminal
+make test-e2e     # en otra terminal
 ```
 
-#### Lint
+## Licencia
 
-```bash
-# Will lint all the app & packages with the supported `lint` script.
-# See `@repo/eslint-config` to customize the behavior.
-pnpm run lint
-```
-
-#### Format
-
-```bash
-# Will format all the supported `.ts,.js,json,.tsx,.jsx` files.
-# See `@repo/eslint-config/prettier-base.js` to customize the behavior.
-pnpm format
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```bash
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```bash
-npx turbo link
-```
-
-## Useful Links
-
-This example take some inspiration the [with-nextjs](https://github.com/vercel/turborepo/tree/main/examples/with-nextjs) `Turbo` example and [01-cats-app](https://github.com/nestjs/nest/tree/master/sample/01-cats-app) `NestJs` sample.
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+[MIT](LICENSE)

@@ -1,0 +1,4 @@
+export enum UsersProvidersEnum {
+  USER_REPOSITORY = 'USER_REPOSITORY',
+  CREATE_USER_USE_CASE = 'CREATE_USER_USE_CASE',
+}

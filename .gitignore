@@ -1,39 +1,40 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # Dependencies
 node_modules
 .pnp
 .pnp.js
 
-# Local env files
+# Environment files (only .env.example gets committed)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Testing
-.nyc_output
-blob-report/
-coverage
-test-results/
-playwright/.cache/
-playwright-report/
-
-
-# Turbo
-.turbo
-
-# Vercel
-.vercel
-
-# Build Outputs
+# Build outputs
 .next/
 out/
 build
 dist
+*.tsbuildinfo
 
-# IDEs and editors
+# Turbo
+.turbo
+
+# Testing
+.nyc_output
+coverage
+test-results/
+blob-report/
+
+# Playwright
+playwright-report/
+playwright/.cache/
+.playwright-mcp/
+
+# Docker volumes
+postgres_data/
+
+# IDEs
 /.idea
 .project
 .classpath
@@ -41,8 +42,6 @@ dist
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -57,6 +56,21 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Misc
+# OS
 .DS_Store
 *.pem
+
+# BMad tooling (install with: npx bmad install)
+_bmad/
+
+# Claude Code — local config
+.claude/settings.local.json
+
+# Claude Code — BMad skills (install with: npx bmad install)
+.claude/skills/bmad-*/
+
+# BMad generated test summaries
+_bmad-output/implementation-artifacts/tests/
+
+# Vercel
+.vercel
