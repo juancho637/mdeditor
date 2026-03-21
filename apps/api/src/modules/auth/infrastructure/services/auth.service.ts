@@ -1,0 +1,31 @@
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { AuthServiceInterface, SignInType, TokenPayloadType } from '../../domain';
+
+export class AuthService implements AuthServiceInterface {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async generateTokens(payload: TokenPayloadType): Promise<SignInType> {
+    const tokenPayload = {
+      sub: payload.sub,
+      email: payload.email,
+      isAdmin: payload.isAdmin,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(tokenPayload, {
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+        expiresIn: this.configService.getOrThrow<string>('JWT_EXPIRATION') as any,
+      }),
+      this.jwtService.signAsync(tokenPayload, {
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        expiresIn: this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRATION') as any,
+      }),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+}
