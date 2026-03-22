@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/common/components/ui/card';
-import { useAuthViewModel } from '../hooks/use-auth.viewmodel';
+import { useAuthViewModel } from '../hooks';
 
 function validateEmail(email: string): string | null {
   if (!email.trim()) return 'El email es requerido';
@@ -31,16 +31,25 @@ export function SignInForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-  const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
+  const [touched, setTouched] = useState<{
+    email?: boolean;
+    password?: boolean;
+  }>({});
 
-  const handleBlur = useCallback((field: 'email' | 'password') => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    const value = field === 'email' ? email : password;
-    const validator = field === 'email' ? validateEmail : validatePassword;
-    const error = validator(value);
-    setFieldErrors((prev) => ({ ...prev, [field]: error ?? undefined }));
-  }, [email, password]);
+  const handleBlur = useCallback(
+    (field: 'email' | 'password') => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+      const value = field === 'email' ? email : password;
+      const validator = field === 'email' ? validateEmail : validatePassword;
+      const error = validator(value);
+      setFieldErrors((prev) => ({ ...prev, [field]: error ?? undefined }));
+    },
+    [email, password],
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -64,10 +73,13 @@ export function SignInForm() {
         router.push('/dashboard');
       }
     },
-    [email, password, signIn, router]
+    [email, password, signIn, router],
   );
 
-  const isRateLimited = error?.includes('ThrottlerException') || error?.includes('Too Many') || error?.includes('rate');
+  const isRateLimited =
+    error?.includes('ThrottlerException') ||
+    error?.includes('Too Many') ||
+    error?.includes('rate');
   const displayError = isRateLimited
     ? 'Demasiados intentos. Espera un momento antes de volver a intentar.'
     : error;
@@ -76,9 +88,7 @@ export function SignInForm() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-semibold">Iniciar sesión</CardTitle>
-        <CardDescription>
-          Ingresa tus credenciales para acceder
-        </CardDescription>
+        <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -93,7 +103,9 @@ export function SignInForm() {
               onBlur={() => handleBlur('email')}
               autoComplete="email"
               disabled={isLoading}
-              className={touched.email && fieldErrors.email ? 'border-destructive' : ''}
+              className={
+                touched.email && fieldErrors.email ? 'border-destructive' : ''
+              }
             />
             {touched.email && fieldErrors.email && (
               <p className="text-xs text-destructive">{fieldErrors.email}</p>
@@ -111,7 +123,11 @@ export function SignInForm() {
               onBlur={() => handleBlur('password')}
               autoComplete="current-password"
               disabled={isLoading}
-              className={touched.password && fieldErrors.password ? 'border-destructive' : ''}
+              className={
+                touched.password && fieldErrors.password
+                  ? 'border-destructive'
+                  : ''
+              }
             />
             {touched.password && fieldErrors.password && (
               <p className="text-xs text-destructive">{fieldErrors.password}</p>

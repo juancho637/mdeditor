@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/common/components/ui/card';
-import { useAuthViewModel } from '../hooks/use-auth.viewmodel';
+import { useAuthViewModel } from '../hooks';
 
 interface FieldErrors {
   name?: string;
@@ -32,7 +32,8 @@ export function RegisterForm() {
 
   const validateName = useCallback((value: string): string | undefined => {
     if (!value.trim()) return 'El nombre es obligatorio';
-    if (value.trim().length < 2) return 'El nombre debe tener al menos 2 caracteres';
+    if (value.trim().length < 2)
+      return 'El nombre debe tener al menos 2 caracteres';
     return undefined;
   }, []);
 
@@ -67,7 +68,7 @@ export function RegisterForm() {
       }
       setFieldErrors((prev) => ({ ...prev, [field]: error }));
     },
-    [name, email, password, validateName, validateEmail, validatePassword]
+    [name, email, password, validateName, validateEmail, validatePassword],
   );
 
   const handleSubmit = useCallback(
@@ -84,15 +85,29 @@ export function RegisterForm() {
 
       if (errors.name || errors.email || errors.password) return;
 
-      const success = await setup({ name: name.trim(), email: email.trim(), password });
+      const success = await setup({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
       if (success) {
         router.push('/dashboard');
       }
     },
-    [name, email, password, setup, router, validateName, validateEmail, validatePassword]
+    [
+      name,
+      email,
+      password,
+      setup,
+      router,
+      validateName,
+      validateEmail,
+      validatePassword,
+    ],
   );
 
-  const passwordStrength = password.length >= 8 ? 'strong' : password.length >= 4 ? 'medium' : 'weak';
+  const passwordStrength =
+    password.length >= 8 ? 'strong' : password.length >= 4 ? 'medium' : 'weak';
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -180,9 +195,7 @@ export function RegisterForm() {
               </div>
             )}
             {touched.password && fieldErrors.password && (
-              <p className="text-sm text-destructive">
-                {fieldErrors.password}
-              </p>
+              <p className="text-sm text-destructive">{fieldErrors.password}</p>
             )}
           </div>
 

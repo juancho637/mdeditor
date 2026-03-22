@@ -1,20 +1,15 @@
 import { apiClient } from '@/common/adapters/api-client';
-import type { AuthRepository } from '../../domain/repositories/auth-repository';
-import type {
-  AuthStatusResponse,
+import {
+  AuthRepository,
   SetupRequest,
   SetupResponse,
   SignInRequest,
   SignInResponse,
-} from '../../domain/entities/auth';
+  AuthStatusResponse,
+} from '../../domain';
 
-// Wire format matches backend response (snake_case)
-interface SetupWireResponse {
-  access_token: string;
-  refresh_token: string;
-}
-
-interface SignInWireResponse {
+// Wire format: backend snake_case responses
+interface TokensWireResponse {
   access_token: string;
   refresh_token: string;
 }
@@ -23,14 +18,7 @@ interface AuthStatusWireResponse {
   setup_completed: boolean;
 }
 
-function mapSetupResponse(wire: SetupWireResponse): SetupResponse {
-  return {
-    accessToken: wire.access_token,
-    refreshToken: wire.refresh_token,
-  };
-}
-
-function mapSignInResponse(wire: SignInWireResponse): SignInResponse {
+function mapTokensResponse(wire: TokensWireResponse): SignInResponse {
   return {
     accessToken: wire.access_token,
     refreshToken: wire.refresh_token,
@@ -47,33 +35,34 @@ function mapAuthStatusResponse(
 
 export class AuthV1Repository implements AuthRepository {
   async setup(data: SetupRequest): Promise<SetupResponse> {
-    const response = await apiClient.post<SetupWireResponse>(
+    const response = await apiClient.post<TokensWireResponse>(
       '/api/auth/setup',
       data,
     );
-    return mapSetupResponse(response.data);
+    return mapTokensResponse(response.data);
   }
 
   async signIn(data: SignInRequest): Promise<SignInResponse> {
-    const response = await apiClient.post<SignInWireResponse>(
+    const response = await apiClient.post<TokensWireResponse>(
       '/api/auth/sign-in',
       data,
     );
-    return mapSignInResponse(response.data);
+    return mapTokensResponse(response.data);
   }
 
   async refreshToken(refreshToken: string): Promise<SignInResponse> {
-    const response = await apiClient.post<SignInWireResponse>(
+    const response = await apiClient.post<TokensWireResponse>(
       '/api/auth/refresh',
-      { refresh_token: refreshToken },
+      {
+        refresh_token: refreshToken,
+      },
     );
-    return mapSignInResponse(response.data);
+    return mapTokensResponse(response.data);
   }
 
   async getStatus(): Promise<AuthStatusResponse> {
-    const response = await apiClient.get<AuthStatusWireResponse>(
-      '/api/auth/status',
-    );
+    const response =
+      await apiClient.get<AuthStatusWireResponse>('/api/auth/status');
     return mapAuthStatusResponse(response.data);
   }
 }
