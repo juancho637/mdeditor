@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ResponseInterceptor, LoggingInterceptor } from '@common/helpers/infrastructure';
-import { GlobalExceptionFilter } from '@common/exception/infrastructure';
+import { GlobalExceptionFilter, ValidationExceptionFilter } from '@common/exception/infrastructure';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,11 +27,17 @@ async function bootstrap() {
     new ResponseInterceptor(),
   );
 
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  // Order: most specific → most generic
+  app.useGlobalFilters(
+    new GlobalExceptionFilter(),
+    new ValidationExceptionFilter(),
+  );
 
   const port = process.env.API_PORT || 3000;
   await app.listen(port);
-  console.log(`API running on port ${port}`);
+
+  const logger = new Logger('Bootstrap');
+  logger.log(`API running on port ${port}`);
 }
 
 void bootstrap();
