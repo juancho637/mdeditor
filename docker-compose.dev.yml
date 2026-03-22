@@ -1,21 +1,48 @@
 services:
+  install:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    command: >
+      sh -c "pnpm install --ignore-scripts &&
+             cd node_modules/.pnpm/bcrypt@*/node_modules/bcrypt &&
+             node-gyp rebuild 2>/dev/null || true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build:
       target: dev
     volumes:
-      - ./apps/api/src:/app/apps/api/src
-      - ./apps/api/.env:/app/apps/api/.env
+      - .:/app
+      - node_modules:/app/node_modules
+    command: sh -c "cd apps/api && npx nest start --watch"
+    depends_on:
+      install:
+        condition: service_completed_successfully
     restart: "no"
 
   web:
     build:
       target: dev
     volumes:
-      - ./apps/web/src:/app/apps/web/src
-      - ./apps/web/public:/app/apps/web/public
+      - .:/app
+      - node_modules:/app/node_modules
+    command: sh -c "cd apps/web && npx next dev --turbopack --port 3001"
+    depends_on:
+      install:
+        condition: service_completed_successfully
     environment:
       API_INTERNAL_URL: http://api:3000
     ports:
       !override
       - "3001:3001"
     restart: "no"
+
+volumes:
+  node_modules:
