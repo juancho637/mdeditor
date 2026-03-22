@@ -74,3 +74,6 @@ _bmad-output/implementation-artifacts/tests/
 
 # Vercel
 .vercel
+
+# pnpm
+.pnpm-store
