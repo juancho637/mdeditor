@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthViewModel } from '@/modules/auth/infrastructure/hooks/use-auth.viewmodel';
 
@@ -23,6 +24,12 @@ export default function DashboardLayout({
           <span className="font-semibold text-foreground">markdown</span>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/settings/users"
+            className="text-sm text-foreground-secondary hover:text-foreground transition-colors"
+          >
+            Configuración
+          </Link>
           <button
             onClick={handleLogout}
             className="text-sm text-foreground-secondary hover:text-foreground transition-colors"

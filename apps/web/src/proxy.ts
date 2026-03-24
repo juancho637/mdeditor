@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = ['/setup', '/sign-in'];
+const PUBLIC_PREFIXES = ['/invite'];
 
 // Server-side (proxy) uses internal Docker URL; browser uses NEXT_PUBLIC_API_URL
 const API_BASE_URL = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -48,6 +49,11 @@ export async function proxy(request: NextRequest) {
 
     // Check if user is authenticated via cookie
     const accessToken = request.cookies.get('access_token')?.value;
+
+    // For public paths and prefixes, allow access without auth
+    if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+      return NextResponse.next();
+    }
 
     // For public paths (sign-in), allow access
     if (PUBLIC_PATHS.includes(pathname)) {
