@@ -29,7 +29,7 @@ export class RefreshTokenUseCase {
       });
     }
 
-    if (!payload.sub || !payload.email || (payload.typ && payload.typ !== 'refresh')) {
+    if (!payload.sub || !payload.email || payload.typ !== 'refresh') {
       throw this.exception.unauthorizedException({
         message: authErrorsCodes.AUT002,
         context: this.context,

@@ -10,6 +10,7 @@ import { StatusController } from './api/status.controller';
 import { HealthController } from './api/health.controller';
 import { SignInController } from './api/sign-in.controller';
 import { RefreshTokenController } from './api/refresh-token.controller';
+import { LogoutController } from './api/logout.controller';
 import {
   AuthUseCasesEnum,
   AuthServiceInterface,
@@ -40,7 +41,7 @@ import {
       }),
     }),
   ],
-  controllers: [SetupController, StatusController, HealthController, SignInController, RefreshTokenController],
+  controllers: [SetupController, StatusController, HealthController, SignInController, RefreshTokenController, LogoutController],
   providers: [
     JwtStrategy,
     JwtAuthGuard,

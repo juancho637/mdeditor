@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, postRefresh } from './helpers/api';
+import { resetUsers, postSetup, postSignIn, extractCookies, postRefreshWithCookie, postLogout } from './helpers/api';
 
 test.describe('Story 1-2: Login y Gestión de Sesión', () => {
   // UI tests run FIRST to avoid rate limiting from API tests
-  // (all tests share the same IP: localhost)
 
   // ─── UI Tests ────────────────────────────────────────────────
 
@@ -24,12 +23,13 @@ test.describe('Story 1-2: Login y Gestión de Sesión', () => {
 
       const tokens = await page.evaluate(() => ({
         access_token: localStorage.getItem('access_token'),
-        refresh_token: localStorage.getItem('refresh_token'),
         cookie: document.cookie,
       }));
       expect(tokens.access_token).toBeTruthy();
-      expect(tokens.refresh_token).toBeTruthy();
       expect(tokens.cookie).toContain('access_token=');
+      // refresh_token should NOT be in localStorage (it's httpOnly cookie)
+      const refreshInStorage = await page.evaluate(() => localStorage.getItem('refresh_token'));
+      expect(refreshInStorage).toBeNull();
     });
 
     test('Button shows loading state while submitting', async ({ page }) => {
@@ -105,7 +105,6 @@ test.describe('Story 1-2: Login y Gestión de Sesión', () => {
       await page.locator('input[type="password"]').fill('wrongpassword');
       await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
-      // Error box should appear with the backend error message
       await expect(page.locator('[class*="bg-destructive"]')).toBeVisible({ timeout: 5_000 });
       await expect(page).toHaveURL(/\/sign-in/);
     });
@@ -127,16 +126,12 @@ test.describe('Story 1-2: Login y Gestión de Sesión', () => {
       await page.getByRole('button', { name: /salir|logout|cerrar/i }).click();
       await expect(page).toHaveURL(/\/sign-in/, { timeout: 5_000 });
 
-      const tokens = await page.evaluate(() => ({
-        access_token: localStorage.getItem('access_token'),
-        refresh_token: localStorage.getItem('refresh_token'),
-      }));
-      expect(tokens.access_token).toBeNull();
-      expect(tokens.refresh_token).toBeNull();
+      const accessToken = await page.evaluate(() => localStorage.getItem('access_token'));
+      expect(accessToken).toBeNull();
     });
   });
 
-  // ─── API Tests (run after UI to avoid rate limiting UI tests) ──
+  // ─── API Tests ────────────────────────────────────────────────
 
   test.describe('API: Sign In', () => {
     test.beforeEach(async () => {
@@ -144,13 +139,17 @@ test.describe('Story 1-2: Login y Gestión de Sesión', () => {
       await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
     });
 
-    test('POST /api/auth/sign-in with valid credentials should return tokens', async () => {
+    test('POST /api/auth/sign-in returns access_token and sets httpOnly refresh cookie', async () => {
       const res = await postSignIn({ email: 'admin@test.com', password: 'password123' });
 
       expect(res.status).toBe(201);
       const json = await res.json();
       expect(json.data.access_token).toBeTruthy();
-      expect(json.data.refresh_token).toBeTruthy();
+      // refresh_token is in Set-Cookie header, not in body
+      expect(json.data.refresh_token).toBeUndefined();
+      const cookies = extractCookies(res);
+      expect(cookies).toContain('refresh_token=');
+      expect(cookies).toContain('HttpOnly');
     });
 
     test('POST /api/auth/sign-in with wrong password should return 400 with AUT001', async () => {
@@ -181,40 +180,49 @@ test.describe('Story 1-2: Login y Gestión de Sesión', () => {
     });
   });
 
-  test.describe('API: Refresh Token', () => {
+  test.describe('API: Refresh Token (HTTP-only cookie)', () => {
     test.beforeEach(async () => {
       await resetUsers();
     });
 
-    test('POST /api/auth/refresh with valid refresh token should return new tokens', async () => {
+    test('POST /api/auth/refresh with valid cookie returns new access_token', async () => {
       const setupRes = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-      const setupJson = await setupRes.json();
-      const refreshToken = setupJson.data.refresh_token;
+      const cookies = extractCookies(setupRes);
 
-      const res = await postRefresh(refreshToken);
+      const res = await postRefreshWithCookie(cookies);
 
       expect(res.status).toBe(201);
       const json = await res.json();
       expect(json.data.access_token).toBeTruthy();
-      expect(json.data.refresh_token).toBeTruthy();
+      // New refresh token cookie should be set
+      const newCookies = extractCookies(res);
+      expect(newCookies).toContain('refresh_token=');
     });
 
-    test('POST /api/auth/refresh with invalid token should return 401', async () => {
-      const res = await postRefresh('invalid-token-here');
+    test('POST /api/auth/refresh without cookie should return 401', async () => {
+      const res = await postRefreshWithCookie('');
 
       expect(res.status).toBe(401);
       const json = await res.json();
       expect(json.code_error).toBe('AUT002');
     });
+  });
 
-    test('POST /api/auth/refresh with empty body should return 400', async () => {
-      const res = await fetch('http://localhost:3000/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
+  test.describe('API: Logout', () => {
+    test.beforeEach(async () => {
+      await resetUsers();
+    });
 
-      expect(res.status).toBe(400);
+    test('POST /api/auth/logout clears refresh_token cookie', async () => {
+      const setupRes = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+      const cookies = extractCookies(setupRes);
+
+      const res = await postLogout(cookies);
+
+      expect(res.status).toBe(201);
+      const logoutCookies = extractCookies(res);
+      // Cookie should be cleared (max-age=0 or expires in past)
+      expect(logoutCookies).toContain('refresh_token=');
     });
   });
 });

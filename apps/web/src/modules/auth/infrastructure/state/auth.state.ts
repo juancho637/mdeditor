@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { AuthState } from '../../domain';
-import { saveTokens, clearTokens } from '@/common/helpers/token-storage.utils';
+import { saveAccessToken, clearTokens } from '@/common/helpers/token-storage.utils';
 
 interface AuthActions {
   setAuthenticated: (isAuthenticated: boolean) => void;
   setSetupCompleted: (isSetupCompleted: boolean) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
+  setToken: (accessToken: string) => void;
   logout: () => void;
   reset: () => void;
 }
@@ -31,8 +31,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
   setError: (error) => set({ error }),
 
-  setTokens: (accessToken, refreshToken) => {
-    saveTokens(accessToken, refreshToken);
+  setToken: (accessToken) => {
+    saveAccessToken(accessToken);
     set({ isAuthenticated: true });
   },
 

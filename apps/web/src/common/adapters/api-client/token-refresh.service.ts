@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
-import { getRefreshToken, saveTokens, clearTokens } from '@/common/helpers/token-storage.utils';
+import { saveAccessToken, clearTokens } from '@/common/helpers/token-storage.utils';
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -44,12 +44,6 @@ export async function handleTokenRefresh(
     throw new Error('Auth endpoint 401');
   }
 
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    clearAuthAndRedirect();
-    throw new Error('No refresh token');
-  }
-
   if (isRefreshing) {
     return new Promise((resolve, reject) => {
       failedQueue.push({
@@ -66,17 +60,20 @@ export async function handleTokenRefresh(
   isRefreshing = true;
 
   try {
+    // No body needed — refresh_token is sent as HTTP-only cookie by the browser
     const response = await axios.post(
       `${baseURL}/api/auth/refresh`,
-      { refresh_token: refreshToken },
-      { headers: { 'Content-Type': 'application/json' } },
+      {},
+      {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
+      },
     );
 
     const data = response.data?.data ?? response.data;
     const newAccessToken = data.access_token;
-    const newRefreshToken = data.refresh_token;
 
-    saveTokens(newAccessToken, newRefreshToken);
+    saveAccessToken(newAccessToken);
     processQueue(null, newAccessToken);
 
     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

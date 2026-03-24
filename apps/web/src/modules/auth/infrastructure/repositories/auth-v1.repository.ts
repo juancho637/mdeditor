@@ -11,7 +11,6 @@ import {
 // Wire format: backend snake_case responses
 interface TokensWireResponse {
   access_token: string;
-  refresh_token: string;
 }
 
 interface AuthStatusWireResponse {
@@ -21,7 +20,6 @@ interface AuthStatusWireResponse {
 function mapTokensResponse(wire: TokensWireResponse): SignInResponse {
   return {
     accessToken: wire.access_token,
-    refreshToken: wire.refresh_token,
   };
 }
 
@@ -50,14 +48,8 @@ export class AuthV1Repository implements AuthRepository {
     return mapTokensResponse(response.data);
   }
 
-  async refreshToken(refreshToken: string): Promise<SignInResponse> {
-    const response = await apiClient.post<TokensWireResponse>(
-      '/api/auth/refresh',
-      {
-        refresh_token: refreshToken,
-      },
-    );
-    return mapTokensResponse(response.data);
+  async logout(): Promise<void> {
+    await apiClient.post('/api/auth/logout');
   }
 
   async getStatus(): Promise<AuthStatusResponse> {

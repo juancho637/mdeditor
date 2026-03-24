@@ -44,21 +44,27 @@ export async function postSignIn(data: {
   });
 }
 
-export async function postRefresh(refreshToken: string): Promise<Response> {
+/** Extract Set-Cookie header from response for use in subsequent requests */
+export function extractCookies(res: Response): string {
+  return res.headers.getSetCookie?.().join('; ') ?? res.headers.get('set-cookie') ?? '';
+}
+
+export async function postRefreshWithCookie(cookies: string): Promise<Response> {
   return fetch(`${API_URL}/api/auth/refresh`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookies,
+    },
   });
 }
 
-export async function setupAndSignIn(data: {
-  name: string;
-  email: string;
-  password: string;
-}): Promise<{ access_token: string; refresh_token: string }> {
-  await postSetup(data);
-  const res = await postSignIn({ email: data.email, password: data.password });
-  const json = await res.json();
-  return json.data;
+export async function postLogout(cookies: string): Promise<Response> {
+  return fetch(`${API_URL}/api/auth/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookies,
+    },
+  });
 }

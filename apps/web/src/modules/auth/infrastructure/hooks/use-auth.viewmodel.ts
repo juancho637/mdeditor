@@ -14,7 +14,7 @@ function extractErrorMessage(err: unknown, fallback: string): string {
       return 'Too Many Requests';
     }
     if (axiosErr.response?.data?.message) {
-      return axiosErr.response.data.message;
+      return String(axiosErr.response.data.message);
     }
   }
   if (err instanceof Error) {
@@ -32,8 +32,8 @@ export function useAuthViewModel() {
     setSetupCompleted,
     setLoading,
     setError,
-    setTokens,
-    logout,
+    setToken,
+    logout: storeLogout,
   } = useAuthStore();
 
   const setup = useCallback(
@@ -42,7 +42,7 @@ export function useAuthViewModel() {
       setError(null);
       try {
         const response = await authRepository.setup(data);
-        setTokens(response.accessToken, response.refreshToken);
+        setToken(response.accessToken);
         setSetupCompleted(true);
         return true;
       } catch (err: unknown) {
@@ -52,7 +52,7 @@ export function useAuthViewModel() {
         setLoading(false);
       }
     },
-    [setLoading, setError, setTokens, setSetupCompleted],
+    [setLoading, setError, setToken, setSetupCompleted],
   );
 
   const signIn = useCallback(
@@ -61,7 +61,7 @@ export function useAuthViewModel() {
       setError(null);
       try {
         const response = await authRepository.signIn(data);
-        setTokens(response.accessToken, response.refreshToken);
+        setToken(response.accessToken);
         return true;
       } catch (err: unknown) {
         setError(extractErrorMessage(err, 'Credenciales inválidas'));
@@ -70,7 +70,7 @@ export function useAuthViewModel() {
         setLoading(false);
       }
     },
-    [setLoading, setError, setTokens],
+    [setLoading, setError, setToken],
   );
 
   const checkStatus = useCallback(async () => {
@@ -86,6 +86,15 @@ export function useAuthViewModel() {
       setLoading(false);
     }
   }, [setLoading, setSetupCompleted]);
+
+  const logout = useCallback(async () => {
+    try {
+      await authRepository.logout();
+    } catch {
+      // Clear local state regardless of API call result
+    }
+    storeLogout();
+  }, [storeLogout]);
 
   return {
     isAuthenticated,
