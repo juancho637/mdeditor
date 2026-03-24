@@ -5,13 +5,18 @@ Plataforma colaborativa de documentos markdown en tiempo real. Self-hosted, open
 ## Comandos
 
 ```bash
-make dev        # Levantar todo en Docker con hot reload
-make up         # Levantar en modo producción
-make down       # Apagar todo
-make db         # Solo PostgreSQL (para desarrollo nativo)
-make logs       # Ver logs
-make test       # Unit tests (API)
-make test-e2e   # E2E tests con Playwright (requiere make dev corriendo)
+make dev                           # Levantar todo en Docker con hot reload
+make dev-build                     # Rebuild imágenes (solo si cambia Dockerfile o Node)
+make add PKG="@nestjs/algo"        # Agregar paquete (corre dentro del container)
+make add PKG="axios" APP=web       # Agregar paquete al frontend específicamente
+make add-dev PKG="@types/algo"     # Agregar dependencia de desarrollo
+make up                            # Levantar en modo producción
+make down                          # Apagar todo
+make clean                         # Apagar + borrar volumen node_modules (fresh install)
+make db                            # Solo PostgreSQL (para desarrollo nativo)
+make logs                          # Ver logs
+make test                          # Unit tests (corre dentro del container)
+make test-e2e                      # E2E tests con Playwright (requiere make dev corriendo)
 ```
 
 ## Estructura del proyecto
@@ -25,6 +30,8 @@ apps/
 │   │   │   ├── database/infrastructure/        # TypeORM + migraciones
 │   │   │   ├── exception/domain/               # ExceptionServiceInterface
 │   │   │   ├── exception/infrastructure/       # ExceptionService + filters
+│   │   │   ├── throttler/infrastructure/       # @nestjs/throttler (rate limiting)
+│   │   │   ├── redis/infrastructure/          # ioredis (token revocation, cache)
 │   │   │   └── helpers/                        # decorators, interceptors, middleware, types compartidos
 │   │   └── modules/        # Módulos de negocio (auth, users, ...)
 │   ├── test/               # E2E tests (Jest + Supertest)
@@ -90,7 +97,7 @@ modules/{feature}/
 
 Solo abstraer lo que la capa de aplicación consume:
 - `exception/` → tiene `domain/` (interface) + `infrastructure/` (implementación) porque los use cases dependen de ExceptionServiceInterface.
-- `configuration/`, `database/` → solo `infrastructure/` (ningún use case las consume directamente).
+- `configuration/`, `database/`, `throttler/`, `redis/` → solo `infrastructure/` (ningún use case las consume directamente). Toda configuración de infraestructura nueva va aquí como módulo wrapper.
 - `helpers/` → decorators, interceptors, middleware, types compartidos.
 - **NO wrappear** bcrypt, Logger nativo de NestJS, ni @nestjs/jwt. Uso directo.
 
@@ -136,6 +143,8 @@ chore: update docker compose for dev hot reload
 **Backend** (`apps/api/.env`):
 - `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_NAME`
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`
+- `REDIS_HOST`, `REDIS_PORT`
+- `THROTTLE_GLOBAL_TTL`, `THROTTLE_GLOBAL_LIMIT`, `THROTTLE_LOGIN_TTL`, `THROTTLE_LOGIN_LIMIT`
 - `CORS_ORIGIN`, `API_PORT`
 
 **Frontend** (`apps/web/.env`):
@@ -144,10 +153,14 @@ chore: update docker compose for dev hot reload
 
 ## Docker
 
-- `make dev` → hot reload, volume mounts de `src/`, target `dev` del Dockerfile
+- `make dev` → monta todo el proyecto + named volume para `node_modules`, corre `pnpm install` al iniciar
+- `make add PKG="X"` → agrega paquete dentro del container (actualiza package.json + lockfile en host)
+- `make dev-build` → reconstruye imágenes (solo si cambia Dockerfile o versión de Node)
+- `make clean` → borra volumen node_modules para fresh install
 - `make up` → producción, imágenes buildeadas, target `runner` del Dockerfile
 - Los Dockerfiles están en cada app (`apps/api/Dockerfile`, `apps/web/Dockerfile`)
 - `docker-compose.dev.yml` overridea `docker-compose.yml` para desarrollo
+- **Todo corre dentro del container** — no se necesita Node/pnpm instalado en el host. Solo Docker + editor.
 
 ## Testing
 

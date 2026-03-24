@@ -1,9 +1,27 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useAuthStore } from '../state/auth.state';
-import { authRepository } from '../repositories/auth-v1.repository';
-import type { SetupRequest, SignInRequest } from '../../domain/entities/auth';
+import { useAuthStore } from '../state';
+import { authRepository } from '../repositories';
+import { SetupRequest, SignInRequest } from '../../domain';
+
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const axiosErr = err as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    if (axiosErr.response?.status === 429) {
+      return 'Too Many Requests';
+    }
+    if (axiosErr.response?.data?.message) {
+      return String(axiosErr.response.data.message);
+    }
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return fallback;
+}
 
 export function useAuthViewModel() {
   const {
@@ -14,9 +32,8 @@ export function useAuthViewModel() {
     setSetupCompleted,
     setLoading,
     setError,
-    setTokens,
-    setAuthenticated,
-    logout,
+    setToken,
+    logout: storeLogout,
   } = useAuthStore();
 
   const setup = useCallback(
@@ -25,19 +42,17 @@ export function useAuthViewModel() {
       setError(null);
       try {
         const response = await authRepository.setup(data);
-        setTokens(response.accessToken, response.refreshToken);
+        setToken(response.accessToken);
         setSetupCompleted(true);
         return true;
       } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : 'Error al crear la cuenta';
-        setError(message);
+        setError(extractErrorMessage(err, 'Error al crear la cuenta'));
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [setLoading, setError, setTokens, setSetupCompleted],
+    [setLoading, setError, setToken, setSetupCompleted],
   );
 
   const signIn = useCallback(
@@ -46,18 +61,16 @@ export function useAuthViewModel() {
       setError(null);
       try {
         const response = await authRepository.signIn(data);
-        setTokens(response.accessToken, response.refreshToken);
+        setToken(response.accessToken);
         return true;
       } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : 'Credenciales incorrectas';
-        setError(message);
+        setError(extractErrorMessage(err, 'Credenciales inválidas'));
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [setLoading, setError, setTokens],
+    [setLoading, setError, setToken],
   );
 
   const checkStatus = useCallback(async () => {
@@ -73,6 +86,15 @@ export function useAuthViewModel() {
       setLoading(false);
     }
   }, [setLoading, setSetupCompleted]);
+
+  const logout = useCallback(async () => {
+    try {
+      await authRepository.logout();
+    } catch {
+      // Clear local state regardless of API call result
+    }
+    storeLogout();
+  }, [storeLogout]);
 
   return {
     isAuthenticated,

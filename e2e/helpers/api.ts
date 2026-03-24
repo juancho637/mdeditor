@@ -32,3 +32,39 @@ export async function postSetup(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function postSignIn(data: {
+  email: string;
+  password: string;
+}): Promise<Response> {
+  return fetch(`${API_URL}/api/auth/sign-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+/** Extract Set-Cookie header from response for use in subsequent requests */
+export function extractCookies(res: Response): string {
+  return res.headers.getSetCookie?.().join('; ') ?? res.headers.get('set-cookie') ?? '';
+}
+
+export async function postRefreshWithCookie(cookies: string): Promise<Response> {
+  return fetch(`${API_URL}/api/auth/refresh`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookies,
+    },
+  });
+}
+
+export async function postLogout(cookies: string): Promise<Response> {
+  return fetch(`${API_URL}/api/auth/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookies,
+    },
+  });
+}

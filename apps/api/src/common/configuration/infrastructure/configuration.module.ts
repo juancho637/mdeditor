@@ -18,6 +18,12 @@ import * as Joi from 'joi';
         JWT_REFRESH_EXPIRATION: Joi.string().default('7d'),
         CORS_ORIGIN: Joi.string().default('http://localhost:3001'),
         API_PORT: Joi.number().default(3000),
+        THROTTLE_GLOBAL_TTL: Joi.number().default(60000),
+        THROTTLE_GLOBAL_LIMIT: Joi.number().default(100),
+        THROTTLE_LOGIN_TTL: Joi.number().default(60000),
+        THROTTLE_LOGIN_LIMIT: Joi.number().default(5),
+        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_PORT: Joi.number().default(6379),
       }),
       validationOptions: {
         abortEarly: true,

@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
-import { UserRepositoryInterface, UserType, usersErrorsCodes } from '../../domain';
+import { UserRepositoryInterface, UserType, UserWithPasswordType, usersErrorsCodes } from '../../domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
 
 export class UserOrmRepository implements UserRepositoryInterface {
@@ -15,6 +15,19 @@ export class UserOrmRepository implements UserRepositoryInterface {
     try {
       const user = await this.repository.findOne({ where: { email } });
       return user ? this.toDomain(user) : null;
+    } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: usersErrorsCodes.USR100,
+        context: UserOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
+
+  async findByEmailWithPassword(email: string): Promise<UserWithPasswordType | null> {
+    try {
+      const user = await this.repository.findOne({ where: { email } });
+      return user ? this.toDomainWithPassword(user) : null;
     } catch (error) {
       throw this.exception.internalServerErrorException({
         message: usersErrorsCodes.USR100,
@@ -73,6 +86,18 @@ export class UserOrmRepository implements UserRepositoryInterface {
       id: entity.id,
       name: entity.name,
       email: entity.email,
+      isAdmin: entity.isAdmin,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    };
+  }
+
+  private toDomainWithPassword(entity: UserEntity): UserWithPasswordType {
+    return {
+      id: entity.id,
+      name: entity.name,
+      email: entity.email,
+      passwordHash: entity.passwordHash,
       isAdmin: entity.isAdmin,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

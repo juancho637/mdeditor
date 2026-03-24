@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-20
-last_updated: 2026-03-20T12:00:00
+last_updated: 2026-03-21T12:00:00
 project: markdown
 project_key: NOKEY
 tracking_system: file-system
@@ -45,7 +45,7 @@ development_status:
   # Epic 1: Autenticación y Configuración del Workspace
   epic-1: in-progress
   1-1-registro-del-primer-administrador-y-setup-inicial: review
-  1-2-login-y-gestion-de-sesion: backlog
+  1-2-login-y-gestion-de-sesion: done
   1-3-invitacion-de-nuevos-usuarios: backlog
   1-4-gestion-de-grupos-de-usuarios: backlog
   epic-1-retrospective: optional

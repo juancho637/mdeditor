@@ -9,18 +9,18 @@ export class AuthService implements AuthServiceInterface {
   ) {}
 
   async generateTokens(payload: TokenPayloadType): Promise<SignInType> {
-    const tokenPayload = {
+    const basePayload = {
       sub: payload.sub,
       email: payload.email,
       isAdmin: payload.isAdmin,
     };
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(tokenPayload, {
+      this.jwtService.signAsync({ ...basePayload, typ: 'access' }, {
         secret: this.configService.getOrThrow<string>('JWT_SECRET'),
         expiresIn: this.configService.getOrThrow<string>('JWT_EXPIRATION') as any,
       }),
-      this.jwtService.signAsync(tokenPayload, {
+      this.jwtService.signAsync({ ...basePayload, typ: 'refresh' }, {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
         expiresIn: this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRATION') as any,
       }),
