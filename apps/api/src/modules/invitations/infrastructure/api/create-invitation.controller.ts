@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Inject, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Auth, AuthUser } from '@common/helpers/infrastructure';
 import { AuthenticatedUserType } from '@common/helpers/domain/types/authenticated-user.type';
@@ -18,6 +18,10 @@ export class CreateInvitationController {
   @Post('api/invitations')
   @Auth()
   async run(@Body() dto: CreateInvitationDto, @AuthUser() authUser: AuthenticatedUserType) {
+    if (!authUser.isAdmin) {
+      throw new ForbiddenException({ code_error: 'AUT004', message: 'Admin access required.' });
+    }
+
     const invitation = await this.createInvitationUseCase.run({
       email: dto.email,
       invitedBy: authUser.id,
