@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './services/auth.service';
@@ -11,9 +12,11 @@ import { HealthController } from './api/health.controller';
 import { SignInController } from './api/sign-in.controller';
 import { RefreshTokenController } from './api/refresh-token.controller';
 import { LogoutController } from './api/logout.controller';
+import { TokenRevocationRedisRepository } from './persistence/token-revocation-redis.repository';
 import {
   AuthUseCasesEnum,
   AuthServiceInterface,
+  TokenRevocationRepositoryInterface,
 } from '../domain';
 import { SetupUseCase, SignInUseCase, RefreshTokenUseCase } from '../application';
 import {
@@ -26,11 +29,14 @@ import {
   ExceptionProvidersEnum,
   ExceptionServiceInterface,
 } from '@common/exception/domain';
+import { RedisProvidersEnum } from '@common/redis/infrastructure/redis-providers.enum';
+import { RedisModule } from '@common/redis/infrastructure/redis.module';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
+    RedisModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -50,6 +56,12 @@ import {
       provide: AuthUseCasesEnum.AUTH_SERVICE,
       useFactory: (jwtService: JwtService, configService: ConfigService) =>
         new AuthService(jwtService, configService),
+    },
+    {
+      inject: [RedisProvidersEnum.REDIS_CLIENT],
+      provide: AuthUseCasesEnum.TOKEN_REVOCATION_REPOSITORY,
+      useFactory: (redis: Redis) =>
+        new TokenRevocationRedisRepository(redis),
     },
     {
       inject: [
@@ -86,6 +98,7 @@ import {
         AuthUseCasesEnum.AUTH_SERVICE,
         ExceptionProvidersEnum.EXCEPTION_SERVICE,
         ConfigService,
+        AuthUseCasesEnum.TOKEN_REVOCATION_REPOSITORY,
       ],
       provide: AuthUseCasesEnum.REFRESH_TOKEN_USE_CASE,
       useFactory: (
@@ -94,7 +107,8 @@ import {
         authService: AuthServiceInterface,
         exception: ExceptionServiceInterface,
         configService: ConfigService,
-      ) => new RefreshTokenUseCase(jwtService, userRepository, authService, exception, configService),
+        tokenRevocation: TokenRevocationRepositoryInterface,
+      ) => new RefreshTokenUseCase(jwtService, userRepository, authService, exception, configService, tokenRevocation),
     },
   ],
   exports: [AuthUseCasesEnum.SETUP_USE_CASE, JwtAuthGuard],

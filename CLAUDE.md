@@ -31,6 +31,7 @@ apps/
 │   │   │   ├── exception/domain/               # ExceptionServiceInterface
 │   │   │   ├── exception/infrastructure/       # ExceptionService + filters
 │   │   │   ├── throttler/infrastructure/       # @nestjs/throttler (rate limiting)
+│   │   │   ├── redis/infrastructure/          # ioredis (token revocation, cache)
 │   │   │   └── helpers/                        # decorators, interceptors, middleware, types compartidos
 │   │   └── modules/        # Módulos de negocio (auth, users, ...)
 │   ├── test/               # E2E tests (Jest + Supertest)
@@ -96,7 +97,7 @@ modules/{feature}/
 
 Solo abstraer lo que la capa de aplicación consume:
 - `exception/` → tiene `domain/` (interface) + `infrastructure/` (implementación) porque los use cases dependen de ExceptionServiceInterface.
-- `configuration/`, `database/`, `throttler/` → solo `infrastructure/` (ningún use case las consume directamente). Toda configuración de infraestructura nueva va aquí como módulo wrapper.
+- `configuration/`, `database/`, `throttler/`, `redis/` → solo `infrastructure/` (ningún use case las consume directamente). Toda configuración de infraestructura nueva va aquí como módulo wrapper.
 - `helpers/` → decorators, interceptors, middleware, types compartidos.
 - **NO wrappear** bcrypt, Logger nativo de NestJS, ni @nestjs/jwt. Uso directo.
 
@@ -142,6 +143,7 @@ chore: update docker compose for dev hot reload
 **Backend** (`apps/api/.env`):
 - `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_NAME`
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`
+- `REDIS_HOST`, `REDIS_PORT`
 - `THROTTLE_GLOBAL_TTL`, `THROTTLE_GLOBAL_LIMIT`, `THROTTLE_LOGIN_TTL`, `THROTTLE_LOGIN_LIMIT`
 - `CORS_ORIGIN`, `API_PORT`
 

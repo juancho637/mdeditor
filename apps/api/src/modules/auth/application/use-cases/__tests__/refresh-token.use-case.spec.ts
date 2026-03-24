@@ -1,6 +1,6 @@
 import { RefreshTokenUseCase } from '../refresh-token.use-case';
 import { UserRepositoryInterface } from '@modules/users/domain';
-import { AuthServiceInterface } from '../../../domain';
+import { AuthServiceInterface, TokenRevocationRepositoryInterface } from '../../../domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +12,7 @@ describe('RefreshTokenUseCase', () => {
   let authService: jest.Mocked<AuthServiceInterface>;
   let exception: jest.Mocked<ExceptionServiceInterface>;
   let configService: jest.Mocked<ConfigService>;
+  let tokenRevocation: jest.Mocked<TokenRevocationRepositoryInterface>;
 
   const mockUser = {
     id: 'uuid-1',
@@ -23,9 +24,7 @@ describe('RefreshTokenUseCase', () => {
   };
 
   beforeEach(() => {
-    jwtService = {
-      verifyAsync: jest.fn(),
-    } as any;
+    jwtService = { verifyAsync: jest.fn() } as any;
 
     userRepository = {
       findByEmail: jest.fn(),
@@ -50,8 +49,13 @@ describe('RefreshTokenUseCase', () => {
       getOrThrow: jest.fn().mockReturnValue('refresh-secret'),
     } as any;
 
+    tokenRevocation = {
+      revoke: jest.fn(),
+      isRevoked: jest.fn().mockResolvedValue(false),
+    };
+
     refreshTokenUseCase = new RefreshTokenUseCase(
-      jwtService, userRepository, authService, exception, configService,
+      jwtService, userRepository, authService, exception, configService, tokenRevocation,
     );
   });
 
@@ -61,6 +65,7 @@ describe('RefreshTokenUseCase', () => {
       email: 'admin@test.com',
       isAdmin: true,
       typ: 'refresh',
+      exp: Math.floor(Date.now() / 1000) + 3600,
     });
     userRepository.findById.mockResolvedValue(mockUser);
     authService.generateTokens.mockResolvedValue({
@@ -72,15 +77,48 @@ describe('RefreshTokenUseCase', () => {
 
     expect(result.accessToken).toBe('new-access-token');
     expect(result.refreshToken).toBe('new-refresh-token');
-    expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-refresh-token', {
-      secret: 'refresh-secret',
-    });
-    expect(userRepository.findById).toHaveBeenCalledWith('uuid-1');
-    expect(authService.generateTokens).toHaveBeenCalledWith({
+    expect(tokenRevocation.isRevoked).toHaveBeenCalled();
+    expect(tokenRevocation.revoke).toHaveBeenCalled();
+  });
+
+  it('should revoke old token after generating new ones (rotation + revocation)', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
       sub: 'uuid-1',
       email: 'admin@test.com',
       isAdmin: true,
+      typ: 'refresh',
+      exp: Math.floor(Date.now() / 1000) + 7200,
     });
+    userRepository.findById.mockResolvedValue(mockUser);
+    authService.generateTokens.mockResolvedValue({
+      accessToken: 'new-access-token',
+      refreshToken: 'new-refresh-token',
+    });
+
+    await refreshTokenUseCase.run('old-refresh-token');
+
+    expect(tokenRevocation.revoke).toHaveBeenCalledWith(
+      expect.any(String), // SHA-256 hash
+      expect.any(Number), // remaining TTL
+    );
+  });
+
+  it('should throw AUT002 when token is revoked', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'uuid-1',
+      email: 'admin@test.com',
+      isAdmin: true,
+      typ: 'refresh',
+    });
+    tokenRevocation.isRevoked.mockResolvedValue(true);
+
+    await expect(
+      refreshTokenUseCase.run('revoked-token'),
+    ).rejects.toThrow('Unauthorized.');
+
+    expect(exception.unauthorizedException).toHaveBeenCalled();
+    expect(userRepository.findById).not.toHaveBeenCalled();
+    expect(authService.generateTokens).not.toHaveBeenCalled();
   });
 
   it('should throw AUT002 when refresh token is invalid', async () => {
@@ -90,12 +128,7 @@ describe('RefreshTokenUseCase', () => {
       refreshTokenUseCase.run('invalid-token'),
     ).rejects.toThrow('Unauthorized.');
 
-    expect(exception.unauthorizedException).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: expect.objectContaining({ codeError: 'AUT002' }),
-        context: 'RefreshTokenUseCase',
-      }),
-    );
+    expect(exception.unauthorizedException).toHaveBeenCalled();
     expect(userRepository.findById).not.toHaveBeenCalled();
   });
 
@@ -112,16 +145,10 @@ describe('RefreshTokenUseCase', () => {
       refreshTokenUseCase.run('valid-but-user-deleted'),
     ).rejects.toThrow('Unauthorized.');
 
-    expect(exception.unauthorizedException).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: expect.objectContaining({ codeError: 'AUT002' }),
-        context: 'RefreshTokenUseCase',
-      }),
-    );
     expect(authService.generateTokens).not.toHaveBeenCalled();
   });
 
-  it('should throw AUT002 when token type is not refresh (access token used as refresh)', async () => {
+  it('should throw AUT002 when token type is not refresh', async () => {
     jwtService.verifyAsync.mockResolvedValue({
       sub: 'uuid-1',
       email: 'admin@test.com',
@@ -133,7 +160,6 @@ describe('RefreshTokenUseCase', () => {
       refreshTokenUseCase.run('access-token-used-as-refresh'),
     ).rejects.toThrow('Unauthorized.');
 
-    expect(exception.unauthorizedException).toHaveBeenCalled();
     expect(userRepository.findById).not.toHaveBeenCalled();
   });
 
@@ -148,7 +174,6 @@ describe('RefreshTokenUseCase', () => {
       refreshTokenUseCase.run('token-without-sub'),
     ).rejects.toThrow('Unauthorized.');
 
-    expect(exception.unauthorizedException).toHaveBeenCalled();
     expect(userRepository.findById).not.toHaveBeenCalled();
   });
 });

@@ -22,6 +22,8 @@ import * as Joi from 'joi';
         THROTTLE_GLOBAL_LIMIT: Joi.number().default(100),
         THROTTLE_LOGIN_TTL: Joi.number().default(60000),
         THROTTLE_LOGIN_LIMIT: Joi.number().default(5),
+        REDIS_HOST: Joi.string().default('localhost'),
+        REDIS_PORT: Joi.number().default(6379),
       }),
       validationOptions: {
         abortEarly: true,
