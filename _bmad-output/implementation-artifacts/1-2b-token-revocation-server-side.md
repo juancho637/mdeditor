@@ -1,6 +1,6 @@
 # Story 1.2b: Revocación de Tokens Server-Side con Redis
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

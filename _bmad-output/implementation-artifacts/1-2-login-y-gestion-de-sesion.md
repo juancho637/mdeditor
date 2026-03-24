@@ -1,6 +1,6 @@
 # Story 1.2: Login y Gestión de Sesión
 
-Status: review
+Status: done
 
 ## Story
 
