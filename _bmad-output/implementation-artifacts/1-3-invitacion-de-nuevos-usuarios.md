@@ -1,6 +1,6 @@
 # Story 1.3: Invitación de Nuevos Usuarios
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
