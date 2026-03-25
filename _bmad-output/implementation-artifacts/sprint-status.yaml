@@ -43,11 +43,11 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 
 development_status:
   # Epic 1: Autenticación y Configuración del Workspace
-  epic-1: in-progress
-  1-1-registro-del-primer-administrador-y-setup-inicial: review
+  epic-1: done
+  1-1-registro-del-primer-administrador-y-setup-inicial: done
   1-2-login-y-gestion-de-sesion: done
   1-3-invitacion-de-nuevos-usuarios: done
-  1-4-gestion-de-grupos-de-usuarios: in-progress
+  1-4-gestion-de-grupos-de-usuarios: done
   epic-1-retrospective: optional
 
   # Epic 2: Gestión de Documentos y Carpetas
