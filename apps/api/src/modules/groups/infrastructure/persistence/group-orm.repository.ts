@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { GroupEntity } from './group.entity';
 import { UserGroupEntity } from './user-group.entity';
 import { UserEntity } from '@modules/users/infrastructure/persistence/user.entity';
@@ -70,10 +70,9 @@ export class GroupOrmRepository implements GroupRepositoryInterface {
 
   async findByName(name: string): Promise<GroupType | null> {
     try {
-      const entity = await this.groupRepo
-        .createQueryBuilder('g')
-        .where('LOWER(g.name) = LOWER(:name)', { name })
-        .getOne();
+      const entity = await this.groupRepo.findOne({
+        where: { name: ILike(name) },
+      });
       if (!entity) return null;
       const count = await this.userGroupRepo.count({ where: { groupId: entity.id } });
       return this.toDomain(entity, count);
@@ -89,12 +88,18 @@ export class GroupOrmRepository implements GroupRepositoryInterface {
   async findAll(): Promise<GroupType[]> {
     try {
       const entities = await this.groupRepo.find({ order: { name: 'ASC' } });
-      const result: GroupType[] = [];
-      for (const entity of entities) {
-        const count = await this.userGroupRepo.count({ where: { groupId: entity.id } });
-        result.push(this.toDomain(entity, count));
-      }
-      return result;
+      if (entities.length === 0) return [];
+
+      const memberships = await this.userGroupRepo.find({
+        where: entities.map((e) => ({ groupId: e.id })),
+      });
+
+      const counts = memberships.reduce((acc, m) => {
+        acc.set(m.groupId, (acc.get(m.groupId) ?? 0) + 1);
+        return acc;
+      }, new Map<string, number>());
+
+      return entities.map((e) => this.toDomain(e, counts.get(e.id) ?? 0));
     } catch (error) {
       throw this.exception.internalServerErrorException({
         message: groupErrorsCodes.GRP100,
@@ -174,10 +179,9 @@ export class GroupOrmRepository implements GroupRepositoryInterface {
       const memberships = await this.userGroupRepo.find({ where: { groupId } });
       const userIds = memberships.map((m) => m.userId);
       if (userIds.length === 0) return [];
-      const users = await this.userRepo
-        .createQueryBuilder('u')
-        .whereInIds(userIds)
-        .getMany();
+      const users = await this.userRepo.find({
+        where: userIds.map((id) => ({ id })),
+      });
       return users.map((u) => ({
         id: u.id,
         name: u.name,
