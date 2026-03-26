@@ -118,7 +118,7 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, y
       if (cancelled || !containerRef.current) return;
 
       const state = EditorState.create({
-        doc: isCollaborative ? '' : content,
+        doc: isCollaborative && yText ? yText.toString() : content,
         extensions: baseExtensions,
       });
 
