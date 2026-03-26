@@ -1,6 +1,6 @@
 # Story 3.2: Enforcement de Permisos en la Plataforma
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

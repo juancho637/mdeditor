@@ -58,9 +58,9 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Control de Acceso y Permisos
-  epic-3: in-progress
+  epic-3: done
   3-1-asignacion-de-permisos-por-carpeta: done
-  3-2-enforcement-de-permisos-en-la-plataforma: ready-for-dev
+  3-2-enforcement-de-permisos-en-la-plataforma: done
   epic-3-retrospective: optional
 
   # Epic 4: Experiencia de Edición de Documentos
