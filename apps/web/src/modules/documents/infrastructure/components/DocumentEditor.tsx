@@ -124,18 +124,25 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
       return () => { destroyCollaboration(); };
     }
 
-    // Wait for sync before switching to collaborative mode
+    // Switch to collaborative mode once synced
+    const activateCollab = () => {
+      setCollabState({
+        yText: result.yText,
+        undoManager: result.undoManager,
+        awareness: result.provider.awareness,
+      });
+      setPreviewContent(result.yText.toString());
+    };
+
     const onSynced = (event: { synced: boolean }) => {
-      if (event.synced) {
-        setCollabState({
-          yText: result.yText,
-          undoManager: result.undoManager,
-          awareness: result.provider.awareness,
-        });
-        setPreviewContent(result.yText.toString());
-      }
+      if (event.synced) activateCollab();
     };
     result.provider.on('synced', onSynced);
+
+    // If already synced (e.g. fast connection), activate immediately
+    if (result.provider.synced) {
+      activateCollab();
+    }
 
     // Observe yText for preview updates
     const observer = () => {
