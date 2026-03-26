@@ -115,6 +115,7 @@ export function useDocumentViewModel() {
 
   return {
     currentDocument, folderDocuments, saveStatus, isLoading, error,
+    setCurrentDocument,
     loadDocument, loadFolderDocuments, createDocument,
     saveContent, renameDocument, deleteDocument, moveDocument,
   };

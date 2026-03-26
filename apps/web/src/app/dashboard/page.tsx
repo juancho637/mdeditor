@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const { selectedFolder, loadTree } = useFolderViewModel();
   const {
     currentDocument, folderDocuments, saveStatus,
-    loadDocument, loadFolderDocuments, createDocument, saveContent, deleteDocument,
+    setCurrentDocument, loadDocument, loadFolderDocuments, createDocument, saveContent, deleteDocument,
   } = useDocumentViewModel();
 
   const [creatingDoc, setCreatingDoc] = useState(false);
@@ -19,9 +19,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (selectedFolder) {
+      setCurrentDocument(null);
       loadFolderDocuments(selectedFolder.id);
     }
-  }, [selectedFolder, loadFolderDocuments]);
+  }, [selectedFolder, loadFolderDocuments, setCurrentDocument]);
 
   if (currentDocument) {
     return (
