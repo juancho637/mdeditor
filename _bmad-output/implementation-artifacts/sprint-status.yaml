@@ -65,7 +65,7 @@ development_status:
 
   # Epic 4: Experiencia de Edición de Documentos
   epic-4: in-progress
-  4-1-editor-markdown-con-codemirror-6: ready-for-dev
+  4-1-editor-markdown-con-codemirror-6: done
   4-2-visualizador-de-markdown-renderizado: backlog
   4-3-modo-hibrido-y-cambio-entre-modos: backlog
   4-4-toolbar-de-asistencia-markdown: backlog

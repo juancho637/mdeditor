@@ -1,6 +1,6 @@
 # Story 4.1: Editor Markdown con CodeMirror 6
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
