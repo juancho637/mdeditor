@@ -120,7 +120,7 @@ test.describe('Story 1-1: Registro del Primer Administrador y Setup Inicial', ()
 
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
       await expect(page.getByRole('heading', { name: 'Bienvenido a markdown' })).toBeVisible();
-      await expect(page.getByText('Crea tu primera carpeta')).toBeVisible();
+      await expect(page.getByText('Selecciona o crea una carpeta')).toBeVisible();
 
       const tokens = await page.evaluate(() => ({
         access_token: localStorage.getItem('access_token'),
