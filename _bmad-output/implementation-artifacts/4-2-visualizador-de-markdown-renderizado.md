@@ -1,6 +1,6 @@
 # Story 4.2: Visualizador de Markdown Renderizado
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
