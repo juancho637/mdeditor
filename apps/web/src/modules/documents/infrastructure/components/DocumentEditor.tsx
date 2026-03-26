@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import type { EditorView } from '@codemirror/view';
 import type { Document } from '../../domain/types/document.type';
+import { MarkdownToolbar } from './toolbar/MarkdownToolbar';
 
 const CodeMirrorEditor = dynamic(
   () => import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
@@ -56,12 +58,17 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   const [mode, setMode] = useState<EditorMode>(() =>
     readOnly ? EditorMode.PREVIEW : getStoredMode(),
   );
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef(content);
   const initialLoadRef = useRef(true);
   const previewScrollRef = useRef(0);
 
   contentRef.current = content;
+
+  const handleEditorReady = useCallback((view: EditorView) => {
+    setEditorView(view);
+  }, []);
 
   const handleModeChange = useCallback(
     (newMode: EditorMode) => {
@@ -129,6 +136,8 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
         : 'text-foreground-secondary hover:text-foreground'
     }`;
 
+  const showToolbar = !readOnly && mode !== EditorMode.PREVIEW;
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
@@ -169,12 +178,15 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
         </span>
       </div>
 
+      {showToolbar && <MarkdownToolbar editorView={editorView} />}
+
       <div className="flex-1 overflow-hidden transition-opacity duration-200">
         {mode === EditorMode.EDITOR && !readOnly && (
           <CodeMirrorEditor
             content={content}
             readOnly={readOnly}
             onChange={handleChange}
+            onEditorReady={handleEditorReady}
           />
         )}
 
@@ -187,6 +199,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
                 content={content}
                 readOnly={readOnly}
                 onChange={handleChange}
+                onEditorReady={handleEditorReady}
               />
             }
             previewContent={<MarkdownPreview content={content} />}
