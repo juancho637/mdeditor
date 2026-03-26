@@ -28,6 +28,9 @@ Este documento se pasa a los agentes de code review para evitar falsos positivos
 - **1 tipo por archivo** — Decisión explícita del proyecto. Un enum = un archivo, un type = un archivo.
 - **Zustand sin hydration** — El store no se hidrata desde localStorage al cargar la app. El apiClient lee tokens directamente de localStorage. By design para CSR.
 
+### Ownership / Permisos
+- **Sin ownership check en endpoints de folders/documents** — Todos los usuarios autenticados pueden operar sobre todas las carpetas y documentos. Los permisos por carpeta/grupo (quién puede ver/editar qué) se implementan en Epic 3. No flaggear "missing authorization" o "missing ownership check" en stories de Epic 1-2.
+
 ### Scope MVP (no flaggear como missing)
 - **Sin pagination** — Las listas (invitaciones, usuarios) no tienen pagination. Aceptable para equipos pequeños (self-hosted).
 - **Sin email service** — Las invitaciones generan un link copiable. No se envían emails. By design.
