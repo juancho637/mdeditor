@@ -12,13 +12,24 @@ interface DocumentEditorProps {
 export function DocumentEditor({ document, saveStatus, onSave }: DocumentEditorProps) {
   const [content, setContent] = useState(document.contentMarkdown);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contentRef = useRef(content);
   const initialLoadRef = useRef(true);
 
-  // Reset content when document changes
+  contentRef.current = content;
+
+  // Flush pending save and reset content when document changes
   useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      // Flush: save the pending content for the previous document
+      if (!initialLoadRef.current) {
+        onSave(document.id, contentRef.current);
+      }
+    }
     setContent(document.contentMarkdown);
     initialLoadRef.current = true;
-  }, [document.id, document.contentMarkdown]);
+  }, [document.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Autosave with debounce
   useEffect(() => {

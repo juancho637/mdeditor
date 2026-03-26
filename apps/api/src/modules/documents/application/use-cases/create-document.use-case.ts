@@ -1,10 +1,7 @@
 import { FolderRepositoryInterface, folderErrorsCodes } from '@modules/folders/domain';
 import { DocumentRepositoryInterface, DocumentType } from '../../domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
-
-function generateSlug(title: string): string {
-  return title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-}
+import { generateSlug } from '@common/helpers/infrastructure/utils/slug.utils';
 
 export class CreateDocumentUseCase {
   private readonly context = CreateDocumentUseCase.name;

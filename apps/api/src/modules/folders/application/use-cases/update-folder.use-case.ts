@@ -1,14 +1,6 @@
 import { FolderRepositoryInterface, FolderType, folderErrorsCodes } from '../../domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
-
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
+import { generateSlug } from '@common/helpers/infrastructure/utils/slug.utils';
 
 export class UpdateFolderUseCase {
   private readonly context = UpdateFolderUseCase.name;

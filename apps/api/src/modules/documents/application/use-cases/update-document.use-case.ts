@@ -1,9 +1,6 @@
 import { DocumentRepositoryInterface, DocumentType, documentErrorsCodes } from '../../domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
-
-function generateSlug(title: string): string {
-  return title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-}
+import { generateSlug } from '@common/helpers/infrastructure/utils/slug.utils';
 
 export class UpdateDocumentUseCase {
   private readonly context = UpdateDocumentUseCase.name;
