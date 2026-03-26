@@ -51,10 +51,10 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: Gestión de Documentos y Carpetas
-  epic-2: in-progress
+  epic-2: done
   2-1-estructura-de-carpetas-y-sidebar-de-navegacion: done
   2-2-creacion-y-edicion-basica-de-documentos: done
-  2-3-mover-documentos-entre-carpetas: ready-for-dev
+  2-3-mover-documentos-entre-carpetas: done
   epic-2-retrospective: optional
 
   # Epic 3: Control de Acceso y Permisos
