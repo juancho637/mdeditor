@@ -142,11 +142,23 @@ export class CollaborationGateway implements OnModuleInit {
         this.awarenessMap.set(documentId, new awarenessProtocol.Awareness(yDoc));
       }
 
-      // y-websocket client sends sync step 1 on connect — we respond in handleSyncMessage.
-      // No proactive messages needed here; the protocol handles initial sync.
+      // Send sync step 1 to client proactively.
+      // This is needed because y-websocket may reconnect with synced=true
+      // (after server restart/hot-reload) and skip sending its own step 1.
+      const syncEncoder = encoding.createEncoder();
+      encoding.writeVarUint(syncEncoder, MSG_SYNC);
+      syncProtocol.writeSyncStep1(syncEncoder, yDoc);
+      client.send(encoding.toUint8Array(syncEncoder));
+
+      // Send sync step 2 (full doc state) so client gets current content
+      const step2Encoder = encoding.createEncoder();
+      encoding.writeVarUint(step2Encoder, MSG_SYNC);
+      syncProtocol.writeSyncStep2(step2Encoder, yDoc);
+      client.send(encoding.toUint8Array(step2Encoder));
 
       // Handle binary messages
       client.on('message', (data: Buffer) => {
+        this.logger.debug(`Message from ${userId}: ${data.length} bytes, first byte: ${data[0]}`);
         this.handleMessage(authClient, yDoc, new Uint8Array(data));
       });
 
@@ -218,18 +230,22 @@ export class CollaborationGateway implements OnModuleInit {
     encoding.writeVarUint(encoder, MSG_SYNC);
 
     const syncMessageType = decoding.readVarUint(decoder);
+    this.logger.debug(`Sync message type: ${syncMessageType} from ${authClient.userId}`);
 
     switch (syncMessageType) {
       case syncProtocol.messageYjsSyncStep1: {
         // Client sends its state vector, server responds with sync step 2 (missing updates)
         syncProtocol.readSyncStep1(decoder, encoder, yDoc);
-        if (encoding.length(encoder) > 1) {
+        const responseLen = encoding.length(encoder);
+        this.logger.debug(`Responding to syncStep1 with ${responseLen} bytes`);
+        if (responseLen > 1) {
           authClient.ws.send(encoding.toUint8Array(encoder));
         }
         // Also send server's sync step 1 so client can respond with its step 2
         const serverStep1Encoder = encoding.createEncoder();
         encoding.writeVarUint(serverStep1Encoder, MSG_SYNC);
         syncProtocol.writeSyncStep1(serverStep1Encoder, yDoc);
+        this.logger.debug(`Sending server syncStep1: ${encoding.length(serverStep1Encoder)} bytes`);
         authClient.ws.send(encoding.toUint8Array(serverStep1Encoder));
         break;
       }
