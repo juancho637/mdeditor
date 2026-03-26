@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@common/throttler/infrastructure/throttler.modu
 import { RequestIdMiddleware } from '@common/helpers/infrastructure';
 import { AuthModule } from '@modules/auth/infrastructure';
 import { InvitationsModule } from '@modules/invitations/infrastructure';
+import { GroupsModule } from '@modules/groups/infrastructure';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { InvitationsModule } from '@modules/invitations/infrastructure';
     ThrottlerModule,
     AuthModule,
     InvitationsModule,
+    GroupsModule,
   ],
 })
 export class AppModule implements NestModule {
