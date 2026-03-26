@@ -1,6 +1,7 @@
 'use client';
 
 import type { Invitation } from '../../domain/types/invitation.type';
+import { InvitationStatus } from '../../domain/types/invitation-status.enum';
 
 interface InvitationListProps {
   invitations: Invitation[];
@@ -29,12 +30,12 @@ export function InvitationList({ invitations }: InvitationListProps) {
             </div>
             <span
               className={`text-xs px-2 py-1 rounded-full ${
-                inv.status === 'pending'
+                inv.status === InvitationStatus.PENDING
                   ? 'bg-yellow-100 text-yellow-800'
                   : 'bg-green-100 text-green-800'
               }`}
             >
-              {inv.status === 'pending' ? 'Pendiente' : 'Aceptada'}
+              {inv.status === InvitationStatus.PENDING ? 'Pendiente' : 'Aceptada'}
             </span>
           </div>
         ))}

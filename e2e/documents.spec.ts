@@ -61,8 +61,10 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
       // Document editor should open with title
       await expect(page.getByText('Brief')).toBeVisible({ timeout: 5_000 });
 
-      // Type content — autosave should trigger
-      await page.locator('textarea').fill('# Hello World');
+      // Type content in CodeMirror — autosave should trigger
+      await expect(page.locator('.cm-editor')).toBeVisible({ timeout: 10_000 });
+      await page.locator('.cm-content').click();
+      await page.keyboard.type('# Hello World');
 
       // Wait for autosave — check for saved state (Guardando... may flash too fast)
       await expect(page.getByText('✓ Guardado')).toBeVisible({ timeout: 10_000 });
