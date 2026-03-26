@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const settingsLinks = [
   { href: '/dashboard/settings/users', label: 'Usuarios' },
   { href: '/dashboard/settings/groups', label: 'Grupos' },
+  { href: '/dashboard/settings/permissions', label: 'Permisos' },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
