@@ -1,6 +1,6 @@
 # Story 2.2: Creación y Edición Básica de Documentos
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
