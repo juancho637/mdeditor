@@ -11,14 +11,10 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
 export function useCollaborationViewModel() {
   const providerRef = useRef<WebsocketProvider | null>(null);
   const yDocRef = useRef<Y.Doc | null>(null);
-  const yTextRef = useRef<Y.Text | null>(null);
   const undoManagerRef = useRef<Y.UndoManager | null>(null);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const {
-    isConnected, isSynced, connectedUsers, saveStatus,
-    setConnected, setSynced, setConnectedUsers, setSaveStatus, reset,
-  } = useCollaborationStore();
+  const store = useCollaborationStore();
 
   const destroyCollaboration = useCallback(() => {
     if (syncTimeoutRef.current) {
@@ -26,7 +22,6 @@ export function useCollaborationViewModel() {
       syncTimeoutRef.current = null;
     }
     if (providerRef.current) {
-      providerRef.current.disconnect();
       providerRef.current.destroy();
       providerRef.current = null;
     }
@@ -38,9 +33,9 @@ export function useCollaborationViewModel() {
       yDocRef.current.destroy();
       yDocRef.current = null;
     }
-    yTextRef.current = null;
-    reset();
-  }, [reset]);
+    useCollaborationStore.getState().reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initCollaboration = useCallback((documentId: string) => {
     // Clean up any existing session first
@@ -61,40 +56,39 @@ export function useCollaborationViewModel() {
     });
 
     provider.on('status', (event: { status: string }) => {
-      setConnected(event.status === 'connected');
+      useCollaborationStore.getState().setConnected(event.status === 'connected');
     });
 
     provider.on('synced', (event: { synced: boolean }) => {
-      setSynced(event.synced);
+      useCollaborationStore.getState().setSynced(event.synced);
     });
 
     provider.awareness.on('change', () => {
-      setConnectedUsers(provider.awareness.getStates().size);
+      useCollaborationStore.getState().setConnectedUsers(provider.awareness.getStates().size);
     });
 
     yDoc.on('update', () => {
-      setSaveStatus('syncing');
+      useCollaborationStore.getState().setSaveStatus('syncing');
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      syncTimeoutRef.current = setTimeout(() => setSaveStatus('synced'), 300);
+      syncTimeoutRef.current = setTimeout(() => {
+        useCollaborationStore.getState().setSaveStatus('synced');
+      }, 300);
     });
 
     yDocRef.current = yDoc;
-    yTextRef.current = yText;
     undoManagerRef.current = undoManager;
     providerRef.current = provider;
 
     return { yDoc, yText, provider, undoManager };
-  }, [destroyCollaboration, setConnected, setSynced, setConnectedUsers, setSaveStatus]);
-
-  // No useEffect cleanup here — the caller (DocumentEditor) manages the lifecycle
-  // via its own useEffect cleanup calling destroyCollaboration()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     initCollaboration,
     destroyCollaboration,
-    isConnected,
-    isSynced,
-    connectedUsers,
-    saveStatus,
+    isConnected: store.isConnected,
+    isSynced: store.isSynced,
+    connectedUsers: store.connectedUsers,
+    saveStatus: store.saveStatus,
   };
 }
