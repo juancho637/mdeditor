@@ -142,30 +142,8 @@ export class CollaborationGateway implements OnModuleInit {
         this.awarenessMap.set(documentId, new awarenessProtocol.Awareness(yDoc));
       }
 
-      // Send sync step 1 to new client
-      const syncEncoder = encoding.createEncoder();
-      encoding.writeVarUint(syncEncoder, MSG_SYNC);
-      syncProtocol.writeSyncStep1(syncEncoder, yDoc);
-      client.send(encoding.toUint8Array(syncEncoder));
-
-      // Also send sync step 2 (full doc state) so client gets initial content
-      const step2Encoder = encoding.createEncoder();
-      encoding.writeVarUint(step2Encoder, MSG_SYNC);
-      syncProtocol.writeSyncStep2(step2Encoder, yDoc);
-      client.send(encoding.toUint8Array(step2Encoder));
-
-      // Send current awareness state
-      const awareness = this.awarenessMap.get(documentId)!;
-      const awarenessStates = awareness.getStates();
-      if (awarenessStates.size > 0) {
-        const awarenessEncoder = encoding.createEncoder();
-        encoding.writeVarUint(awarenessEncoder, MSG_AWARENESS);
-        encoding.writeVarUint8Array(
-          awarenessEncoder,
-          awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(awarenessStates.keys())),
-        );
-        client.send(encoding.toUint8Array(awarenessEncoder));
-      }
+      // y-websocket client sends sync step 1 on connect — we respond in handleSyncMessage.
+      // No proactive messages needed here; the protocol handles initial sync.
 
       // Handle binary messages
       client.on('message', (data: Buffer) => {

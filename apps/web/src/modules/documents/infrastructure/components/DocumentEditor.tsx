@@ -117,36 +117,38 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
 
   // Initialize collaboration when document changes
   useEffect(() => {
-    if (readOnly) return;
+    if (readOnly) return () => {};
 
     const result = initCollaboration(document.id);
-    if (result) {
-      // Wait for sync before switching to collaborative mode
-      const onSynced = (event: { synced: boolean }) => {
-        if (event.synced) {
-          setCollabState({
-            yText: result.yText,
-            undoManager: result.undoManager,
-            awareness: result.provider.awareness,
-          });
-          setPreviewContent(result.yText.toString());
-        }
-      };
-      result.provider.on('synced', onSynced);
-
-      // Observe yText for preview updates (works even before sync for local edits)
-      const observer = () => {
-        setPreviewContent(result.yText.toString());
-      };
-      result.yText.observe(observer);
-
-      return () => {
-        result.provider.off('synced', onSynced);
-        result.yText.unobserve(observer);
-        destroyCollaboration();
-        setCollabState(null);
-      };
+    if (!result) {
+      return () => { destroyCollaboration(); };
     }
+
+    // Wait for sync before switching to collaborative mode
+    const onSynced = (event: { synced: boolean }) => {
+      if (event.synced) {
+        setCollabState({
+          yText: result.yText,
+          undoManager: result.undoManager,
+          awareness: result.provider.awareness,
+        });
+        setPreviewContent(result.yText.toString());
+      }
+    };
+    result.provider.on('synced', onSynced);
+
+    // Observe yText for preview updates
+    const observer = () => {
+      setPreviewContent(result.yText.toString());
+    };
+    result.yText.observe(observer);
+
+    return () => {
+      result.provider.off('synced', onSynced);
+      result.yText.unobserve(observer);
+      destroyCollaboration();
+      setCollabState(null);
+    };
   }, [document.id, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle document switching (both modes)
