@@ -221,11 +221,16 @@ export class CollaborationGateway implements OnModuleInit {
 
     switch (syncMessageType) {
       case syncProtocol.messageYjsSyncStep1: {
-        // Client sends its state vector, server responds with missing updates
+        // Client sends its state vector, server responds with sync step 2 (missing updates)
         syncProtocol.readSyncStep1(decoder, encoder, yDoc);
         if (encoding.length(encoder) > 1) {
           authClient.ws.send(encoding.toUint8Array(encoder));
         }
+        // Also send server's sync step 1 so client can respond with its step 2
+        const serverStep1Encoder = encoding.createEncoder();
+        encoding.writeVarUint(serverStep1Encoder, MSG_SYNC);
+        syncProtocol.writeSyncStep1(serverStep1Encoder, yDoc);
+        authClient.ws.send(encoding.toUint8Array(serverStep1Encoder));
         break;
       }
       case syncProtocol.messageYjsSyncStep2: {
