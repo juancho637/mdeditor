@@ -7,6 +7,7 @@ import { RequestIdMiddleware } from '@common/helpers/infrastructure';
 import { AuthModule } from '@modules/auth/infrastructure';
 import { InvitationsModule } from '@modules/invitations/infrastructure';
 import { GroupsModule } from '@modules/groups/infrastructure';
+import { FoldersModule } from '@modules/folders/infrastructure';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { GroupsModule } from '@modules/groups/infrastructure';
     AuthModule,
     InvitationsModule,
     GroupsModule,
+    FoldersModule,
   ],
 })
 export class AppModule implements NestModule {
