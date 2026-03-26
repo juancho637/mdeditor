@@ -14,9 +14,34 @@ const MarkdownPreview = dynamic(
   { ssr: false, loading: () => <div className="flex-1 animate-pulse bg-muted" /> },
 );
 
+const SplitView = dynamic(
+  () => import('./SplitView').then((m) => ({ default: m.SplitView })),
+  { ssr: false, loading: () => <div className="flex-1 animate-pulse bg-muted" /> },
+);
+
 enum EditorMode {
   EDITOR = 'editor',
+  HYBRID = 'hybrid',
   PREVIEW = 'preview',
+}
+
+const EDITOR_MODE_STORAGE_KEY = 'editor-mode-preference';
+
+function getStoredMode(): EditorMode {
+  if (typeof window === 'undefined') return EditorMode.HYBRID;
+  const stored = localStorage.getItem(EDITOR_MODE_STORAGE_KEY);
+  if (stored === EditorMode.EDITOR || stored === EditorMode.HYBRID || stored === EditorMode.PREVIEW) {
+    return stored;
+  }
+  return EditorMode.HYBRID;
+}
+
+function storeMode(mode: EditorMode): void {
+  try {
+    localStorage.setItem(EDITOR_MODE_STORAGE_KEY, mode);
+  } catch {
+    // localStorage unavailable (private browsing, quota exceeded)
+  }
 }
 
 interface DocumentEditorProps {
@@ -28,12 +53,43 @@ interface DocumentEditorProps {
 
 export function DocumentEditor({ document, saveStatus, readOnly, onSave }: DocumentEditorProps) {
   const [content, setContent] = useState(document.contentMarkdown);
-  const [mode, setMode] = useState<EditorMode>(readOnly ? EditorMode.PREVIEW : EditorMode.EDITOR);
+  const [mode, setMode] = useState<EditorMode>(() =>
+    readOnly ? EditorMode.PREVIEW : getStoredMode(),
+  );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef(content);
   const initialLoadRef = useRef(true);
+  const previewScrollRef = useRef(0);
 
   contentRef.current = content;
+
+  const handleModeChange = useCallback(
+    (newMode: EditorMode) => {
+      const previewEl = globalThis.document?.querySelector('.prose-container');
+      if (previewEl) {
+        previewScrollRef.current = previewEl.scrollTop;
+      }
+
+      setMode(newMode);
+      if (!readOnly) {
+        storeMode(newMode);
+      }
+    },
+    [readOnly],
+  );
+
+  useEffect(() => {
+    if (mode === EditorMode.PREVIEW || mode === EditorMode.HYBRID) {
+      const restoreScroll = () => {
+        const previewEl = globalThis.document?.querySelector('.prose-container');
+        if (previewEl && previewScrollRef.current > 0) {
+          previewEl.scrollTop = previewScrollRef.current;
+        }
+      };
+      const frameId = requestAnimationFrame(restoreScroll);
+      return () => cancelAnimationFrame(frameId);
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (timerRef.current) {
@@ -66,31 +122,41 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     setContent(newContent);
   }, []);
 
+  const modeTabClass = (tabMode: EditorMode) =>
+    `px-3 py-1 text-xs rounded transition-colors ${
+      mode === tabMode
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-foreground-secondary hover:text-foreground'
+    }`;
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-medium">{document.title}</h2>
-          <div className="flex gap-1 bg-muted rounded-md p-0.5">
+          <div className="flex gap-1 bg-muted rounded-md p-0.5" data-testid="mode-tabs">
             {!readOnly && (
-              <button
-                onClick={() => setMode(EditorMode.EDITOR)}
-                className={`px-3 py-1 text-xs rounded transition-colors ${
-                  mode === EditorMode.EDITOR
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-foreground-secondary hover:text-foreground'
-                }`}
-              >
-                Editor
-              </button>
+              <>
+                <button
+                  onClick={() => handleModeChange(EditorMode.EDITOR)}
+                  className={modeTabClass(EditorMode.EDITOR)}
+                  data-testid="mode-editor"
+                >
+                  Editor
+                </button>
+                <button
+                  onClick={() => handleModeChange(EditorMode.HYBRID)}
+                  className={modeTabClass(EditorMode.HYBRID)}
+                  data-testid="mode-hybrid"
+                >
+                  Híbrido
+                </button>
+              </>
             )}
             <button
-              onClick={() => setMode(EditorMode.PREVIEW)}
-              className={`px-3 py-1 text-xs rounded transition-colors ${
-                mode === EditorMode.PREVIEW
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-foreground-secondary hover:text-foreground'
-              }`}
+              onClick={() => handleModeChange(EditorMode.PREVIEW)}
+              className={modeTabClass(EditorMode.PREVIEW)}
+              data-testid="mode-preview"
             >
               Preview
             </button>
@@ -103,15 +169,30 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
         </span>
       </div>
 
-      {mode === EditorMode.EDITOR && !readOnly ? (
-        <CodeMirrorEditor
-          content={content}
-          readOnly={readOnly}
-          onChange={handleChange}
-        />
-      ) : (
-        <MarkdownPreview content={content} />
-      )}
+      <div className="flex-1 overflow-hidden transition-opacity duration-200">
+        {mode === EditorMode.EDITOR && !readOnly && (
+          <CodeMirrorEditor
+            content={content}
+            readOnly={readOnly}
+            onChange={handleChange}
+          />
+        )}
+
+        {mode === EditorMode.PREVIEW && <MarkdownPreview content={content} />}
+
+        {mode === EditorMode.HYBRID && !readOnly && (
+          <SplitView
+            editorContent={
+              <CodeMirrorEditor
+                content={content}
+                readOnly={readOnly}
+                onChange={handleChange}
+              />
+            }
+            previewContent={<MarkdownPreview content={content} />}
+          />
+        )}
+      </div>
     </div>
   );
 }
