@@ -8,6 +8,7 @@ import { GetDocumentController } from './api/get-document.controller';
 import { UpdateDocumentController } from './api/update-document.controller';
 import { DeleteDocumentController } from './api/delete-document.controller';
 import { ListDocumentsByFolderController } from './api/list-documents-by-folder.controller';
+import { MoveDocumentController } from './api/move-document.controller';
 import { DocumentProvidersEnum, DocumentRepositoryInterface } from '../domain';
 import {
   CreateDocumentUseCase,
@@ -15,6 +16,7 @@ import {
   UpdateDocumentUseCase,
   DeleteDocumentUseCase,
   ListDocumentsByFolderUseCase,
+  MoveDocumentUseCase,
 } from '../application';
 import { FolderProvidersEnum, FolderRepositoryInterface } from '@modules/folders/domain';
 import { FoldersModule } from '@modules/folders/infrastructure';
@@ -31,6 +33,7 @@ import { ExceptionProvidersEnum, ExceptionServiceInterface } from '@common/excep
     UpdateDocumentController,
     DeleteDocumentController,
     ListDocumentsByFolderController,
+    MoveDocumentController,
   ],
   providers: [
     {
@@ -68,6 +71,12 @@ import { ExceptionProvidersEnum, ExceptionServiceInterface } from '@common/excep
       provide: DocumentProvidersEnum.LIST_DOCUMENTS_BY_FOLDER_USE_CASE,
       useFactory: (repo: DocumentRepositoryInterface) =>
         new ListDocumentsByFolderUseCase(repo),
+    },
+    {
+      inject: [DocumentProvidersEnum.DOCUMENT_REPOSITORY, FolderProvidersEnum.FOLDER_REPOSITORY, ExceptionProvidersEnum.EXCEPTION_SERVICE],
+      provide: DocumentProvidersEnum.MOVE_DOCUMENT_USE_CASE,
+      useFactory: (docRepo: DocumentRepositoryInterface, folderRepo: FolderRepositoryInterface, ex: ExceptionServiceInterface) =>
+        new MoveDocumentUseCase(docRepo, folderRepo, ex),
     },
   ],
   exports: [DocumentProvidersEnum.DOCUMENT_REPOSITORY],
