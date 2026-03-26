@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { InvitationStatus } from '@/modules/invitations/domain/types/invitation-status.enum';
 import { Button } from '@/common/components/ui/button';
 import { Input } from '@/common/components/ui/input';
 import { Label } from '@/common/components/ui/label';
@@ -35,7 +36,7 @@ export default function InvitePage() {
       try {
         const invitation = await invitationRepository.getByToken(token);
         setEmail(invitation.email);
-        setState(invitation.status === 'pending' ? 'pending' : 'accepted');
+        setState(invitation.status === InvitationStatus.PENDING ? 'pending' : 'accepted');
       } catch (err: unknown) {
         const status = (err as { response?: { status?: number } })?.response?.status;
         setState(status === 404 ? 'not-found' : 'error');

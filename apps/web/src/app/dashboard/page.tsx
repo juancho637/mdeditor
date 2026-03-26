@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-folder.viewmodel';
 import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/use-document.viewmodel';
+import { PermissionLevel } from '@/modules/permissions/domain/types/permission-level.enum';
 import { DocumentEditor } from '@/modules/documents/infrastructure/components/DocumentEditor';
 import { Button } from '@/common/components/ui/button';
 
@@ -28,6 +29,7 @@ export default function DashboardPage() {
         <DocumentEditor
           document={currentDocument}
           saveStatus={saveStatus}
+          readOnly={currentDocument.permissionLevel === PermissionLevel.VIEW}
           onSave={saveContent}
         />
       </div>

@@ -1,15 +1,22 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import type { Document } from '../../domain/types/document.type';
+
+const CodeMirrorEditor = dynamic(
+  () => import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
+  { ssr: false, loading: () => <div className="flex-1 animate-pulse bg-muted" /> },
+);
 
 interface DocumentEditorProps {
   document: Document;
   saveStatus: 'idle' | 'saving' | 'saved';
+  readOnly: boolean;
   onSave: (id: string, contentMarkdown: string) => Promise<void>;
 }
 
-export function DocumentEditor({ document, saveStatus, onSave }: DocumentEditorProps) {
+export function DocumentEditor({ document, saveStatus, readOnly, onSave }: DocumentEditorProps) {
   const [content, setContent] = useState(document.contentMarkdown);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef(content);
@@ -22,8 +29,7 @@ export function DocumentEditor({ document, saveStatus, onSave }: DocumentEditorP
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
-      // Flush: save the pending content for the previous document
-      if (!initialLoadRef.current) {
+      if (!initialLoadRef.current && !readOnly) {
         onSave(document.id, contentRef.current);
       }
     }
@@ -38,6 +44,8 @@ export function DocumentEditor({ document, saveStatus, onSave }: DocumentEditorP
       return;
     }
 
+    if (readOnly) return;
+
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
@@ -47,23 +55,26 @@ export function DocumentEditor({ document, saveStatus, onSave }: DocumentEditorP
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [content, document.id, onSave]);
+  }, [content, document.id, onSave, readOnly]);
+
+  const handleChange = useCallback((newContent: string) => {
+    setContent(newContent);
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <h2 className="text-lg font-medium">{document.title}</h2>
         <span className="text-xs text-foreground-secondary">
-          {saveStatus === 'saving' && 'Guardando...'}
-          {saveStatus === 'saved' && '✓ Guardado'}
+          {!readOnly && saveStatus === 'saving' && 'Guardando...'}
+          {!readOnly && saveStatus === 'saved' && '✓ Guardado'}
+          {readOnly && 'Solo lectura'}
         </span>
       </div>
-      <textarea
-        className="flex-1 w-full p-4 bg-background text-foreground font-mono text-sm resize-none outline-none"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Escribe tu contenido markdown aquí..."
-        spellCheck={false}
+      <CodeMirrorEditor
+        content={content}
+        readOnly={readOnly}
+        onChange={handleChange}
       />
     </div>
   );

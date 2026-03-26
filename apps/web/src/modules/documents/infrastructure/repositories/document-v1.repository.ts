@@ -2,6 +2,7 @@ import { apiClient } from '@/common/adapters/api-client';
 import type { DocumentRepository } from '../../domain/repositories/document-repository';
 import type { Document } from '../../domain/types/document.type';
 import type { DocumentSummary } from '../../domain/types/document-summary.type';
+import { PermissionLevel } from '@/modules/permissions/domain/types/permission-level.enum';
 
 interface DocumentWireResponse {
   id: string;
@@ -12,6 +13,7 @@ interface DocumentWireResponse {
   created_by: string;
   created_at: string;
   updated_at: string;
+  permission_level?: string;
 }
 
 interface DocumentSummaryWireResponse {
@@ -33,6 +35,7 @@ function mapDocument(wire: DocumentWireResponse): Document {
     createdBy: wire.created_by,
     createdAt: wire.created_at,
     updatedAt: wire.updated_at,
+    permissionLevel: wire.permission_level as PermissionLevel | undefined,
   };
 }
 

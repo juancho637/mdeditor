@@ -1,0 +1,95 @@
+import { test, expect } from '@playwright/test';
+import { resetUsers, postSetup } from './helpers/api';
+
+const API_URL = 'http://localhost:3000';
+
+function authHeaders(token: string) {
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+}
+
+async function getAdminToken(): Promise<string> {
+  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+  const json = await res.json();
+  return json.data.access_token;
+}
+
+async function createFolder(token: string, name: string): Promise<string> {
+  const res = await fetch(`${API_URL}/api/folders`, {
+    method: 'POST', headers: authHeaders(token),
+    body: JSON.stringify({ name }),
+  });
+  const json = await res.json();
+  return json.data.id;
+}
+
+async function createDocument(token: string, title: string, folderId: string): Promise<string> {
+  const res = await fetch(`${API_URL}/api/documents`, {
+    method: 'POST', headers: authHeaders(token),
+    body: JSON.stringify({ title, folder_id: folderId }),
+  });
+  const json = await res.json();
+  return json.data.id;
+}
+
+async function resetAll(): Promise<void> {
+  const { execSync } = await import('child_process');
+  execSync(
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM folder_permissions; DELETE FROM documents; DELETE FROM folders;"`,
+    { cwd: process.cwd(), stdio: 'pipe' },
+  );
+}
+
+test.describe('Story 4-1: Editor Markdown con CodeMirror 6', () => {
+  test.describe('UI: CodeMirror Editor', () => {
+    test.beforeEach(async () => {
+      await resetAll();
+      await resetUsers();
+    });
+
+    test('AC#1: Document opens with CodeMirror editor (not textarea)', async ({ page }) => {
+      const token = await getAdminToken();
+      const folderId = await createFolder(token, 'Docs');
+      await createDocument(token, 'Test Doc', folderId);
+
+      await page.goto('/sign-in');
+      await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
+      await page.locator('input[type="password"]').fill('password123');
+      await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+      await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
+
+      // Select folder
+      await page.getByText('Docs').click();
+      // Open document
+      await page.getByText('Test Doc').first().click();
+
+      // Should see CodeMirror (cm-editor class), NOT a textarea
+      await expect(page.locator('.cm-editor')).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('textarea')).not.toBeVisible();
+    });
+
+    test('AC#5: Typing triggers autosave with badge', async ({ page }) => {
+      const token = await getAdminToken();
+      const folderId = await createFolder(token, 'Docs');
+      await createDocument(token, 'Autosave Test', folderId);
+
+      await page.goto('/sign-in');
+      await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
+      await page.locator('input[type="password"]').fill('password123');
+      await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+      await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
+
+      await page.getByText('Docs').click();
+      await page.getByText('Autosave Test').first().click();
+
+      // Wait for editor to load
+      await expect(page.locator('.cm-editor')).toBeVisible({ timeout: 10_000 });
+
+      // Type in CodeMirror
+      await page.locator('.cm-content').click();
+      await page.keyboard.type('# Hello World');
+
+      // Wait for autosave badge
+      await expect(page.getByText('✓ Guardado')).toBeVisible({ timeout: 10_000 });
+    });
+  });
+});

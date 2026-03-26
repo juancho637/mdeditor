@@ -3,6 +3,7 @@ import type { InvitationRepository } from '../../domain/repositories/invitation-
 import type { Invitation } from '../../domain/types/invitation.type';
 import type { InvitationPublic } from '../../domain/types/invitation-public.type';
 import type { CreateInvitationRequest } from '../../domain/types/create-invitation-request.type';
+import { InvitationStatus } from '../../domain/types/invitation-status.enum';
 import type { AcceptInvitationRequest } from '../../domain/types/accept-invitation-request.type';
 
 interface InvitationWireResponse {
@@ -30,7 +31,7 @@ function mapInvitation(wire: InvitationWireResponse): Invitation {
     id: wire.id,
     email: wire.email,
     token: wire.token,
-    status: wire.status as 'pending' | 'accepted',
+    status: wire.status as InvitationStatus,
     invitationLink: wire.invitation_link,
     invitedBy: wire.invited_by,
     createdAt: wire.created_at,
@@ -48,7 +49,7 @@ export class InvitationV1Repository implements InvitationRepository {
     const response = await apiClient.get<InvitationPublicWireResponse>(`/api/invitations/${token}`);
     return {
       email: response.data.email,
-      status: response.data.status as 'pending' | 'accepted',
+      status: response.data.status as InvitationStatus,
     };
   }
 

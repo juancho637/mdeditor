@@ -19,12 +19,12 @@ dev-build:
 # Add a package (runs inside container, updates package.json + lockfile on host)
 # Usage: make add PKG="@nestjs/throttler" APP=api
 add:
-	$(DEV_COMPOSE) exec $(or $(APP),api) pnpm add $(PKG)
+	$(DEV_COMPOSE) exec $(or $(APP),api) sh -c "cd /app/apps/$(or $(APP),api) && pnpm add $(PKG)"
 
 # Add a dev dependency
 # Usage: make add-dev PKG="@types/bcrypt" APP=api
 add-dev:
-	$(DEV_COMPOSE) exec $(or $(APP),api) pnpm add -D $(PKG)
+	$(DEV_COMPOSE) exec $(or $(APP),api) sh -c "cd /app/apps/$(or $(APP),api) && pnpm add -D $(PKG)"
 
 # Production: optimized containers
 up:

@@ -1,3 +1,5 @@
+import { PermissionLevel } from '@/modules/permissions/domain/types/permission-level.enum';
+
 export interface Document {
   id: string;
   folderId: string;
@@ -7,4 +9,5 @@ export interface Document {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  permissionLevel?: PermissionLevel;
 }
