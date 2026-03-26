@@ -1,6 +1,6 @@
 # Story 2.1: Estructura de Carpetas y Sidebar de Navegación
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
