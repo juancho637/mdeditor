@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { EditorView } from '@codemirror/view';
+import type * as Y from 'yjs';
 import type { Document } from '../../domain/types/document.type';
 import { MarkdownToolbar } from './toolbar/MarkdownToolbar';
+import { useCollaborationViewModel } from '@/modules/collaboration/infrastructure/hooks/use-collaboration.viewmodel';
 
 const CodeMirrorEditor = dynamic(
   () => import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
@@ -64,6 +66,21 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   const initialLoadRef = useRef(true);
   const previewScrollRef = useRef(0);
 
+  // Collaboration state
+  const {
+    initCollaboration, destroyCollaboration,
+    isSynced, saveStatus: collabSaveStatus,
+  } = useCollaborationViewModel();
+  const [collabState, setCollabState] = useState<{
+    yText: Y.Text;
+    undoManager: Y.UndoManager;
+    awareness: any;
+  } | null>(null);
+  const [previewContent, setPreviewContent] = useState(document.contentMarkdown);
+
+  const isCollaborative = !!collabState && isSynced;
+  const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
+
   contentRef.current = content;
 
   const handleEditorReady = useCallback((view: EditorView) => {
@@ -98,19 +115,58 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     }
   }, [mode]);
 
+  // Initialize collaboration when document changes
+  useEffect(() => {
+    if (readOnly) return;
+
+    const result = initCollaboration(document.id);
+    if (result) {
+      // Wait for sync before switching to collaborative mode
+      const onSynced = (event: { synced: boolean }) => {
+        if (event.synced) {
+          setCollabState({
+            yText: result.yText,
+            undoManager: result.undoManager,
+            awareness: result.provider.awareness,
+          });
+          setPreviewContent(result.yText.toString());
+        }
+      };
+      result.provider.on('synced', onSynced);
+
+      // Observe yText for preview updates (works even before sync for local edits)
+      const observer = () => {
+        setPreviewContent(result.yText.toString());
+      };
+      result.yText.observe(observer);
+
+      return () => {
+        result.provider.off('synced', onSynced);
+        result.yText.unobserve(observer);
+        destroyCollaboration();
+        setCollabState(null);
+      };
+    }
+  }, [document.id, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle document switching (both modes)
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
-      if (!initialLoadRef.current && !readOnly) {
+      if (!initialLoadRef.current && !readOnly && !isCollaborative) {
         onSave(document.id, contentRef.current);
       }
     }
     setContent(document.contentMarkdown);
+    setPreviewContent(document.contentMarkdown);
     initialLoadRef.current = true;
   }, [document.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Non-collaborative: autosave with debounce
   useEffect(() => {
+    if (isCollaborative) return; // Yjs handles persistence
+
     if (initialLoadRef.current) {
       initialLoadRef.current = false;
       return;
@@ -123,10 +179,11 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [content, document.id, onSave, readOnly]);
+  }, [content, document.id, onSave, readOnly, isCollaborative]);
 
   const handleChange = useCallback((newContent: string) => {
     setContent(newContent);
+    setPreviewContent(newContent);
   }, []);
 
   const modeTabClass = (tabMode: EditorMode) =>
@@ -137,6 +194,13 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     }`;
 
   const showToolbar = !readOnly && mode !== EditorMode.PREVIEW;
+
+  const saveStatusLabel = useMemo(() => {
+    if (readOnly) return 'Solo lectura';
+    if (effectiveSaveStatus === 'saving' || effectiveSaveStatus === 'syncing') return 'Guardando...';
+    if (effectiveSaveStatus === 'saved' || effectiveSaveStatus === 'synced') return '✓ Guardado';
+    return '';
+  }, [readOnly, effectiveSaveStatus]);
 
   return (
     <div className="flex flex-col h-full">
@@ -172,9 +236,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
           </div>
         </div>
         <span className="text-xs text-foreground-secondary">
-          {!readOnly && saveStatus === 'saving' && 'Guardando...'}
-          {!readOnly && saveStatus === 'saved' && '✓ Guardado'}
-          {readOnly && 'Solo lectura'}
+          {saveStatusLabel}
         </span>
       </div>
 
@@ -187,10 +249,13 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
             readOnly={readOnly}
             onChange={handleChange}
             onEditorReady={handleEditorReady}
+            yText={collabState?.yText}
+            undoManager={collabState?.undoManager}
+            awareness={collabState?.awareness}
           />
         )}
 
-        {mode === EditorMode.PREVIEW && <MarkdownPreview content={content} />}
+        {mode === EditorMode.PREVIEW && <MarkdownPreview content={previewContent} />}
 
         {mode === EditorMode.HYBRID && !readOnly && (
           <SplitView
@@ -200,9 +265,12 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
                 readOnly={readOnly}
                 onChange={handleChange}
                 onEditorReady={handleEditorReady}
+                yText={collabState?.yText}
+                undoManager={collabState?.undoManager}
+                awareness={collabState?.awareness}
               />
             }
-            previewContent={<MarkdownPreview content={content} />}
+            previewContent={<MarkdownPreview content={previewContent} />}
           />
         )}
       </div>

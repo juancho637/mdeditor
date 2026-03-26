@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { WsAdapter } from '@nestjs/platform-ws';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ResponseInterceptor, LoggingInterceptor } from '@common/helpers/infrastructure';
@@ -7,6 +8,8 @@ import { GlobalExceptionFilter, ValidationExceptionFilter } from '@common/except
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useWebSocketAdapter(new WsAdapter(app));
 
   app.use(helmet());
 

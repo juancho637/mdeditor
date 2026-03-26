@@ -64,7 +64,7 @@ export class DocumentOrmRepository implements DocumentRepositoryInterface {
     }
   }
 
-  async update(id: string, data: { title?: string; slug?: string; contentMarkdown?: string; folderId?: string }): Promise<DocumentType> {
+  async update(id: string, data: { title?: string; slug?: string; contentMarkdown?: string; folderId?: string; yjsState?: Buffer }): Promise<DocumentType> {
     try {
       await this.repository.update(id, data);
       const entity = await this.repository.findOneOrFail({ where: { id } });
@@ -97,6 +97,7 @@ export class DocumentOrmRepository implements DocumentRepositoryInterface {
       title: entity.title,
       slug: entity.slug,
       contentMarkdown: entity.contentMarkdown,
+      yjsState: entity.yjsState,
       createdBy: entity.createdBy,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
