@@ -1,6 +1,6 @@
 # Story 3.1: Asignación de Permisos por Carpeta
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

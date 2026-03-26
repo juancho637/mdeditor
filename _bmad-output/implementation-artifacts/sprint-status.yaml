@@ -59,7 +59,7 @@ development_status:
 
   # Epic 3: Control de Acceso y Permisos
   epic-3: in-progress
-  3-1-asignacion-de-permisos-por-carpeta: ready-for-dev
+  3-1-asignacion-de-permisos-por-carpeta: done
   3-2-enforcement-de-permisos-en-la-plataforma: backlog
   epic-3-retrospective: optional
 
