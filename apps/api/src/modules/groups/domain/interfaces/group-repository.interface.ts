@@ -14,4 +14,5 @@ export interface GroupRepositoryInterface {
   removeUser(groupId: string, userId: string): Promise<void>;
   isUserInGroup(groupId: string, userId: string): Promise<boolean>;
   findMembers(groupId: string): Promise<UserType[]>;
+  findGroupIdsByUserId(userId: string): Promise<string[]>;
 }
