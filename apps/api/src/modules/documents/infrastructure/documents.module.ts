@@ -20,12 +20,14 @@ import {
 } from '../application';
 import { FolderProvidersEnum, FolderRepositoryInterface } from '@modules/folders/domain';
 import { FoldersModule } from '@modules/folders/infrastructure';
+import { PermissionsModule } from '@modules/permissions/infrastructure';
 import { ExceptionProvidersEnum, ExceptionServiceInterface } from '@common/exception/domain';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([DocumentEntity]),
     FoldersModule,
+    PermissionsModule,
   ],
   controllers: [
     CreateDocumentController,

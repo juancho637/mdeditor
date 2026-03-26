@@ -199,6 +199,19 @@ export class GroupOrmRepository implements GroupRepositoryInterface {
     }
   }
 
+  async findGroupIdsByUserId(userId: string): Promise<string[]> {
+    try {
+      const memberships = await this.userGroupRepo.find({ where: { userId } });
+      return memberships.map((m) => m.groupId);
+    } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: groupErrorsCodes.GRP100,
+        context: GroupOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
+
   private toDomain(entity: GroupEntity, memberCount: number): GroupType {
     return {
       id: entity.id,
