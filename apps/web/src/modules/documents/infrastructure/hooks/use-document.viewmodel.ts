@@ -93,9 +93,29 @@ export function useDocumentViewModel() {
     }
   }, [currentDocument, setCurrentDocument, loadFolderDocuments, setError]);
 
+  const moveDocument = useCallback(async (docId: string, targetFolderId: string, currentFolderId: string) => {
+    setError(null);
+    try {
+      const wireData = { folder_id: targetFolderId };
+      const response = await (await import('@/common/adapters/api-client')).apiClient.patch(`/api/documents/${docId}/move`, wireData);
+      const updated = response.data;
+      if (currentDocument?.id === docId) {
+        setCurrentDocument({
+          ...currentDocument,
+          folderId: targetFolderId,
+        });
+      }
+      await loadFolderDocuments(currentFolderId);
+      return true;
+    } catch (err) {
+      setError(extractError(err, 'Error al mover documento'));
+      return false;
+    }
+  }, [currentDocument, setCurrentDocument, loadFolderDocuments, setError]);
+
   return {
     currentDocument, folderDocuments, saveStatus, isLoading, error,
     loadDocument, loadFolderDocuments, createDocument,
-    saveContent, renameDocument, deleteDocument,
+    saveContent, renameDocument, deleteDocument, moveDocument,
   };
 }
