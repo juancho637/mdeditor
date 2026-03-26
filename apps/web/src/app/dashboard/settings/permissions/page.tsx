@@ -6,7 +6,7 @@ import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-f
 import { useGroupViewModel } from '@/modules/groups/infrastructure/hooks/use-group.viewmodel';
 
 export default function SettingsPermissionsPage() {
-  const { permissions, isLoading, error, setPermission } = usePermissionViewModel();
+  const { permissions, isLoading, error, setPermission, removePermission } = usePermissionViewModel();
   const { tree } = useFolderViewModel();
   const { groups } = useGroupViewModel();
 
@@ -32,6 +32,7 @@ export default function SettingsPermissionsPage() {
           groups={groups}
           permissions={permissions}
           onSetPermission={setPermission}
+          onRemovePermission={removePermission}
         />
       )}
     </div>

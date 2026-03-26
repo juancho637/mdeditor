@@ -117,26 +117,22 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
       expect(json.data.permission_level).toBe('edit');
     });
 
-    test('PUT /api/permissions with null removes permission', async () => {
+    test('DELETE /api/permissions/:id then GET shows empty list', async () => {
       const token = await getAdminToken();
       const folderId = await createFolder(token, 'Root');
       const groupId = await createGroup(token, 'Dev');
 
       // Create permission
-      await fetch(`${API_URL}/api/permissions`, {
+      const createRes = await fetch(`${API_URL}/api/permissions`, {
         method: 'PUT', headers: authHeaders(token),
         body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: 'view' }),
       });
+      const createJson = await createRes.json();
 
-      // Remove by setting null
-      const res = await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: null }),
+      // Delete
+      await fetch(`${API_URL}/api/permissions/${createJson.data.id}`, {
+        method: 'DELETE', headers: authHeaders(token),
       });
-
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.data.deleted).toBe(true);
 
       // Verify removed
       const listRes = await fetch(`${API_URL}/api/permissions`, { headers: authHeaders(token) });

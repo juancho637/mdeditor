@@ -20,8 +20,8 @@ export class SetPermissionUseCase {
   async run(data: {
     folderId: string;
     groupId: string;
-    permissionLevel: PermissionLevel | null;
-  }): Promise<FolderPermissionType | null> {
+    permissionLevel: PermissionLevel;
+  }): Promise<FolderPermissionType> {
     const folder = await this.folderRepository.findById(data.folderId);
     if (!folder) {
       throw this.exception.notFoundException({
@@ -36,11 +36,6 @@ export class SetPermissionUseCase {
         message: groupErrorsCodes.GRP001,
         context: this.context,
       });
-    }
-
-    if (data.permissionLevel === null) {
-      await this.permissionRepository.deleteByFolderAndGroup(data.folderId, data.groupId);
-      return null;
     }
 
     return this.permissionRepository.upsert(data.folderId, data.groupId, data.permissionLevel);

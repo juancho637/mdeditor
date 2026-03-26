@@ -3,12 +3,14 @@
 import type { FolderPermission } from '../../domain/types/folder-permission.type';
 import type { FolderTreeNode } from '@/modules/folders/domain/types/folder-tree-node.type';
 import type { Group } from '@/modules/groups/domain/types/group.type';
+import { PermissionLevel } from '../../domain/types/permission-level.enum';
 
 interface PermissionMatrixProps {
   folders: FolderTreeNode[];
   groups: Group[];
   permissions: FolderPermission[];
-  onSetPermission: (folderId: string, groupId: string, level: 'view' | 'edit' | null) => Promise<boolean>;
+  onSetPermission: (folderId: string, groupId: string, level: PermissionLevel) => Promise<boolean>;
+  onRemovePermission: (permissionId: string) => Promise<boolean>;
 }
 
 function flattenTree(nodes: FolderTreeNode[], level = 0): Array<{ node: FolderTreeNode; level: number }> {
@@ -20,16 +22,15 @@ function flattenTree(nodes: FolderTreeNode[], level = 0): Array<{ node: FolderTr
   return result;
 }
 
-function getPermissionLevel(
+function getPermission(
   permissions: FolderPermission[],
   folderId: string,
   groupId: string,
-): 'view' | 'edit' | null {
-  const perm = permissions.find((p) => p.folderId === folderId && p.groupId === groupId);
-  return perm?.permissionLevel ?? null;
+): FolderPermission | null {
+  return permissions.find((p) => p.folderId === folderId && p.groupId === groupId) ?? null;
 }
 
-export function PermissionMatrix({ folders, groups, permissions, onSetPermission }: PermissionMatrixProps) {
+export function PermissionMatrix({ folders, groups, permissions, onSetPermission, onRemovePermission }: PermissionMatrixProps) {
   const flatFolders = flattenTree(folders);
 
   if (flatFolders.length === 0 || groups.length === 0) {
@@ -60,24 +61,24 @@ export function PermissionMatrix({ folders, groups, permissions, onSetPermission
                 📁 {node.name}
               </td>
               {groups.map((g) => {
-                const currentLevel = getPermissionLevel(permissions, node.id, g.id);
+                const perm = getPermission(permissions, node.id, g.id);
                 return (
                   <td key={g.id} className="text-center px-3 py-2">
                     <select
-                      value={currentLevel ?? ''}
+                      value={perm?.permissionLevel ?? ''}
                       onChange={(e) => {
                         const val = e.target.value;
-                        onSetPermission(
-                          node.id,
-                          g.id,
-                          val === '' ? null : (val as 'view' | 'edit'),
-                        );
+                        if (val === '' && perm) {
+                          onRemovePermission(perm.id);
+                        } else if (val === PermissionLevel.VIEW || val === PermissionLevel.EDIT) {
+                          onSetPermission(node.id, g.id, val);
+                        }
                       }}
                       className="text-xs bg-background border border-border rounded px-2 py-1"
                     >
                       <option value="">Sin acceso</option>
-                      <option value="view">Ver</option>
-                      <option value="edit">Editar</option>
+                      <option value={PermissionLevel.VIEW}>Ver</option>
+                      <option value={PermissionLevel.EDIT}>Editar</option>
                     </select>
                   </td>
                 );

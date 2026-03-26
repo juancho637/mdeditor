@@ -19,19 +19,11 @@ export class SetPermissionController {
       throw new ForbiddenException({ code_error: 'AUT004', message: 'Admin access required.' });
     }
 
-    const permissionLevel = dto.permission_level
-      ? (dto.permission_level as PermissionLevel)
-      : null;
-
     const result = await this.setPermissionUseCase.run({
       folderId: dto.folder_id,
       groupId: dto.group_id,
-      permissionLevel,
+      permissionLevel: dto.permission_level as PermissionLevel,
     });
-
-    if (!result) {
-      return { deleted: true };
-    }
 
     return {
       id: result.id,

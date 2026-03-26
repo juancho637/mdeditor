@@ -31,11 +31,11 @@ export function usePermissionViewModel() {
   const setPermission = useCallback(async (
     folderId: string,
     groupId: string,
-    permissionLevel: 'view' | 'edit' | null,
+    permissionLevel: string,
   ) => {
     setError(null);
     try {
-      await permissionRepository.setPermission(folderId, groupId, permissionLevel);
+      await permissionRepository.setPermission(folderId, groupId, permissionLevel as any);
       await loadPermissions();
       return true;
     } catch (err) {
@@ -44,7 +44,19 @@ export function usePermissionViewModel() {
     }
   }, [loadPermissions, setError]);
 
+  const removePermission = useCallback(async (permissionId: string) => {
+    setError(null);
+    try {
+      await permissionRepository.deletePermission(permissionId);
+      await loadPermissions();
+      return true;
+    } catch (err) {
+      setError(extractError(err, 'Error al eliminar permiso'));
+      return false;
+    }
+  }, [loadPermissions, setError]);
+
   useEffect(() => { loadPermissions(); }, [loadPermissions]);
 
-  return { permissions, isLoading, error, setPermission, loadPermissions };
+  return { permissions, isLoading, error, setPermission, removePermission, loadPermissions };
 }

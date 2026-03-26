@@ -1,4 +1,5 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { PermissionLevel } from '../../domain/enums/permission-level.enum';
 
 export class SetPermissionDto {
   @IsUUID()
@@ -9,7 +10,7 @@ export class SetPermissionDto {
   @IsNotEmpty()
   group_id!: string;
 
-  @IsEnum(['view', 'edit'], { message: 'permission_level must be view, edit, or null' })
-  @IsOptional()
-  permission_level?: 'view' | 'edit' | null;
+  @IsEnum(PermissionLevel)
+  @IsNotEmpty()
+  permission_level!: PermissionLevel;
 }

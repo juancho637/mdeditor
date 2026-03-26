@@ -54,7 +54,7 @@ describe('SetPermissionUseCase', () => {
     expect(permissionRepository.upsert).toHaveBeenCalledWith('fld-1', 'grp-1', PermissionLevel.EDIT);
   });
 
-  it('should delete permission when level is null', async () => {
+  it('should update permission when it already exists', async () => {
     folderRepository.findById.mockResolvedValue({
       id: 'fld-1', parentId: null, name: 'Root', slug: 'root',
       createdBy: 'usr-1', createdAt: new Date(), updatedAt: new Date(),
@@ -62,13 +62,16 @@ describe('SetPermissionUseCase', () => {
     groupRepository.findById.mockResolvedValue({
       id: 'grp-1', name: 'Dev', memberCount: 2, createdAt: new Date(),
     });
-
-    const result = await useCase.run({
-      folderId: 'fld-1', groupId: 'grp-1', permissionLevel: null,
+    permissionRepository.upsert.mockResolvedValue({
+      id: 'perm-1', folderId: 'fld-1', groupId: 'grp-1',
+      permissionLevel: PermissionLevel.VIEW, createdAt: new Date(), updatedAt: new Date(),
     });
 
-    expect(result).toBeNull();
-    expect(permissionRepository.deleteByFolderAndGroup).toHaveBeenCalledWith('fld-1', 'grp-1');
+    const result = await useCase.run({
+      folderId: 'fld-1', groupId: 'grp-1', permissionLevel: PermissionLevel.VIEW,
+    });
+
+    expect(result.permissionLevel).toBe(PermissionLevel.VIEW);
   });
 
   it('should throw FLD001 when folder not found', async () => {
