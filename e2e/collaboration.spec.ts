@@ -1,45 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
-
-const API_URL = 'http://localhost:3000';
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
-}
-
-function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-async function createFolder(token: string, name: string): Promise<string> {
-  const res = await fetch(`${API_URL}/api/folders`, {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: JSON.stringify({ name }),
-  });
-  const json = await res.json();
-  return json.data.id;
-}
-
-async function createDocument(token: string, title: string, folderId: string): Promise<string> {
-  const res = await fetch(`${API_URL}/api/documents`, {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: JSON.stringify({ title, folder_id: folderId }),
-  });
-  const json = await res.json();
-  return json.data.id;
-}
-
-async function resetData(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folders;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
-}
+import {
+  resetUsers,
+  resetCollaborationData,
+  setupCollaborationTest,
+} from './helpers/api';
 
 test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
 
@@ -86,14 +50,12 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
 
   test.describe('UI: Collaborative Editor', () => {
     test.beforeEach(async () => {
-      await resetData();
+      await resetCollaborationData();
       await resetUsers();
     });
 
     test('AC#3: Editor loads and allows editing with collaboration module active', async ({ page }) => {
-      const token = await getAdminToken();
-      const folderId = await createFolder(token, 'Producto');
-      await createDocument(token, 'Collab Doc', folderId);
+      const { folderId } = await setupCollaborationTest();
 
       await page.goto('/sign-in');
       await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
@@ -101,14 +63,12 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
       await page.getByRole('button', { name: 'Iniciar sesión' }).click();
       await page.waitForURL('/dashboard');
 
-      await page.getByText('Producto').click();
+      await page.getByText('Collab Folder').click();
       await page.getByText('Collab Doc').click();
 
-      // Editor should load with CodeMirror
       const editor = page.locator('.cm-editor');
       await expect(editor).toBeVisible({ timeout: 5000 });
 
-      // Should be able to type in the editor
       const contentArea = page.locator('.cm-content');
       await contentArea.click();
       await page.keyboard.type('# Hello Collaboration');
@@ -117,9 +77,7 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
     });
 
     test('AC#3: Editor preserves mode tabs and toolbar with collaboration module', async ({ page }) => {
-      const token = await getAdminToken();
-      const folderId = await createFolder(token, 'Producto');
-      await createDocument(token, 'Mode Test', folderId);
+      await setupCollaborationTest();
 
       await page.goto('/sign-in');
       await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
@@ -127,8 +85,8 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
       await page.getByRole('button', { name: 'Iniciar sesión' }).click();
       await page.waitForURL('/dashboard');
 
-      await page.getByText('Producto').click();
-      await page.getByText('Mode Test').click();
+      await page.getByText('Collab Folder').click();
+      await page.getByText('Collab Doc').click();
 
       const modeTabs = page.locator('[data-testid="mode-tabs"]');
       await expect(modeTabs).toBeVisible({ timeout: 5000 });
@@ -138,49 +96,54 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
       await expect(page.locator('[data-testid="mode-preview"]')).toBeVisible();
     });
 
-    test('AC#1: Two browser contexts can open same document simultaneously', async ({ browser }) => {
-      const token = await getAdminToken();
-      const folderId = await createFolder(token, 'Shared');
-      await createDocument(token, 'Shared Doc', folderId);
+    test('AC#1: Two users can open same document and see each other changes', async ({ browser }) => {
+      const { user2Email } = await setupCollaborationTest();
 
-      // Create two browser contexts to simulate two users
+      // Create two SEPARATE browser contexts (isolated localStorage/cookies)
       const context1 = await browser.newContext();
       const context2 = await browser.newContext();
       const page1 = await context1.newPage();
       const page2 = await context2.newPage();
 
-      // Login on both pages
-      for (const page of [page1, page2]) {
-        await page.goto('/sign-in');
-        await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
-        await page.locator('input[type="password"]').fill('password123');
-        await page.getByRole('button', { name: 'Iniciar sesión' }).click();
-        await page.waitForURL('/dashboard');
-      }
+      // Login admin in context1
+      await page1.goto('/sign-in');
+      await page1.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
+      await page1.locator('input[type="password"]').fill('password123');
+      await page1.getByRole('button', { name: 'Iniciar sesión' }).click();
+      await page1.waitForURL('/dashboard');
 
-      // Both navigate to the same document
-      for (const page of [page1, page2]) {
-        await page.getByText('Shared').click();
-        await page.getByText('Shared Doc').click();
-      }
+      // Login user2 in context2
+      await page2.goto('/sign-in');
+      await page2.getByRole('textbox', { name: 'Email' }).fill(user2Email);
+      await page2.locator('input[type="password"]').fill('password123');
+      await page2.getByRole('button', { name: 'Iniciar sesión' }).click();
+      await page2.waitForURL('/dashboard');
 
-      // Both editors should load
+      // Admin opens document first
+      await page1.getByText('Collab Folder').click();
+      await page1.getByText('Collab Doc').click();
       await expect(page1.locator('.cm-editor')).toBeVisible({ timeout: 5000 });
+
+      // Wait for admin's WebSocket to connect and sync
+      await page1.waitForTimeout(3000);
+
+      // Admin types content
+      await page1.locator('.cm-content').click();
+      await page1.keyboard.type('Hello from Admin', { delay: 50 });
+
+      // Wait for content to sync to server
+      await page1.waitForTimeout(2000);
+
+      // Now user2 opens the same document
+      await page2.getByText('Collab Folder').click();
+      await page2.getByText('Collab Doc').click();
       await expect(page2.locator('.cm-editor')).toBeVisible({ timeout: 5000 });
 
-      // Type in page1
-      await page1.locator('.cm-content').click();
-      await page1.keyboard.type('Hello from user 1');
+      // Wait for user2's WebSocket to connect and sync
+      await page2.waitForTimeout(3000);
 
-      // Content should appear in page1
-      await expect(page1.locator('.cm-content')).toContainText('Hello from user 1');
-
-      // Type in page2
-      await page2.locator('.cm-content').click();
-      await page2.keyboard.type('Hello from user 2');
-
-      // Content should appear in page2
-      await expect(page2.locator('.cm-content')).toContainText('Hello from user 2');
+      // Check if page2 (user2) sees admin's text
+      await expect(page2.locator('.cm-content')).toContainText('Hello from Admin', { timeout: 5000 });
 
       await context1.close();
       await context2.close();
