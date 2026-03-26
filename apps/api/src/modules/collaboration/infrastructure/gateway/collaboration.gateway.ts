@@ -1,12 +1,13 @@
-import { Inject, Logger } from '@nestjs/common';
-import { WebSocketGateway, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
-import type { WebSocket } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
+import type { IncomingMessage } from 'http';
 import { DocumentSyncServiceInterface, CollaborationProvidersEnum } from '../../domain';
 import { CheckPermissionUseCase } from '@modules/permissions/application';
 import { PermissionLevel, PermissionProvidersEnum } from '@modules/permissions/domain';
@@ -14,6 +15,7 @@ import { DocumentRepositoryInterface, DocumentProvidersEnum } from '@modules/doc
 
 const MSG_SYNC = 0;
 const MSG_AWARENESS = 1;
+const COLLAB_PATH_PREFIX = '/collaboration/';
 
 interface AuthenticatedClient {
   ws: WebSocket;
@@ -22,14 +24,16 @@ interface AuthenticatedClient {
   permissionLevel: PermissionLevel;
 }
 
-@WebSocketGateway({ path: '/collaboration' })
-export class CollaborationGateway implements OnGatewayConnection, OnGatewayDisconnect {
+@Injectable()
+export class CollaborationGateway implements OnModuleInit {
   private readonly logger = new Logger(CollaborationGateway.name);
   private readonly documentClients = new Map<string, Set<AuthenticatedClient>>();
   private readonly clientMap = new Map<WebSocket, AuthenticatedClient>();
   private readonly awarenessMap = new Map<string, awarenessProtocol.Awareness>();
+  private wss!: WebSocketServer;
 
   constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
     @Inject(CollaborationProvidersEnum.DOCUMENT_SYNC_SERVICE)
     private readonly syncService: DocumentSyncServiceInterface,
     private readonly jwtService: JwtService,
@@ -39,12 +43,39 @@ export class CollaborationGateway implements OnGatewayConnection, OnGatewayDisco
     private readonly documentRepository: DocumentRepositoryInterface,
   ) {}
 
-  async handleConnection(client: WebSocket, ...args: any[]): Promise<void> {
+  onModuleInit(): void {
+    const httpServer = this.httpAdapterHost.httpAdapter.getHttpServer();
+
+    this.wss = new WebSocketServer({ noServer: true });
+
+    httpServer.on('upgrade', (request: IncomingMessage, socket: any, head: Buffer) => {
+      const pathname = new URL(request.url || '', 'http://localhost').pathname;
+
+      if (pathname.startsWith(COLLAB_PATH_PREFIX)) {
+        this.wss.handleUpgrade(request, socket, head, (ws) => {
+          this.handleConnection(ws, request).catch((err) => {
+            this.logger.error('Connection handler error', (err as Error).stack);
+            ws.close(4000, 'Internal error');
+          });
+        });
+      }
+    });
+
+    this.wss.on('connection', () => {
+      // Connection handled in handleConnection
+    });
+
+    this.logger.log('Collaboration WebSocket server initialized on /collaboration/*');
+  }
+
+  private async handleConnection(client: WebSocket, request: IncomingMessage): Promise<void> {
     try {
-      const request = args[0] as { url?: string };
       const url = new URL(request.url || '', 'http://localhost');
       const token = url.searchParams.get('token');
-      const documentId = url.searchParams.get('documentId');
+
+      // Extract documentId from path: /collaboration/{documentId}
+      const pathDocumentId = url.pathname.replace(COLLAB_PATH_PREFIX, '').split('/')[0];
+      const documentId = pathDocumentId || url.searchParams.get('documentId');
 
       if (!token || !documentId) {
         client.close(4001, 'Missing token or documentId');
@@ -141,6 +172,11 @@ export class CollaborationGateway implements OnGatewayConnection, OnGatewayDisco
         this.handleMessage(authClient, yDoc, new Uint8Array(data));
       });
 
+      // Handle disconnect
+      client.on('close', () => {
+        void this.handleDisconnect(client);
+      });
+
       this.logger.log(`Client ${userId} connected to document ${documentId} (${permissionLevel})`);
     } catch (error) {
       this.logger.error('Connection error', (error as Error).stack);
@@ -148,7 +184,7 @@ export class CollaborationGateway implements OnGatewayConnection, OnGatewayDisco
     }
   }
 
-  async handleDisconnect(client: WebSocket): Promise<void> {
+  private async handleDisconnect(client: WebSocket): Promise<void> {
     const authClient = this.clientMap.get(client);
     if (!authClient) return;
 
