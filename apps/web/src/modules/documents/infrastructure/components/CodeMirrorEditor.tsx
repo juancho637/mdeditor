@@ -13,30 +13,21 @@ import {
   bracketMatching,
 } from '@codemirror/language';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-
-function wrapSelection(view: EditorView, before: string, after: string): boolean {
-  const { from, to } = view.state.selection.main;
-  if (from === to) {
-    const placeholder = `${before}text${after}`;
-    view.dispatch({
-      changes: { from, insert: placeholder },
-      selection: { anchor: from + before.length, head: from + before.length + 4 },
-    });
-  } else {
-    view.dispatch({
-      changes: [
-        { from, insert: before },
-        { from: to, insert: after },
-      ],
-      selection: { anchor: from + before.length, head: to + before.length },
-    });
-  }
-  return true;
-}
+import { wrapSelection, executeToolbarAction } from './toolbar/toolbar-actions';
+import { ToolbarAction } from '../../domain/enums/toolbar-actions.enum';
 
 const markdownKeymap = [
   { key: 'Mod-b', run: (view: EditorView) => wrapSelection(view, '**', '**') },
   { key: 'Mod-i', run: (view: EditorView) => wrapSelection(view, '*', '*') },
+  { key: 'Mod-e', run: (view: EditorView) => wrapSelection(view, '`', '`') },
+  { key: 'Mod-Shift-s', run: (view: EditorView) => wrapSelection(view, '~~', '~~') },
+  {
+    key: 'Mod-k',
+    run: (view: EditorView) => {
+      executeToolbarAction(view, ToolbarAction.LINK);
+      return true;
+    },
+  },
 ];
 
 const editorTheme = EditorView.theme({
@@ -61,13 +52,16 @@ interface CodeMirrorEditorProps {
   content: string;
   readOnly: boolean;
   onChange: (content: string) => void;
+  onEditorReady?: (view: EditorView | null) => void;
 }
 
-export function CodeMirrorEditor({ content, readOnly, onChange }: CodeMirrorEditorProps) {
+export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const onEditorReadyRef = useRef(onEditorReady);
   onChangeRef.current = onChange;
+  onEditorReadyRef.current = onEditorReady;
 
   const createExtensions = useCallback(() => {
     const extensions = [
@@ -111,10 +105,12 @@ export function CodeMirrorEditor({ content, readOnly, onChange }: CodeMirrorEdit
     });
 
     viewRef.current = view;
+    onEditorReadyRef.current?.(view);
 
     return () => {
       view.destroy();
       viewRef.current = null;
+      onEditorReadyRef.current?.(null);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readOnly]);
