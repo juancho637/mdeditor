@@ -53,7 +53,7 @@ development_status:
   # Epic 2: Gestión de Documentos y Carpetas
   epic-2: in-progress
   2-1-estructura-de-carpetas-y-sidebar-de-navegacion: done
-  2-2-creacion-y-edicion-basica-de-documentos: backlog
+  2-2-creacion-y-edicion-basica-de-documentos: ready-for-dev
   2-3-mover-documentos-entre-carpetas: backlog
   epic-2-retrospective: optional
 

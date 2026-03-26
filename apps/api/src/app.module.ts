@@ -8,6 +8,7 @@ import { AuthModule } from '@modules/auth/infrastructure';
 import { InvitationsModule } from '@modules/invitations/infrastructure';
 import { GroupsModule } from '@modules/groups/infrastructure';
 import { FoldersModule } from '@modules/folders/infrastructure';
+import { DocumentsModule } from '@modules/documents/infrastructure';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { FoldersModule } from '@modules/folders/infrastructure';
     InvitationsModule,
     GroupsModule,
     FoldersModule,
+    DocumentsModule,
   ],
 })
 export class AppModule implements NestModule {
