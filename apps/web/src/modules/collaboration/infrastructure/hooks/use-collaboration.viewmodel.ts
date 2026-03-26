@@ -59,8 +59,8 @@ export function useCollaborationViewModel() {
       useCollaborationStore.getState().setConnected(event.status === 'connected');
     });
 
-    provider.on('synced', (event: { synced: boolean }) => {
-      useCollaborationStore.getState().setSynced(event.synced);
+    provider.on('synced', (synced: boolean) => {
+      useCollaborationStore.getState().setSynced(synced);
     });
 
     provider.awareness.on('change', () => {

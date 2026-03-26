@@ -134,8 +134,8 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
       setPreviewContent(result.yText.toString());
     };
 
-    const onSynced = (event: { synced: boolean }) => {
-      if (event.synced) activateCollab();
+    const onSynced = (synced: boolean) => {
+      if (synced) activateCollab();
     };
     result.provider.on('synced', onSynced);
 

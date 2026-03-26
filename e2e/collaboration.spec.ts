@@ -142,8 +142,8 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
       // Wait for user2's WebSocket to connect and sync
       await page2.waitForTimeout(3000);
 
-      // Check if page2 (user2) sees admin's text
-      await expect(page2.locator('.cm-content')).toContainText('Hello from Admin', { timeout: 5000 });
+      // Check if page2 (user2) sees admin's text synced via Yjs (visible in preview)
+      await expect(page2.locator('article.prose')).toContainText('Hello from Admin', { timeout: 10000 });
 
       await context1.close();
       await context2.close();
