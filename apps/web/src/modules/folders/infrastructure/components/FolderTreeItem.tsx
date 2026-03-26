@@ -33,7 +33,7 @@ export function FolderTreeItem({
   return (
     <div>
       <div
-        className={`flex items-center gap-1 px-2 py-1 cursor-pointer text-sm rounded-md transition-colors ${
+        className={`group flex items-center gap-1 px-2 py-1 cursor-pointer text-sm rounded-md transition-colors ${
           isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
         }`}
         style={{ paddingLeft: `${8 + level * 16}px` }}
