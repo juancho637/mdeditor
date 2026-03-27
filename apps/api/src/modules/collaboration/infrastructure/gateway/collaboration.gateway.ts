@@ -22,6 +22,7 @@ interface AuthenticatedClient {
   userId: string;
   documentId: string;
   permissionLevel: PermissionLevel;
+  awarenessClientIds: Set<number>;
 }
 
 @Injectable()
@@ -112,6 +113,7 @@ export class CollaborationGateway implements OnModuleInit {
         userId,
         documentId,
         permissionLevel,
+        awarenessClientIds: new Set(),
       };
 
       this.clientMap.set(client, authClient);
@@ -183,6 +185,28 @@ export class CollaborationGateway implements OnModuleInit {
     if (!authClient) return;
 
     const { documentId, userId } = authClient;
+
+    // Remove awareness states for this client and broadcast removal
+    const awareness = this.awarenessMap.get(documentId);
+    if (awareness && authClient.awarenessClientIds.size > 0) {
+      awarenessProtocol.removeAwarenessStates(awareness, Array.from(authClient.awarenessClientIds), 'connection closed');
+
+      // Broadcast awareness removal to remaining clients
+      const removalUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(authClient.awarenessClientIds));
+      const removalEncoder = encoding.createEncoder();
+      encoding.writeVarUint(removalEncoder, MSG_AWARENESS);
+      encoding.writeVarUint8Array(removalEncoder, removalUpdate);
+      const removalData = encoding.toUint8Array(removalEncoder);
+
+      const remainingClients = this.documentClients.get(documentId);
+      if (remainingClients) {
+        for (const other of remainingClients) {
+          if (other.ws !== client && other.ws.readyState === 1) {
+            other.ws.send(removalData);
+          }
+        }
+      }
+    }
 
     // Remove from document clients
     const clients = this.documentClients.get(documentId);
@@ -304,6 +328,25 @@ export class CollaborationGateway implements OnModuleInit {
 
     const update = decoding.readVarUint8Array(decoder);
     awarenessProtocol.applyAwarenessUpdate(awareness, update, authClient);
+
+    // Track which awareness client IDs belong to this WebSocket connection
+    const states = awareness.getStates();
+    states.forEach((_state, clientId) => {
+      // If this client's state was just updated, track it
+      if (!authClient.awarenessClientIds.has(clientId)) {
+        // Check if any other connection already owns this clientId
+        let owned = false;
+        for (const [, other] of this.clientMap) {
+          if (other !== authClient && other.awarenessClientIds.has(clientId)) {
+            owned = true;
+            break;
+          }
+        }
+        if (!owned) {
+          authClient.awarenessClientIds.add(clientId);
+        }
+      }
+    });
 
     // Broadcast awareness to all other clients on this document
     const clients = this.documentClients.get(authClient.documentId);

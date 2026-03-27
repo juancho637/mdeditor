@@ -19,6 +19,7 @@ import { wrapSelection, executeToolbarAction } from './toolbar/toolbar-actions';
 import { ToolbarAction } from '../../domain/enums/toolbar-actions.enum';
 import type * as Y from 'yjs';
 import type { Extension } from '@codemirror/state';
+import '@/modules/collaboration/infrastructure/components/collaboration-cursors.css';
 
 const markdownKeymap = [
   { key: 'Mod-b', run: (view: EditorView) => wrapSelection(view, '**', '**') },

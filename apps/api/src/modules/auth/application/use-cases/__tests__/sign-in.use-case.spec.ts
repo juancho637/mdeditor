@@ -69,6 +69,7 @@ describe('SignInUseCase', () => {
     expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashed-password');
     expect(authService.generateTokens).toHaveBeenCalledWith({
       sub: 'uuid-1',
+      name: 'Admin',
       email: 'admin@test.com',
       isAdmin: true,
     });

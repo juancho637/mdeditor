@@ -7,6 +7,8 @@ import type * as Y from 'yjs';
 import type { Document } from '../../domain/types/document.type';
 import { MarkdownToolbar } from './toolbar/MarkdownToolbar';
 import { useCollaborationViewModel } from '@/modules/collaboration/infrastructure/hooks/use-collaboration.viewmodel';
+import { usePresence } from '@/modules/collaboration/infrastructure/hooks/use-presence.viewmodel';
+import { PresenceIndicator } from '@/modules/collaboration/infrastructure/components/PresenceIndicator';
 import { useSyncScroll } from '../hooks/use-sync-scroll';
 
 const CodeMirrorEditor = dynamic(
@@ -79,6 +81,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   } | null>(null);
   const [previewContent, setPreviewContent] = useState(document.contentMarkdown);
 
+  const { connectedUsers } = usePresence(collabState?.awareness ?? null);
   const isCollaborative = !!collabState && isSynced;
   const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
 
@@ -258,9 +261,14 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
             </button>
           </div>
         </div>
-        <span className="text-xs text-foreground-secondary">
-          {saveStatusLabel}
-        </span>
+        <div className="flex items-center gap-3">
+          {isCollaborative && connectedUsers.length > 0 && (
+            <PresenceIndicator users={connectedUsers} />
+          )}
+          <span className="text-xs text-foreground-secondary">
+            {saveStatusLabel}
+          </span>
+        </div>
       </div>
 
       {showToolbar && <MarkdownToolbar editorView={editorView} />}

@@ -5,6 +5,8 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useCollaborationStore } from '../state/use-collaboration.store';
 import { getAccessToken } from '@/common/helpers/token-storage.utils';
+import { getColorForUser } from '../helpers/cursor-colors';
+import { decodeTokenPayload } from '../helpers/decode-token';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
 
@@ -54,6 +56,19 @@ export function useCollaborationViewModel() {
       params: { token, documentId },
       connect: true,
     });
+
+    // Set awareness local state with user metadata for cursors/presence
+    const tokenPayload = decodeTokenPayload(token);
+    if (tokenPayload) {
+      const userColor = getColorForUser(tokenPayload.sub);
+      provider.awareness.setLocalStateField('user', {
+        id: tokenPayload.sub,
+        name: tokenPayload.name,
+        color: userColor.light,
+        colorLight: userColor.dark,
+        isAI: false,
+      });
+    }
 
     provider.on('status', (event: { status: string }) => {
       useCollaborationStore.getState().setConnected(event.status === 'connected');
