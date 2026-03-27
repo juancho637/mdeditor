@@ -9,6 +9,8 @@ import { MarkdownToolbar } from './toolbar/MarkdownToolbar';
 import { useCollaborationViewModel } from '@/modules/collaboration/infrastructure/hooks/use-collaboration.viewmodel';
 import { usePresence } from '@/modules/collaboration/infrastructure/hooks/use-presence.viewmodel';
 import { PresenceIndicator } from '@/modules/collaboration/infrastructure/components/PresenceIndicator';
+import { ConnectionStatusBanner } from '@/modules/collaboration/infrastructure/components/ConnectionStatusBanner';
+import { ConnectionIndicator } from '@/modules/collaboration/infrastructure/components/ConnectionIndicator';
 import { useSyncScroll } from '../hooks/use-sync-scroll';
 
 const CodeMirrorEditor = dynamic(
@@ -73,6 +75,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   const {
     initCollaboration, destroyCollaboration,
     isSynced, saveStatus: collabSaveStatus,
+    connectionStatus,
   } = useCollaborationViewModel();
   const [collabState, setCollabState] = useState<{
     yText: Y.Text;
@@ -82,7 +85,8 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   const [previewContent, setPreviewContent] = useState(document.contentMarkdown);
 
   const { connectedUsers } = usePresence(collabState?.awareness ?? null);
-  const isCollaborative = !!collabState && isSynced;
+  const isCollaborationActive = !!collabState;
+  const isCollaborative = isCollaborationActive && isSynced;
   const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
 
   contentRef.current = content;
@@ -265,6 +269,9 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
           {isCollaborative && connectedUsers.length > 0 && (
             <PresenceIndicator users={connectedUsers} />
           )}
+          {isCollaborationActive && (
+            <ConnectionIndicator connectionStatus={connectionStatus} />
+          )}
           <span className="text-xs text-foreground-secondary">
             {saveStatusLabel}
           </span>
@@ -272,6 +279,10 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
       </div>
 
       {showToolbar && <MarkdownToolbar editorView={editorView} />}
+
+      {isCollaborationActive && (
+        <ConnectionStatusBanner connectionStatus={connectionStatus} />
+      )}
 
       <div className="flex-1 overflow-hidden transition-opacity duration-200">
         {mode === EditorMode.EDITOR && !readOnly && (
