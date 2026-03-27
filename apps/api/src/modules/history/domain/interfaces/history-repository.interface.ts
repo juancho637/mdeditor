@@ -9,4 +9,11 @@ export interface HistoryRepositoryInterface {
   ): Promise<{ snapshots: SnapshotSummaryType[]; total: number }>;
 
   findSnapshotById(snapshotId: string): Promise<SnapshotDetailType | null>;
+
+  saveSnapshot(
+    documentId: string,
+    yjsSnapshot: Buffer,
+    contentMarkdown: string,
+    authorId: string,
+  ): Promise<string>;
 }

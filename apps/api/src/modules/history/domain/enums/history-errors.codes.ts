@@ -9,6 +9,11 @@ export const historyErrorsCodes = {
     message: 'No history available for this document.',
     serverMessage: 'No snapshots found for document',
   },
+  HST003: {
+    codeError: 'HST003',
+    message: 'Cannot restore snapshot.',
+    serverMessage: 'Failed to restore snapshot to document',
+  },
   HST100: {
     codeError: 'HST100',
     message: 'Failed to retrieve document history.',

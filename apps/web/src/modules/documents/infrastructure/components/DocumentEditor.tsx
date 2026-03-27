@@ -340,6 +340,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
           documentId={document.id}
           connectedUsers={connectedUsers}
           isOpen={isPanelOpen}
+          canEdit={!readOnly}
           onClose={togglePanel}
         />
       </div>

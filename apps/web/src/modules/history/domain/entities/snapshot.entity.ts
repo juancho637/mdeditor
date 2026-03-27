@@ -16,3 +16,10 @@ export interface SnapshotListResponse {
   page: number;
   limit: number;
 }
+
+export interface RestoreResult {
+  documentId: string;
+  restoredFromSnapshotId: string;
+  newSnapshotId: string;
+  message: string;
+}

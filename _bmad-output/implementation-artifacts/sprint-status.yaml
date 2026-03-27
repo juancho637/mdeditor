@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-20
-last_updated: 2026-03-27 # epic 6 in progress, story 6-2 ready-for-dev
+last_updated: 2026-03-27 # epic 6 in progress, story 6-3 ready-for-dev
 project: markdown
 project_key: NOKEY
 tracking_system: file-system
@@ -80,10 +80,10 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Historial de Cambios y Restauración
-  epic-6: in-progress
+  epic-6: done
   6-1-registro-y-persistencia-del-historial: done
   6-2-visualizacion-del-historial-y-panel-de-actividad: done
-  6-3-restauracion-de-versiones-anteriores: backlog
+  6-3-restauracion-de-versiones-anteriores: done
   epic-6-retrospective: optional
 
   # Epic 7: Integración MCP para Herramientas de IA

@@ -4,6 +4,7 @@ import type {
   SnapshotSummary,
   SnapshotDetail,
   SnapshotListResponse,
+  RestoreResult,
 } from '../../domain/entities/snapshot.entity';
 
 interface SnapshotSummaryWire {
@@ -73,6 +74,29 @@ export class HistoryV1Repository implements HistoryRepository {
       `/api/documents/${documentId}/snapshots/${snapshotId}`,
     );
     return mapDetail(response.data as SnapshotDetailWire);
+  }
+  async restoreSnapshot(
+    documentId: string,
+    snapshotId: string,
+  ): Promise<RestoreResult> {
+    const response = await apiClient.post<{
+      document_id: string;
+      restored_from_snapshot_id: string;
+      new_snapshot_id: string;
+      message: string;
+    }>(`/api/documents/${documentId}/snapshots/${snapshotId}/restore`);
+    const wire = response.data as {
+      document_id: string;
+      restored_from_snapshot_id: string;
+      new_snapshot_id: string;
+      message: string;
+    };
+    return {
+      documentId: wire.document_id,
+      restoredFromSnapshotId: wire.restored_from_snapshot_id,
+      newSnapshotId: wire.new_snapshot_id,
+      message: wire.message,
+    };
   }
 }
 

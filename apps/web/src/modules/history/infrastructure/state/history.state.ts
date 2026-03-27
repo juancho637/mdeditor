@@ -46,10 +46,12 @@ export interface HistoryState {
   selectedSnapshot: SnapshotDetail | null;
   previousSnapshot: SnapshotDetail | null;
   loadingDetail: boolean;
+  restoring: boolean;
 
   togglePanel: () => void;
   fetchSnapshots: (documentId: string, page?: number) => Promise<void>;
   fetchSnapshotDetail: (documentId: string, snapshotId: string, previousSnapshotId: string | null) => Promise<void>;
+  restoreSnapshot: (documentId: string, snapshotId: string) => Promise<boolean>;
   clearSelection: () => void;
   reset: () => void;
 }
@@ -64,6 +66,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   selectedSnapshot: null,
   previousSnapshot: null,
   loadingDetail: false,
+  restoring: false,
 
   togglePanel: () => {
     const newState = !get().isPanelOpen;
@@ -113,6 +116,28 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }
   },
 
+  restoreSnapshot: async (documentId: string, snapshotId: string) => {
+    set({ restoring: true, error: null });
+    try {
+      await historyRepository.restoreSnapshot(documentId, snapshotId);
+      // Reset and refetch snapshots to show the new restoration entry
+      set({
+        restoring: false,
+        selectedSnapshot: null,
+        previousSnapshot: null,
+        snapshots: [],
+        total: 0,
+        page: 1,
+      });
+      // Refetch page 1
+      await get().fetchSnapshots(documentId);
+      return true;
+    } catch {
+      set({ restoring: false, error: 'Error al restaurar la versión' });
+      return false;
+    }
+  },
+
   clearSelection: () => {
     set({ selectedSnapshot: null, previousSnapshot: null });
   },
@@ -127,6 +152,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       selectedSnapshot: null,
       previousSnapshot: null,
       loadingDetail: false,
+      restoring: false,
     });
   },
 }));

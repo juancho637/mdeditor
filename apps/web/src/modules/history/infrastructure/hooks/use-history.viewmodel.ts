@@ -13,8 +13,10 @@ export function useHistoryViewModel(documentId: string) {
     selectedSnapshot,
     previousSnapshot,
     loadingDetail,
+    restoring,
     fetchSnapshots,
     fetchSnapshotDetail,
+    restoreSnapshot,
     clearSelection,
     reset,
   } = useHistoryStore();
@@ -54,6 +56,11 @@ export function useHistoryViewModel(documentId: string) {
     [documentId, snapshots, fetchSnapshotDetail],
   );
 
+  const handleRestore = useCallback(
+    (snapshotId: string) => restoreSnapshot(documentId, snapshotId),
+    [documentId, restoreSnapshot],
+  );
+
   return {
     isPanelOpen,
     togglePanel,
@@ -64,9 +71,11 @@ export function useHistoryViewModel(documentId: string) {
     selectedSnapshot,
     previousSnapshot,
     loadingDetail,
+    restoring,
     loadMore,
     selectSnapshot,
     clearSelection,
+    restoreSnapshot: handleRestore,
     hasMore: snapshots.length < total,
   };
 }

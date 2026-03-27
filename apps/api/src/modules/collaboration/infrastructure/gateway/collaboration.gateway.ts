@@ -66,6 +66,11 @@ export class CollaborationGateway implements OnModuleInit {
       // Connection handled in handleConnection
     });
 
+    // Register callback so syncService can disconnect clients on document restore
+    this.syncService.setOnDocumentInvalidated((documentId) => {
+      this.disconnectDocumentClients(documentId);
+    });
+
     this.logger.log('Collaboration WebSocket server initialized on /collaboration/*');
   }
 
@@ -230,7 +235,22 @@ export class CollaborationGateway implements OnModuleInit {
     this.logger.log(`Client ${userId} disconnected from document ${documentId}`);
   }
 
+  private disconnectDocumentClients(documentId: string): void {
+    // Clean up awareness before closing connections (underlying Y.Doc is already destroyed)
+    this.awarenessMap.delete(documentId);
+
+    const clients = this.documentClients.get(documentId);
+    if (!clients) return;
+
+    this.logger.log(`Disconnecting ${clients.size} client(s) from document ${documentId} for restore`);
+    for (const client of Array.from(clients)) {
+      client.ws.close(4010, 'Document restored');
+    }
+  }
+
   private handleMessage(authClient: AuthenticatedClient, yDoc: Y.Doc, message: Uint8Array): void {
+    if (authClient.ws.readyState !== 1) return; // Ignore messages from closing/closed connections
+
     try {
       const decoder = decoding.createDecoder(message);
       const messageType = decoding.readVarUint(decoder);

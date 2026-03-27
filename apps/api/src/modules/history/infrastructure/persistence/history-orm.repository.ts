@@ -88,4 +88,28 @@ export class HistoryOrmRepository implements HistoryRepositoryInterface {
       });
     }
   }
+
+  async saveSnapshot(
+    documentId: string,
+    yjsSnapshot: Buffer,
+    contentMarkdown: string,
+    authorId: string,
+  ): Promise<string> {
+    try {
+      const entity = this.repository.create({
+        documentId,
+        yjsSnapshot,
+        contentMarkdown,
+        authorId,
+      });
+      const saved = await this.repository.save(entity);
+      return saved.id;
+    } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: historyErrorsCodes.HST100,
+        context: HistoryOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
 }
