@@ -27,7 +27,7 @@ export class RefreshTokenUseCase {
   ) {}
 
   async run(refreshToken: string): Promise<SignInType> {
-    let payload: { sub: string; email: string; isAdmin: boolean; typ?: string; exp?: number };
+    let payload: { sub: string; name?: string; email: string; isAdmin: boolean; typ?: string; exp?: number };
 
     try {
       payload = await this.jwtService.verifyAsync(refreshToken, {
@@ -73,6 +73,7 @@ export class RefreshTokenUseCase {
 
     return this.authService.generateTokens({
       sub: user.id,
+      name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
     });

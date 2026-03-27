@@ -11,6 +11,7 @@ export class AuthService implements AuthServiceInterface {
   async generateTokens(payload: TokenPayloadType): Promise<SignInType> {
     const basePayload = {
       sub: payload.sub,
+      name: payload.name,
       email: payload.email,
       isAdmin: payload.isAdmin,
     };

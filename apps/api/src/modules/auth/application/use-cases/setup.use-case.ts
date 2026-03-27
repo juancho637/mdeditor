@@ -35,6 +35,7 @@ export class SetupUseCase {
 
     return this.authService.generateTokens({
       sub: user.id,
+      name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
     });
