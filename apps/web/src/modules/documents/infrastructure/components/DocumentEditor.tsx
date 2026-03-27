@@ -86,6 +86,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
 
   const { setEditorScroller, setPreviewScroller } = useSyncScroll({
     enabled: mode === EditorMode.HYBRID && !readOnly,
+    editorView,
   });
 
   const previewRef = useCallback((el: HTMLDivElement | null) => {
