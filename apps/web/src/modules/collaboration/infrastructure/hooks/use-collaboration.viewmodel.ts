@@ -66,6 +66,7 @@ export function useCollaborationViewModel() {
     const provider = new WebsocketProvider(wsUrl, documentId, yDoc, {
       params: { token, documentId },
       connect: true,
+      resyncInterval: 20_000, // Send sync every 20s to keep WS alive (y-websocket closes after 30s of silence)
     });
 
     // Set awareness local state with user metadata for cursors/presence

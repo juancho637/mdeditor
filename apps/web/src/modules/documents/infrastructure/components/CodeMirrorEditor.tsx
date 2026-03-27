@@ -129,6 +129,17 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
         baseExtensions.push(
           yCollab(yText, awareness ?? null, { undoManager: undoManager ?? undefined }),
         );
+        // Workaround: y-codemirror.next@0.3.5 never clears cursor on blur
+        // (dead code: `cursor != null && hasFocus` is always false when hasFocus is false)
+        if (awareness) {
+          baseExtensions.push(
+            EditorView.updateListener.of((update) => {
+              if (update.focusChanged && !update.view.hasFocus) {
+                awareness.setLocalStateField('cursor', null);
+              }
+            }),
+          );
+        }
         baseExtensions.push(keymap.of([...defaultKeymap, ...markdownKeymap]));
       } else {
         baseExtensions.push(history());
