@@ -7,6 +7,7 @@ interface DocumentEntry {
   doc: Y.Doc;
   connections: number;
   lastActivity: Date;
+  lastAuthorId?: string;
   snapshotTimer?: ReturnType<typeof setTimeout>;
   releaseTimer?: ReturnType<typeof setTimeout>;
 }
@@ -70,6 +71,7 @@ export class InMemoryDocumentSyncService implements DocumentSyncServiceInterface
     // Note: Y.applyUpdate is already called by the gateway before calling this method.
     // This method only handles persistence and snapshot scheduling.
     entry.lastActivity = new Date();
+    entry.lastAuthorId = authorId;
 
     await this.applyUpdateUseCase.run(documentId, update, authorId);
 
@@ -133,7 +135,7 @@ export class InMemoryDocumentSyncService implements DocumentSyncServiceInterface
         clearTimeout(entry.snapshotTimer);
         entry.snapshotTimer = undefined;
       }
-      await this.persistSnapshotUseCase.run(documentId, entry.doc);
+      await this.persistSnapshotUseCase.run(documentId, entry.doc, entry.lastAuthorId);
       this.logger.log(`Snapshot persisted for document ${documentId}`);
     } catch (error) {
       this.logger.error(`Failed to persist snapshot for document ${documentId}`, (error as Error).stack);

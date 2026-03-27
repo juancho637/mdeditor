@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-20
-last_updated: 2026-03-27 # story 5-3 created
+last_updated: 2026-03-27 # epic 5 done, starting epic 6
 project: markdown
 project_key: NOKEY
 tracking_system: file-system
@@ -73,15 +73,15 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Colaboración en Tiempo Real
-  epic-5: in-progress
+  epic-5: done
   5-1-edicion-colaborativa-con-yjs-y-websocket: done
   5-2-cursores-colaborativos-y-presencia-de-usuarios: done
   5-3-reconexion-automatica-y-estado-de-conexion: done
   epic-5-retrospective: optional
 
   # Epic 6: Historial de Cambios y Restauración
-  epic-6: backlog
-  6-1-registro-y-persistencia-del-historial: backlog
+  epic-6: in-progress
+  6-1-registro-y-persistencia-del-historial: done
   6-2-visualizacion-del-historial-y-panel-de-actividad: backlog
   6-3-restauracion-de-versiones-anteriores: backlog
   epic-6-retrospective: optional
