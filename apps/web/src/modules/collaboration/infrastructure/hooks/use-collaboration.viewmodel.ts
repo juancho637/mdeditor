@@ -91,17 +91,22 @@ export function useCollaborationViewModel() {
         storeState.setDisconnectedAt(null);
       } else if (event.status === 'disconnected') {
         const currentStatus = useCollaborationStore.getState().connectionStatus;
-        // Only set disconnectedAt if transitioning from connected
-        if (currentStatus === ConnectionStatus.CONNECTED) {
-          storeState.setDisconnectedAt(Date.now());
-        }
-        storeState.setConnectionStatus(ConnectionStatus.RECONNECTING);
+        // Only show reconnection UI if we were previously connected
+        // Ignore disconnects during initial connection (DISCONNECTED state)
+        if (currentStatus === ConnectionStatus.CONNECTED ||
+            currentStatus === ConnectionStatus.RECONNECTING ||
+            currentStatus === ConnectionStatus.OFFLINE) {
+          if (currentStatus === ConnectionStatus.CONNECTED) {
+            storeState.setDisconnectedAt(Date.now());
+          }
+          storeState.setConnectionStatus(ConnectionStatus.RECONNECTING);
 
-        // Start timer to transition to OFFLINE after 10s
-        clearOfflineTimer();
-        offlineTimerRef.current = setTimeout(() => {
-          useCollaborationStore.getState().setConnectionStatus(ConnectionStatus.OFFLINE);
-        }, OFFLINE_THRESHOLD_MS);
+          // Start timer to transition to OFFLINE after 10s
+          clearOfflineTimer();
+          offlineTimerRef.current = setTimeout(() => {
+            useCollaborationStore.getState().setConnectionStatus(ConnectionStatus.OFFLINE);
+          }, OFFLINE_THRESHOLD_MS);
+        }
       }
     });
 
