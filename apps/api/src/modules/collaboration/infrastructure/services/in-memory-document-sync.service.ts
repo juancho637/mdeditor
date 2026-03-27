@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { Logger } from '@nestjs/common';
-import { DocumentSyncServiceInterface } from '../../domain';
+import { DocumentSyncServiceInterface, DocumentInvalidatedCallback } from '../../domain';
 import { LoadDocumentUseCase, ApplyUpdateUseCase, PersistSnapshotUseCase } from '../../application';
 
 interface DocumentEntry {
@@ -19,6 +19,7 @@ export class InMemoryDocumentSyncService implements DocumentSyncServiceInterface
   private readonly documents = new Map<string, DocumentEntry>();
   private readonly loadingPromises = new Map<string, Promise<Y.Doc>>();
   private readonly logger = new Logger(InMemoryDocumentSyncService.name);
+  private onDocumentInvalidated?: DocumentInvalidatedCallback;
 
   constructor(
     private readonly loadDocumentUseCase: LoadDocumentUseCase,
@@ -127,6 +128,28 @@ export class InMemoryDocumentSyncService implements DocumentSyncServiceInterface
     entry.snapshotTimer = setTimeout(async () => {
       await this.flushSnapshot(documentId, entry);
     }, SNAPSHOT_INTERVAL_MS);
+  }
+
+  setOnDocumentInvalidated(callback: DocumentInvalidatedCallback): void {
+    this.onDocumentInvalidated = callback;
+  }
+
+  forceDocumentReload(documentId: string): void {
+    const entry = this.documents.get(documentId);
+    if (entry) {
+      if (entry.snapshotTimer) clearTimeout(entry.snapshotTimer);
+      if (entry.releaseTimer) clearTimeout(entry.releaseTimer);
+      entry.doc.destroy();
+      this.documents.delete(documentId);
+      this.logger.log(`Document ${documentId} forcefully invalidated for restore`);
+    }
+
+    // Cancel any in-flight loads so reconnecting clients get fresh DB state
+    this.loadingPromises.delete(documentId);
+
+    if (this.onDocumentInvalidated) {
+      this.onDocumentInvalidated(documentId);
+    }
   }
 
   private async flushSnapshot(documentId: string, entry: DocumentEntry): Promise<void> {

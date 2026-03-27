@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { diffLines } from 'diff';
+import { RotateCcw } from 'lucide-react';
 import type { SnapshotDetail } from '../../domain/entities/snapshot.entity';
 import { formatRelativeDate } from '@/common/helpers/format-relative-date';
 
@@ -9,10 +10,13 @@ interface DiffViewProps {
   selected: SnapshotDetail;
   previous: SnapshotDetail | null;
   loading: boolean;
+  canEdit: boolean;
+  restoring: boolean;
   onClose: () => void;
+  onRestore: (snapshotId: string) => void;
 }
 
-export function DiffView({ selected, previous, loading, onClose }: DiffViewProps) {
+export function DiffView({ selected, previous, loading, canEdit, restoring, onClose, onRestore }: DiffViewProps) {
   const diffResult = useMemo(() => {
     const oldText = previous?.contentMarkdown ?? '';
     const newText = selected.contentMarkdown ?? '';
@@ -78,6 +82,18 @@ export function DiffView({ selected, previous, loading, onClose }: DiffViewProps
           </pre>
         </div>
       </div>
+
+      {canEdit && (
+        <button
+          onClick={() => onRestore(selected.id)}
+          disabled={restoring}
+          className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          data-testid="restore-version-button"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          {restoring ? 'Restaurando...' : 'Restaurar esta versión'}
+        </button>
+      )}
     </div>
   );
 }

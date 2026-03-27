@@ -1,22 +1,24 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { X } from 'lucide-react';
 import type { AwarenessUser } from '@/modules/collaboration/domain/entities/awareness-user';
 import { Separator } from '@/common/components/ui/separator';
 import { LiveActivitySection } from './LiveActivitySection';
 import { HistoryTimeline } from './HistoryTimeline';
 import { DiffView } from './DiffView';
+import { RestoreConfirmDialog } from './RestoreConfirmDialog';
 import { useHistoryViewModel } from '../hooks/use-history.viewmodel';
 
 interface ActivityPanelProps {
   documentId: string;
   connectedUsers: AwarenessUser[];
   isOpen: boolean;
+  canEdit: boolean;
   onClose: () => void;
 }
 
-export function ActivityPanel({ documentId, connectedUsers, isOpen, onClose }: ActivityPanelProps) {
+export function ActivityPanel({ documentId, connectedUsers, isOpen, canEdit, onClose }: ActivityPanelProps) {
   const {
     snapshots,
     loading,
@@ -24,11 +26,15 @@ export function ActivityPanel({ documentId, connectedUsers, isOpen, onClose }: A
     selectedSnapshot,
     previousSnapshot,
     loadingDetail,
+    restoring,
     loadMore,
     selectSnapshot,
     clearSelection,
+    restoreSnapshot,
     hasMore,
   } = useHistoryViewModel(documentId);
+
+  const [restoreTargetSnapshotId, setRestoreTargetSnapshotId] = useState<string | null>(null);
 
   // Escape key to close
   const handleKeyDown = useCallback(
@@ -47,6 +53,22 @@ export function ActivityPanel({ documentId, connectedUsers, isOpen, onClose }: A
   useEffect(() => {
     if (!isOpen) clearSelection();
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRestoreRequest = useCallback((snapshotId: string) => {
+    setRestoreTargetSnapshotId(snapshotId);
+  }, []);
+
+  const handleRestoreConfirm = useCallback(async () => {
+    if (!restoreTargetSnapshotId) return;
+    const success = await restoreSnapshot(restoreTargetSnapshotId);
+    if (success) {
+      setRestoreTargetSnapshotId(null);
+    }
+  }, [restoreTargetSnapshotId, restoreSnapshot]);
+
+  const handleRestoreCancel = useCallback(() => {
+    setRestoreTargetSnapshotId(null);
+  }, []);
 
   return (
     <>
@@ -121,7 +143,10 @@ export function ActivityPanel({ documentId, connectedUsers, isOpen, onClose }: A
                 selected={selectedSnapshot}
                 previous={previousSnapshot}
                 loading={loadingDetail}
+                canEdit={canEdit}
+                restoring={restoring}
                 onClose={clearSelection}
+                onRestore={handleRestoreRequest}
               />
             ) : (
               <HistoryTimeline
@@ -136,6 +161,15 @@ export function ActivityPanel({ documentId, connectedUsers, isOpen, onClose }: A
           </div>
         </div>
       </aside>
+
+      {/* Restore confirmation dialog */}
+      <RestoreConfirmDialog
+        isOpen={restoreTargetSnapshotId !== null}
+        snapshotDate={selectedSnapshot?.createdAt ?? ''}
+        restoring={restoring}
+        onConfirm={handleRestoreConfirm}
+        onCancel={handleRestoreCancel}
+      />
     </>
   );
 }
