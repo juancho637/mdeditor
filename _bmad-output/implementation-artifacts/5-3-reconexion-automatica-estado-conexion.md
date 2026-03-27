@@ -1,6 +1,6 @@
 # Story 5.3: Reconexión Automática y Estado de Conexión
 
-Status: review
+Status: done
 
 ## Story
 

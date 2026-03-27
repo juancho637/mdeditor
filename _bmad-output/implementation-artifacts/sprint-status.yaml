@@ -76,7 +76,7 @@ development_status:
   epic-5: in-progress
   5-1-edicion-colaborativa-con-yjs-y-websocket: done
   5-2-cursores-colaborativos-y-presencia-de-usuarios: done
-  5-3-reconexion-automatica-y-estado-de-conexion: review
+  5-3-reconexion-automatica-y-estado-de-conexion: done
   epic-5-retrospective: optional
 
   # Epic 6: Historial de Cambios y Restauración
