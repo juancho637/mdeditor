@@ -7,6 +7,7 @@ import type * as Y from 'yjs';
 import type { Document } from '../../domain/types/document.type';
 import { MarkdownToolbar } from './toolbar/MarkdownToolbar';
 import { useCollaborationViewModel } from '@/modules/collaboration/infrastructure/hooks/use-collaboration.viewmodel';
+import { useSyncScroll } from '../hooks/use-sync-scroll';
 
 const CodeMirrorEditor = dynamic(
   () => import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
@@ -82,6 +83,18 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
 
   contentRef.current = content;
+
+  const { setEditorScroller, setPreviewScroller } = useSyncScroll({
+    enabled: mode === EditorMode.HYBRID && !readOnly,
+  });
+
+  const previewRef = useCallback((el: HTMLDivElement | null) => {
+    setPreviewScroller(el);
+  }, [setPreviewScroller]);
+
+  const handleScrollerReady = useCallback((el: HTMLElement | null) => {
+    setEditorScroller(el);
+  }, [setEditorScroller]);
 
   const handleEditorReady = useCallback((view: EditorView) => {
     setEditorView(view);
@@ -274,12 +287,14 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
                 readOnly={readOnly}
                 onChange={handleChange}
                 onEditorReady={handleEditorReady}
+                onScrollerReady={handleScrollerReady}
                 yText={collabState?.yText}
                 undoManager={collabState?.undoManager}
                 awareness={collabState?.awareness}
               />
             }
             previewContent={<MarkdownPreview content={previewContent} />}
+            previewRef={previewRef}
           />
         )}
       </div>

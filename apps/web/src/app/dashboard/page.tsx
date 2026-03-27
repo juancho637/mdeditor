@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
   if (currentDocument) {
     return (
-      <div className="h-full" style={{ minHeight: 'calc(100vh - 48px)' }}>
+      <div style={{ height: 'calc(100vh - 48px)' }}>
         <DocumentEditor
           document={currentDocument}
           saveStatus={saveStatus}

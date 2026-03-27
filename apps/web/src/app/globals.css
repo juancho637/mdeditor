@@ -264,3 +264,37 @@ body {
 .prose img { max-width: 100%; border-radius: 8px; margin: 16px 0; }
 
 .prose input[type="checkbox"] { margin-right: 8px; }
+
+/*
+ * Syntax Highlighting — Dark Mode (highlight.js classes from rehype-highlight)
+ */
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-built_in { color: #c678dd; }
+
+.dark .hljs-string,
+.dark .hljs-attr,
+.dark .hljs-addition { color: #98c379; }
+
+.dark .hljs-comment,
+.dark .hljs-quote { color: #7d8799; font-style: italic; }
+
+.dark .hljs-number,
+.dark .hljs-literal { color: #d19a66; }
+
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-type { color: #e5c07b; }
+
+.dark .hljs-name,
+.dark .hljs-tag { color: #e06c75; }
+
+.dark .hljs-variable,
+.dark .hljs-template-variable { color: #61afef; }
+
+.dark .hljs-deletion { color: #e06c75; }
+
+.dark .hljs-meta { color: #56b6c2; }
+
+.dark .prose pre code { color: #abb2bf; }
+.dark .prose code { color: #abb2bf; }
