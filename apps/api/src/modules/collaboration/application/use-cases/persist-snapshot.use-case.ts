@@ -9,15 +9,15 @@ export class PersistSnapshotUseCase {
     private readonly updateRepository: DocumentUpdateRepositoryInterface,
   ) {}
 
-  async run(documentId: string, yDoc: Y.Doc): Promise<void> {
+  async run(documentId: string, yDoc: Y.Doc, authorId?: string): Promise<void> {
     // Capture timestamp BEFORE encoding to safely delete only older updates
     const snapshotTime = new Date();
     const snapshot = Y.encodeStateAsUpdate(yDoc);
     const yText = yDoc.getText('content');
     const contentMarkdown = yText.toString();
 
-    // Save snapshot for history
-    await this.snapshotRepository.saveSnapshot(documentId, snapshot, contentMarkdown);
+    // Save snapshot for history with author tracking
+    await this.snapshotRepository.saveSnapshot(documentId, snapshot, contentMarkdown, authorId);
 
     // Update document's yjs_state and content_markdown
     await this.documentRepository.update(documentId, {

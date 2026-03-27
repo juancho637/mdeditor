@@ -30,6 +30,7 @@ describe('PersistSnapshotUseCase', () => {
       'doc-1',
       expect.any(Uint8Array),
       '# Test Content',
+      undefined,
     );
 
     expect(mockDocumentRepository.update).toHaveBeenCalledWith('doc-1', {
@@ -51,6 +52,7 @@ describe('PersistSnapshotUseCase', () => {
       'doc-1',
       expect.any(Uint8Array),
       '',
+      undefined,
     );
 
     expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith('doc-1', expect.any(Date));

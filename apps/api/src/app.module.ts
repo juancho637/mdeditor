@@ -11,6 +11,7 @@ import { FoldersModule } from '@modules/folders/infrastructure';
 import { DocumentsModule } from '@modules/documents/infrastructure';
 import { PermissionsModule } from '@modules/permissions/infrastructure';
 import { CollaborationModule } from '@modules/collaboration/infrastructure';
+import { HistoryModule } from '@modules/history/infrastructure';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CollaborationModule } from '@modules/collaboration/infrastructure';
     DocumentsModule,
     PermissionsModule,
     CollaborationModule,
+    HistoryModule,
   ],
 })
 export class AppModule implements NestModule {

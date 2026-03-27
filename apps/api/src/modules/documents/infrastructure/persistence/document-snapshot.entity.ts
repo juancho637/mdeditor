@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { DocumentEntity } from './document.entity';
 
+// Append-only table: snapshots are immutable by design (NFR16). No DELETE/UPDATE endpoints exist.
 @Entity('document_snapshots')
 @Index('idx_document_snapshots_document_id_created_at', ['documentId', 'createdAt'])
 export class DocumentSnapshotEntity {
