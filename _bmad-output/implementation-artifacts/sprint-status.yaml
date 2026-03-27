@@ -64,17 +64,17 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Experiencia de Edición de Documentos
-  epic-4: in-progress
+  epic-4: done
   4-1-editor-markdown-con-codemirror-6: done
   4-2-visualizador-de-markdown-renderizado: done
   4-3-modo-hibrido-y-cambio-entre-modos: done
-  4-4-toolbar-de-asistencia-markdown: review
-  4-5-sync-scroll-y-temas: backlog
+  4-4-toolbar-de-asistencia-markdown: done
+  4-5-sync-scroll-y-temas: done
   epic-4-retrospective: optional
 
   # Epic 5: Colaboración en Tiempo Real
   epic-5: in-progress
-  5-1-edicion-colaborativa-con-yjs-y-websocket: review
+  5-1-edicion-colaborativa-con-yjs-y-websocket: done
   5-2-cursores-colaborativos-y-presencia-de-usuarios: backlog
   5-3-reconexion-automatica-y-estado-de-conexion: backlog
   epic-5-retrospective: optional

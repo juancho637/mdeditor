@@ -2,16 +2,18 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { EditorView, keymap } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Compartment } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
-import { oneDark } from '@codemirror/theme-one-dark';
+import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark';
 import {
   syntaxHighlighting,
   defaultHighlightStyle,
   bracketMatching,
 } from '@codemirror/language';
+import { useThemeStore } from '@/modules/theme/infrastructure/state/theme.state';
+import { Theme } from '@/modules/theme/domain';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { wrapSelection, executeToolbarAction } from './toolbar/toolbar-actions';
 import { ToolbarAction } from '../../domain/enums/toolbar-actions.enum';
@@ -32,11 +34,13 @@ const markdownKeymap = [
   },
 ];
 
-const editorTheme = EditorView.theme({
+const baseEditorTheme = EditorView.theme({
   '&': {
     fontFamily: 'var(--font-jetbrains-mono, monospace)',
     fontSize: '14px',
     height: '100%',
+    backgroundColor: 'var(--background-secondary)',
+    color: 'var(--foreground)',
   },
   '.cm-scroller': {
     overflow: 'auto',
@@ -44,29 +48,55 @@ const editorTheme = EditorView.theme({
   '.cm-content': {
     padding: '16px',
     minHeight: '100%',
+    caretColor: 'var(--primary)',
+  },
+  '.cm-cursor, .cm-dropCursor': {
+    borderLeftColor: 'var(--primary)',
   },
   '.cm-gutters': {
     border: 'none',
+    backgroundColor: 'var(--background-secondary)',
+    color: 'var(--foreground-secondary)',
+  },
+  '.cm-activeLineGutter': {
+    backgroundColor: 'var(--muted)',
+  },
+  '.cm-activeLine': {
+    backgroundColor: 'var(--muted)',
+  },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+    backgroundColor: 'color-mix(in srgb, var(--primary) 25%, transparent)',
   },
 });
+
+function getHighlightExtension(isDark: boolean) {
+  return isDark
+    ? syntaxHighlighting(oneDarkHighlightStyle)
+    : syntaxHighlighting(defaultHighlightStyle);
+}
 
 interface CodeMirrorEditorProps {
   content: string;
   readOnly: boolean;
   onChange: (content: string) => void;
   onEditorReady?: (view: EditorView | null) => void;
+  onScrollerReady?: (el: HTMLElement | null) => void;
   yText?: Y.Text;
   undoManager?: Y.UndoManager;
   awareness?: any;
 }
 
-export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, yText, undoManager, awareness }: CodeMirrorEditorProps) {
+export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, onScrollerReady, yText, undoManager, awareness }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const onEditorReadyRef = useRef(onEditorReady);
+  const onScrollerReadyRef = useRef(onScrollerReady);
+  const highlightCompartmentRef = useRef(new Compartment());
+  const resolvedTheme = useThemeStore((s) => s.resolvedTheme);
   onChangeRef.current = onChange;
   onEditorReadyRef.current = onEditorReady;
+  onScrollerReadyRef.current = onScrollerReady;
 
   const isCollaborative = !!yText;
 
@@ -80,14 +110,15 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, y
     const initEditor = async () => {
       if (!containerRef.current || cancelled) return;
 
+      const isDark = useThemeStore.getState().resolvedTheme === Theme.DARK;
       const baseExtensions: Extension[] = [
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightActiveLine(),
         bracketMatching(),
-        syntaxHighlighting(defaultHighlightStyle),
+        highlightCompartmentRef.current.of(getHighlightExtension(isDark)),
         markdown({ base: markdownLanguage, codeLanguages: languages }),
-        editorTheme,
+        baseEditorTheme,
         EditorView.lineWrapping,
       ];
 
@@ -129,6 +160,7 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, y
 
       viewRef.current = view;
       onEditorReadyRef.current?.(view);
+      onScrollerReadyRef.current?.(view.scrollDOM);
     };
 
     void initEditor();
@@ -140,9 +172,20 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, y
       }
       viewRef.current = null;
       onEditorReadyRef.current?.(null);
+      onScrollerReadyRef.current?.(null);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readOnly, isCollaborative, yText]);
+
+  // Reconfigure syntax highlighting when theme changes
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || view.destroyed) return;
+    const isDark = resolvedTheme === Theme.DARK;
+    view.dispatch({
+      effects: highlightCompartmentRef.current.reconfigure(getHighlightExtension(isDark)),
+    });
+  }, [resolvedTheme]);
 
   // Update content when document changes externally (non-collaborative only)
   useEffect(() => {

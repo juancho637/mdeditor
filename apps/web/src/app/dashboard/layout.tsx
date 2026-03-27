@@ -1,11 +1,14 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthViewModel } from '@/modules/auth/infrastructure/hooks/use-auth.viewmodel';
 import { FolderSidebar } from '@/modules/folders/infrastructure/components/FolderSidebar';
 import { FolderBreadcrumbs } from '@/modules/folders/infrastructure/components/FolderBreadcrumbs';
 import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-folder.viewmodel';
+import { ThemeToggle } from '@/modules/theme/infrastructure/components/ThemeToggle';
+import { useThemeStore } from '@/modules/theme/infrastructure/state/theme.state';
 
 export default function DashboardLayout({
   children,
@@ -22,6 +25,12 @@ export default function DashboardLayout({
     selectFolder, createFolder, renameFolder, deleteFolder,
     toggleExpanded, toggleSidebar,
   } = useFolderViewModel();
+
+  const initTheme = useThemeStore((s) => s.initTheme);
+
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
 
   const handleLogout = async () => {
     await logout();
@@ -43,6 +52,7 @@ export default function DashboardLayout({
           )}
         </div>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link
             href="/dashboard/settings/users"
             className="text-sm text-foreground-secondary hover:text-foreground transition-colors"
