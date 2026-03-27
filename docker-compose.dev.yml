@@ -39,8 +39,8 @@ services:
     depends_on:
       install:
         condition: service_completed_successfully
-    environment:
-      API_INTERNAL_URL: http://api:3000
+    env_file:
+      - apps/web/.env
     ports:
       !override
       - "3001:3001"

@@ -1,18 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, getAdminToken } from './helpers/api';
-
-const API_URL = 'http://localhost:3000';
+import { resetUsers, postSetup, postSignIn, getAdminToken, API_URL, runSQL } from './helpers/api';
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
 async function resetFolders(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM folders;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM folders;');
 }
 
 test.describe('Story 2-1: Estructura de Carpetas y Sidebar', () => {

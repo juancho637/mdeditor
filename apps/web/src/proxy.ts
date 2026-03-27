@@ -4,8 +4,7 @@ import type { NextRequest } from 'next/server';
 const PUBLIC_PATHS = ['/setup', '/sign-in'];
 const PUBLIC_PREFIXES = ['/invite'];
 
-// Server-side (proxy) uses internal Docker URL; browser uses NEXT_PUBLIC_API_URL
-const API_BASE_URL = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -4,7 +4,7 @@
 # docker compose commands directly. See DOCKER_COMMANDS.md
 # ─────────────────────────────────────────────────────────────
 
-.PHONY: dev dev-build up down db logs test test-e2e add add-dev clean
+.PHONY: dev dev-build up down db logs test test-e2e test-e2e-grep add add-dev clean typecheck typecheck-web typecheck-api
 
 DEV_COMPOSE = docker compose -f docker-compose.yml -f docker-compose.dev.yml
 
@@ -50,6 +50,23 @@ logs:
 test:
 	$(DEV_COMPOSE) exec api pnpm --filter api test
 
-# E2E tests with Playwright (runs on host, requires make dev running)
+# TypeScript type check (runs inside container)
+# Usage: make typecheck (both), make typecheck-web, make typecheck-api
+typecheck:
+	$(DEV_COMPOSE) exec api sh -c "cd /app/apps/api && npx tsc --noEmit"
+	$(DEV_COMPOSE) exec web sh -c "cd /app/apps/web && npx tsc --noEmit"
+
+typecheck-web:
+	$(DEV_COMPOSE) exec web sh -c "cd /app/apps/web && npx tsc --noEmit"
+
+typecheck-api:
+	$(DEV_COMPOSE) exec api sh -c "cd /app/apps/api && npx tsc --noEmit"
+
+# E2E tests with Playwright (runs inside web container)
 test-e2e:
-	pnpm test:playwright
+	$(DEV_COMPOSE) exec web sh -c "cd /app && pnpm test:playwright"
+
+# E2E tests filtered by grep pattern (runs inside web container)
+# Usage: make test-e2e-grep GREP="Story 6-2"
+test-e2e-grep:
+	$(DEV_COMPOSE) exec web sh -c "cd /app && pnpm test:playwright --grep '$(GREP)'"

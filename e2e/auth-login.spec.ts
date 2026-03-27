@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, extractCookies, postRefreshWithCookie, postLogout } from './helpers/api';
+import { resetUsers, postSetup, postSignIn, extractCookies, postRefreshWithCookie, postLogout, API_URL } from './helpers/api';
 
 test.describe('Story 1-2: Login y Gestión de Sesión', () => {
   // UI tests run FIRST to avoid rate limiting from API tests
@@ -170,7 +170,7 @@ test.describe('Story 1-2: Login y Gestión de Sesión', () => {
     });
 
     test('POST /api/auth/sign-in with empty body should return 400', async () => {
-      const res = await fetch('http://localhost:3000/api/auth/sign-in', {
+      const res = await fetch(`${API_URL}/api/auth/sign-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, extractCookies, getAdminToken } from './helpers/api';
-
-const API_URL = 'http://localhost:3000';
+import { resetUsers, postSetup, postSignIn, extractCookies, getAdminToken, API_URL, runSQL } from './helpers/api';
 
 async function createInvitedUser(adminToken: string, email: string): Promise<string> {
   // Create invitation
@@ -34,19 +32,11 @@ function authHeaders(token: string) {
 }
 
 async function resetGroups(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM user_groups; DELETE FROM groups;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM user_groups; DELETE FROM groups;');
 }
 
 async function resetInvitations(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM invitations;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM invitations;');
 }
 
 test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {

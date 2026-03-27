@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, extractCookies } from './helpers/api';
-
-const API_URL = 'http://localhost:3000';
+import { resetUsers, postSetup, postSignIn, extractCookies, API_URL, runSQL } from './helpers/api';
 
 async function createAdminAndGetToken(): Promise<{ accessToken: string; cookies: string }> {
   const setupRes = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
@@ -34,11 +32,7 @@ async function acceptInvitation(token: string, data: { name: string; password: s
 }
 
 async function resetInvitations(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM invitations;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM invitations;');
 }
 
 test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
