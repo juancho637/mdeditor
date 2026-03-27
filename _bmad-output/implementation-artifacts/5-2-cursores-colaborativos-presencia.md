@@ -1,6 +1,6 @@
 # Story 5.2: Cursores Colaborativos y Presencia de Usuarios
 
-Status: review
+Status: done
 
 ## Story
 
