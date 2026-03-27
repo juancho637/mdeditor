@@ -10,6 +10,8 @@ export class PersistSnapshotUseCase {
   ) {}
 
   async run(documentId: string, yDoc: Y.Doc): Promise<void> {
+    // Capture timestamp BEFORE encoding to safely delete only older updates
+    const snapshotTime = new Date();
     const snapshot = Y.encodeStateAsUpdate(yDoc);
     const yText = yDoc.getText('content');
     const contentMarkdown = yText.toString();
@@ -23,7 +25,7 @@ export class PersistSnapshotUseCase {
       contentMarkdown,
     });
 
-    // Clean up incremental updates that are now included in the snapshot
-    await this.updateRepository.deleteByDocumentId(documentId);
+    // Clean up only updates created before the snapshot (not newer ones arriving concurrently)
+    await this.updateRepository.deleteBeforeDate(documentId, snapshotTime);
   }
 }

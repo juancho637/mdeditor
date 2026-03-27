@@ -15,7 +15,7 @@ describe('PersistSnapshotUseCase', () => {
       saveSnapshot: jest.fn().mockResolvedValue(undefined),
     };
     mockUpdateRepository = {
-      deleteByDocumentId: jest.fn().mockResolvedValue(undefined),
+      deleteBeforeDate: jest.fn().mockResolvedValue(undefined),
     };
     useCase = new PersistSnapshotUseCase(mockDocumentRepository, mockSnapshotRepository, mockUpdateRepository);
   });
@@ -37,7 +37,7 @@ describe('PersistSnapshotUseCase', () => {
       contentMarkdown: '# Test Content',
     });
 
-    expect(mockUpdateRepository.deleteByDocumentId).toHaveBeenCalledWith('doc-1');
+    expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith('doc-1', expect.any(Date));
 
     yDoc.destroy();
   });
@@ -53,7 +53,7 @@ describe('PersistSnapshotUseCase', () => {
       '',
     );
 
-    expect(mockUpdateRepository.deleteByDocumentId).toHaveBeenCalledWith('doc-1');
+    expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith('doc-1', expect.any(Date));
 
     yDoc.destroy();
   });

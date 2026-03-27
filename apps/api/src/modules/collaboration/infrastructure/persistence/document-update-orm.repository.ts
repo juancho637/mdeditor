@@ -45,9 +45,14 @@ export class DocumentUpdateOrmRepository implements DocumentUpdateRepositoryInte
     }
   }
 
-  async deleteByDocumentId(documentId: string): Promise<void> {
+  async deleteBeforeDate(documentId: string, before: Date): Promise<void> {
     try {
-      await this.repository.delete({ documentId });
+      await this.repository
+        .createQueryBuilder()
+        .delete()
+        .where('document_id = :documentId', { documentId })
+        .andWhere('created_at <= :before', { before })
+        .execute();
     } catch (error) {
       throw this.exception.internalServerErrorException({
         message: collaborationErrorsCodes.COL100,

@@ -158,13 +158,17 @@ export class CollaborationGateway implements OnModuleInit {
 
       // Handle binary messages
       client.on('message', (data: Buffer) => {
-        this.logger.debug(`Message from ${userId}: ${data.length} bytes, first byte: ${data[0]}`);
         this.handleMessage(authClient, yDoc, new Uint8Array(data));
       });
 
       // Handle disconnect
       client.on('close', () => {
         void this.handleDisconnect(client);
+      });
+
+      // Handle errors to prevent unhandled EventEmitter crashes
+      client.on('error', (err) => {
+        this.logger.error(`WebSocket error for ${userId}`, (err as Error).stack);
       });
 
       this.logger.log(`Client ${userId} connected to document ${documentId} (${permissionLevel})`);
