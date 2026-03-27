@@ -15,6 +15,8 @@ import {
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { wrapSelection, executeToolbarAction } from './toolbar/toolbar-actions';
 import { ToolbarAction } from '../../domain/enums/toolbar-actions.enum';
+import type * as Y from 'yjs';
+import type { Extension } from '@codemirror/state';
 
 const markdownKeymap = [
   { key: 'Mod-b', run: (view: EditorView) => wrapSelection(view, '**', '**') },
@@ -53,9 +55,12 @@ interface CodeMirrorEditorProps {
   readOnly: boolean;
   onChange: (content: string) => void;
   onEditorReady?: (view: EditorView | null) => void;
+  yText?: Y.Text;
+  undoManager?: Y.UndoManager;
+  awareness?: any;
 }
 
-export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady }: CodeMirrorEditorProps) {
+export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, yText, undoManager, awareness }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -63,60 +68,86 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady }:
   onChangeRef.current = onChange;
   onEditorReadyRef.current = onEditorReady;
 
-  const createExtensions = useCallback(() => {
-    const extensions = [
-      lineNumbers(),
-      highlightActiveLineGutter(),
-      highlightActiveLine(),
-      history(),
-      bracketMatching(),
-      syntaxHighlighting(defaultHighlightStyle),
-      markdown({ base: markdownLanguage, codeLanguages: languages }),
-      editorTheme,
-      keymap.of([...defaultKeymap, ...historyKeymap, ...markdownKeymap]),
-      EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          onChangeRef.current(update.state.doc.toString());
-        }
-      }),
-      EditorView.lineWrapping,
-    ];
-
-    if (readOnly) {
-      extensions.push(EditorState.readOnly.of(true));
-      extensions.push(EditorView.editable.of(false));
-    }
-
-    return extensions;
-  }, [readOnly]);
+  const isCollaborative = !!yText;
 
   // Initialize editor
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const state = EditorState.create({
-      doc: content,
-      extensions: createExtensions(),
-    });
+    let view: EditorView | null = null;
+    let cancelled = false;
 
-    const view = new EditorView({
-      state,
-      parent: containerRef.current,
-    });
+    const initEditor = async () => {
+      if (!containerRef.current || cancelled) return;
 
-    viewRef.current = view;
-    onEditorReadyRef.current?.(view);
+      const baseExtensions: Extension[] = [
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        highlightActiveLine(),
+        bracketMatching(),
+        syntaxHighlighting(defaultHighlightStyle),
+        markdown({ base: markdownLanguage, codeLanguages: languages }),
+        editorTheme,
+        EditorView.lineWrapping,
+      ];
+
+      if (isCollaborative && yText) {
+        const { yCollab } = await import('y-codemirror.next');
+        if (cancelled) return;
+        baseExtensions.push(
+          yCollab(yText, awareness ?? null, { undoManager: undoManager ?? undefined }),
+        );
+        baseExtensions.push(keymap.of([...defaultKeymap, ...markdownKeymap]));
+      } else {
+        baseExtensions.push(history());
+        baseExtensions.push(keymap.of([...defaultKeymap, ...historyKeymap, ...markdownKeymap]));
+        baseExtensions.push(
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              onChangeRef.current(update.state.doc.toString());
+            }
+          }),
+        );
+      }
+
+      if (readOnly) {
+        baseExtensions.push(EditorState.readOnly.of(true));
+        baseExtensions.push(EditorView.editable.of(false));
+      }
+
+      if (cancelled || !containerRef.current) return;
+
+      const state = EditorState.create({
+        doc: isCollaborative && yText ? yText.toString() : content,
+        extensions: baseExtensions,
+      });
+
+      view = new EditorView({
+        state,
+        parent: containerRef.current,
+      });
+
+      viewRef.current = view;
+      onEditorReadyRef.current?.(view);
+    };
+
+    void initEditor();
 
     return () => {
-      view.destroy();
+      cancelled = true;
+      if (view) {
+        view.destroy();
+      }
       viewRef.current = null;
       onEditorReadyRef.current?.(null);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readOnly]);
+  }, [readOnly, isCollaborative, yText]);
 
-  // Update content when document changes externally
+  // Update content when document changes externally (non-collaborative only)
   useEffect(() => {
+    if (isCollaborative) return;
+
     const view = viewRef.current;
     if (!view) return;
 
@@ -126,7 +157,7 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady }:
         changes: { from: 0, to: currentContent.length, insert: content },
       });
     }
-  }, [content]);
+  }, [content, isCollaborative]);
 
   return (
     <div

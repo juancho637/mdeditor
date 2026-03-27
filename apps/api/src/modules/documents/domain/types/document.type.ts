@@ -4,6 +4,7 @@ export type DocumentType = {
   title: string;
   slug: string;
   contentMarkdown: string;
+  yjsState: Buffer | null;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;

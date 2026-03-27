@@ -1,13 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
+import { resetAndSeedUsers } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
-}
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -32,16 +26,18 @@ async function resetDocuments(): Promise<void> {
 }
 
 test.describe('Story 2-2: Creación y Edición de Documentos', () => {
+  let adminToken: string;
+
   // ─── UI Tests FIRST ──────────────────────────────────────────
 
   test.describe('UI: Document Management', () => {
     test.beforeEach(async () => {
       await resetDocuments();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#1+#2: Create document, edit with autosave, see save badge', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Producto');
 
       await page.goto('/sign-in');
@@ -76,11 +72,11 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
   test.describe('API: Document CRUD', () => {
     test.beforeEach(async () => {
       await resetDocuments();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('POST /api/documents creates document in folder', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       const res = await fetch(`${API_URL}/api/documents`, {
@@ -98,7 +94,7 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
     });
 
     test('GET /api/documents/:id returns document with content', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       const createRes = await fetch(`${API_URL}/api/documents`, {
@@ -119,7 +115,7 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
     });
 
     test('PUT /api/documents/:id updates content', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       const createRes = await fetch(`${API_URL}/api/documents`, {
@@ -141,7 +137,7 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
     });
 
     test('PUT /api/documents/:id updates title and slug', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       const createRes = await fetch(`${API_URL}/api/documents`, {
@@ -164,7 +160,7 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
     });
 
     test('DELETE /api/documents/:id deletes document', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       const createRes = await fetch(`${API_URL}/api/documents`, {
@@ -189,7 +185,7 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
     });
 
     test('GET /api/folders/:folderId/documents lists documents without content', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       await fetch(`${API_URL}/api/documents`, {
@@ -215,7 +211,7 @@ test.describe('Story 2-2: Creación y Edición de Documentos', () => {
     });
 
     test('DELETE folder cascades to documents', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
 
       const createRes = await fetch(`${API_URL}/api/documents`, {

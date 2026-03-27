@@ -23,6 +23,9 @@ export class DocumentEntity {
   @Column({ type: 'text', name: 'content_markdown', default: '' })
   contentMarkdown!: string;
 
+  @Column({ type: 'bytea', name: 'yjs_state', nullable: true })
+  yjsState!: Buffer | null;
+
   @Column({ type: 'uuid', name: 'created_by' })
   createdBy!: string;
 

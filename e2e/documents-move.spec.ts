@@ -1,13 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
+import { resetAndSeedUsers } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
-}
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -40,14 +34,16 @@ async function resetAll(): Promise<void> {
 }
 
 test.describe('Story 2-3: Mover Documentos entre Carpetas', () => {
+  let adminToken: string;
+
   test.describe('API: Move Document', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('PATCH /api/documents/:id/move moves document to target folder', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folder1 = await createFolder(token, 'Source');
       const folder2 = await createFolder(token, 'Target');
       const docId = await createDocument(token, 'Brief', folder1);
@@ -79,7 +75,7 @@ test.describe('Story 2-3: Mover Documentos entre Carpetas', () => {
     });
 
     test('PATCH /api/documents/:id/move to same folder returns DOC003', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Folder');
       const docId = await createDocument(token, 'Brief', folderId);
 
@@ -95,7 +91,7 @@ test.describe('Story 2-3: Mover Documentos entre Carpetas', () => {
     });
 
     test('PATCH /api/documents/:id/move with nonexistent doc returns DOC001', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Target');
 
       const res = await fetch(`${API_URL}/api/documents/00000000-0000-0000-0000-000000000001/move`, {
@@ -108,7 +104,7 @@ test.describe('Story 2-3: Mover Documentos entre Carpetas', () => {
     });
 
     test('PATCH /api/documents/:id/move with nonexistent target folder returns FLD001', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Source');
       const docId = await createDocument(token, 'Brief', folderId);
 

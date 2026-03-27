@@ -111,6 +111,6 @@ import { RedisModule } from '@common/redis/infrastructure/redis.module';
       ) => new RefreshTokenUseCase(jwtService, userRepository, authService, exception, configService, tokenRevocation),
     },
   ],
-  exports: [AuthUseCasesEnum.SETUP_USE_CASE, AuthUseCasesEnum.AUTH_SERVICE, JwtAuthGuard],
+  exports: [AuthUseCasesEnum.SETUP_USE_CASE, AuthUseCasesEnum.AUTH_SERVICE, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}

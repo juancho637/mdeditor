@@ -1,16 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
+import { resetAndSeedUsers } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
 }
 
 async function createFolder(token: string, name: string): Promise<string> {
@@ -63,14 +57,16 @@ async function loginAndNavigateToDoc(page: import('@playwright/test').Page, fold
 }
 
 test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
+  let adminToken: string;
+
   test.describe('UI: Mode Tabs', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#1: Three mode tabs appear for editable document', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'HybridDocs');
       await createDocumentWithContent(token, 'Hybrid Test', folderId, '# Test Content');
 
@@ -87,7 +83,7 @@ test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
     });
 
     test('AC#2: Hybrid mode shows editor and preview side-by-side', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'SplitDocs');
       await createDocumentWithContent(token, 'Split Test', folderId, '# Hello World\n\nSome **bold** text.');
 
@@ -106,7 +102,7 @@ test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
     });
 
     test('AC#2+: Typing in hybrid mode updates preview in real time', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'RealtimeDocs');
       await createDocumentWithContent(token, 'Realtime Test', folderId, '');
 
@@ -125,7 +121,7 @@ test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
     });
 
     test('AC#4: Switching modes preserves content', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'SwitchDocs');
       await createDocumentWithContent(token, 'Switch Test', folderId, '# Original Content');
 
@@ -149,7 +145,7 @@ test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
     });
 
     test('AC#5: Editor mode shows only CodeMirror', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'EditorOnlyDocs');
       await createDocumentWithContent(token, 'Editor Only Test', folderId, '# Test');
 
@@ -164,7 +160,7 @@ test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
     });
 
     test('AC#6: Mode preference persists across page reload', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'PersistDocs');
       await createDocumentWithContent(token, 'Persist Test', folderId, '# Persist');
 
@@ -192,7 +188,7 @@ test.describe('Story 4-3: Modo Híbrido y Cambio entre Modos', () => {
     });
 
     test('AC#6: Default mode is Hybrid for new user', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'DefaultDocs');
       await createDocumentWithContent(token, 'Default Mode Test', folderId, '# Default');
 

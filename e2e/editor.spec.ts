@@ -1,16 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
+import { resetAndSeedUsers } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
 }
 
 async function createFolder(token: string, name: string): Promise<string> {
@@ -40,14 +34,16 @@ async function resetAll(): Promise<void> {
 }
 
 test.describe('Story 4-1: Editor Markdown con CodeMirror 6', () => {
+  let adminToken: string;
+
   test.describe('UI: CodeMirror Editor', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#1: Document opens with CodeMirror editor (not textarea)', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Docs');
       await createDocument(token, 'Test Doc', folderId);
 
@@ -68,7 +64,7 @@ test.describe('Story 4-1: Editor Markdown con CodeMirror 6', () => {
     });
 
     test('AC#5: Typing triggers autosave with badge', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Docs');
       await createDocument(token, 'Autosave Test', folderId);
 
@@ -93,7 +89,7 @@ test.describe('Story 4-1: Editor Markdown con CodeMirror 6', () => {
     });
 
     test('AC#1: Switch to Preview mode shows rendered markdown', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Renders');
 
       // Create document with markdown content via API
