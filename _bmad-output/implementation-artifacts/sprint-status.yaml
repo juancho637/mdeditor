@@ -64,12 +64,12 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Experiencia de Edición de Documentos
-  epic-4: in-progress
+  epic-4: done
   4-1-editor-markdown-con-codemirror-6: done
   4-2-visualizador-de-markdown-renderizado: done
   4-3-modo-hibrido-y-cambio-entre-modos: done
   4-4-toolbar-de-asistencia-markdown: done
-  4-5-sync-scroll-y-temas: review
+  4-5-sync-scroll-y-temas: done
   epic-4-retrospective: optional
 
   # Epic 5: Colaboración en Tiempo Real

@@ -1,6 +1,6 @@
 # Story 4.5: Sync Scroll y Temas
 
-Status: review
+Status: done
 
 ## Story
 
