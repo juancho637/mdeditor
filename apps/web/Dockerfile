@@ -10,6 +10,9 @@ WORKDIR /app
 # No COPY — everything comes from volume mounts
 # Dependencies installed by docker-compose install service
 FROM base AS dev
+# Chromium + psql for running Playwright E2E tests inside the container
+RUN apk add --no-cache chromium postgresql-client
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 EXPOSE 3001
 CMD ["sh", "-c", "cd apps/web && npx next dev --turbopack --port 3001"]
 

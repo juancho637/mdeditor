@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, getSetupStatus, getHealth, postSetup } from './helpers/api';
+import { resetUsers, getSetupStatus, getHealth, postSetup, API_URL } from './helpers/api';
 
 test.describe('Story 1-1: Registro del Primer Administrador y Setup Inicial', () => {
   // ─── API Tests ───────────────────────────────────────────────
@@ -38,7 +38,7 @@ test.describe('Story 1-1: Registro del Primer Administrador y Setup Inicial', ()
     });
 
     test('POST without name should return 400', async () => {
-      const res = await fetch('http://localhost:3000/api/auth/setup', {
+      const res = await fetch(`${API_URL}/api/auth/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'test@test.com', password: 'password123' }),
@@ -54,7 +54,7 @@ test.describe('Story 1-1: Registro del Primer Administrador y Setup Inicial', ()
     });
 
     test('POST with empty body should return 400', async () => {
-      const res = await fetch('http://localhost:3000/api/auth/setup', {
+      const res = await fetch(`${API_URL}/api/auth/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -64,7 +64,7 @@ test.describe('Story 1-1: Registro del Primer Administrador y Setup Inicial', ()
     });
 
     test('POST with extra fields should return 400 (forbidNonWhitelisted)', async () => {
-      const res = await fetch('http://localhost:3000/api/auth/setup', {
+      const res = await fetch(`${API_URL}/api/auth/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

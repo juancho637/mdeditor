@@ -1,4 +1,37 @@
-const API_URL = process.env.API_URL ?? 'http://localhost:3000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+// Detect if running inside Docker (container has /.dockerenv or /app mount)
+const IS_DOCKER = (() => {
+  try {
+    const fs = require('fs');
+    return fs.existsSync('/.dockerenv') || fs.existsSync('/app/package.json');
+  } catch {
+    return false;
+  }
+})();
+
+const PSQL_PREFIX = IS_DOCKER
+  ? 'PGPASSWORD=markdown_secret psql -h postgres -U markdown -d markdown'
+  : 'docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown';
+
+/** Run a SQL command against the database. Works both inside Docker and on the host. */
+export function runSQL(sql: string, opts?: { encoding?: 'utf8' }): string {
+  const { execSync } = require('child_process');
+  return execSync(`${PSQL_PREFIX} -c "${sql}"`, {
+    cwd: process.cwd(),
+    stdio: opts?.encoding ? 'pipe' : 'pipe',
+    encoding: opts?.encoding,
+  }) as string;
+}
+
+/** Run a SQL query and return trimmed text output. */
+export function querySQL(sql: string): string {
+  const { execSync } = require('child_process');
+  return (execSync(`${PSQL_PREFIX} -t -c "${sql}"`, {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+  }) as string).trim();
+}
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -90,11 +123,7 @@ export async function getUserIdFromToken(token: string): Promise<string> {
 
 /** Deletes all users from the database. */
 export async function resetUsers(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM users;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM users;');
 }
 
 /**
@@ -102,13 +131,8 @@ export async function resetUsers(): Promise<void> {
  * Returns admin token (from postSetup, no sign-in needed — avoids throttle).
  */
 export async function resetAndSeedUsers(): Promise<string> {
-  const { execSync } = await import('child_process');
-
-  // Clean all tables + flush in-memory throttler via Redis
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders; DELETE FROM users;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  // Clean all tables
+  runSQL('DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders; DELETE FROM users;');
   // Note: @nestjs/throttler uses in-memory storage. Redis FLUSHALL doesn't reset it.
   // Throttle limit is 30/min which is enough for the test suite.
 
@@ -130,10 +154,7 @@ export async function resetAndSeedUsers(): Promise<string> {
   });
 
   // Get user2 ID from DB (avoids sign-in)
-  const user2Id = execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -t -c "SELECT id FROM users WHERE email='user2@test.com';"`,
-    { cwd: process.cwd(), encoding: 'utf8' },
-  ).trim();
+  const user2Id = querySQL("SELECT id FROM users WHERE email='user2@test.com';");
 
   // Create "Editors" group and add user2
   const groupRes = await fetch(`${API_URL}/api/groups`, {
@@ -153,11 +174,7 @@ export async function resetAndSeedUsers(): Promise<string> {
 }
 
 export async function resetCollaborationData(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders;');
 }
 
 // ─── CRUD helpers ───────────────────────────────────────────────
@@ -209,11 +226,7 @@ export async function setFolderPermission(token: string, folderId: string, group
 }
 
 export async function grantUser2EditPermission(adminToken: string, folderId: string): Promise<void> {
-  const { execSync } = await import('child_process');
-  const groupId = execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -t -c "SELECT id FROM groups WHERE name='Editors' LIMIT 1;"`,
-    { cwd: process.cwd(), encoding: 'utf8' },
-  ).trim();
+  const groupId = querySQL("SELECT id FROM groups WHERE name='Editors' LIMIT 1;");
 
   if (groupId) {
     await setFolderPermission(adminToken, folderId, groupId, 'edit');

@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { resetAndSeedUsers } from './helpers/api';
-
-const API_URL = 'http://localhost:3000';
+import { resetAndSeedUsers, API_URL, runSQL } from './helpers/api';
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -38,11 +36,7 @@ async function createDocumentWithContent(
 }
 
 async function resetAll(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM folder_permissions; DELETE FROM documents; DELETE FROM folders; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  runSQL('DELETE FROM folder_permissions; DELETE FROM documents; DELETE FROM folders; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations;');
 }
 
 async function loginAndNavigateToDoc(page: import('@playwright/test').Page, folderName: string, docTitle: string) {

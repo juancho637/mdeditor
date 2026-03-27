@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   resetCollaborationData,
   setupCollaborationTest,
+  API_URL,
 } from './helpers/api';
 
 test.describe('Story 5-2: Cursores Colaborativos y Presencia de Usuarios', () => {
@@ -165,7 +166,7 @@ test.describe('Story 5-2: Cursores Colaborativos y Presencia de Usuarios', () =>
     test('AC#1: JWT token contains name field for cursor display', async () => {
       await setupCollaborationTest();
 
-      const signInRes = await fetch('http://localhost:3000/api/auth/sign-in', {
+      const signInRes = await fetch(`${API_URL}/api/auth/sign-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'admin@test.com', password: 'password123' }),

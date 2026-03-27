@@ -63,8 +63,9 @@ pnpm-debug.log*
 # BMad tooling (install with: npx bmad install)
 _bmad/
 
-# Claude Code — local config
+# Claude Code — local config and memory
 .claude/settings.local.json
+.claude/projects/
 
 # Claude Code — BMad skills (install with: npx bmad install)
 .claude/skills/bmad-*/

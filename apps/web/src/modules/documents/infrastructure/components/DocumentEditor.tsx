@@ -12,6 +12,9 @@ import { PresenceIndicator } from '@/modules/collaboration/infrastructure/compon
 import { ConnectionStatusBanner } from '@/modules/collaboration/infrastructure/components/ConnectionStatusBanner';
 import { ConnectionIndicator } from '@/modules/collaboration/infrastructure/components/ConnectionIndicator';
 import { useSyncScroll } from '../hooks/use-sync-scroll';
+import { ClipboardList } from 'lucide-react';
+import { ActivityPanel } from '@/modules/history/infrastructure/components/ActivityPanel';
+import { useHistoryStore } from '@/modules/history/infrastructure/state/history.state';
 
 const CodeMirrorEditor = dynamic(
   () => import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
@@ -85,6 +88,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   const [previewContent, setPreviewContent] = useState(document.contentMarkdown);
 
   const { connectedUsers } = usePresence(collabState?.awareness ?? null);
+  const { isPanelOpen, togglePanel } = useHistoryStore();
   const isCollaborationActive = !!collabState;
   const isCollaborative = isCollaborationActive && isSynced;
   const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
@@ -275,6 +279,18 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
           <span className="text-xs text-foreground-secondary">
             {saveStatusLabel}
           </span>
+          <button
+            onClick={togglePanel}
+            className={`p-1.5 rounded-md transition-colors ${
+              isPanelOpen
+                ? 'bg-muted text-foreground'
+                : 'text-foreground-secondary hover:text-foreground hover:bg-muted'
+            }`}
+            aria-label="Panel de actividad"
+            data-testid="activity-panel-toggle"
+          >
+            <ClipboardList className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -284,39 +300,48 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
         <ConnectionStatusBanner connectionStatus={connectionStatus} />
       )}
 
-      <div className="flex-1 overflow-hidden transition-opacity duration-200">
-        {mode === EditorMode.EDITOR && !readOnly && (
-          <CodeMirrorEditor
-            content={content}
-            readOnly={readOnly}
-            onChange={handleChange}
-            onEditorReady={handleEditorReady}
-            yText={collabState?.yText}
-            undoManager={collabState?.undoManager}
-            awareness={collabState?.awareness}
-          />
-        )}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden transition-opacity duration-200">
+          {mode === EditorMode.EDITOR && !readOnly && (
+            <CodeMirrorEditor
+              content={content}
+              readOnly={readOnly}
+              onChange={handleChange}
+              onEditorReady={handleEditorReady}
+              yText={collabState?.yText}
+              undoManager={collabState?.undoManager}
+              awareness={collabState?.awareness}
+            />
+          )}
 
-        {mode === EditorMode.PREVIEW && <MarkdownPreview content={previewContent} />}
+          {mode === EditorMode.PREVIEW && <MarkdownPreview content={previewContent} />}
 
-        {mode === EditorMode.HYBRID && !readOnly && (
-          <SplitView
-            editorContent={
-              <CodeMirrorEditor
-                content={content}
-                readOnly={readOnly}
-                onChange={handleChange}
-                onEditorReady={handleEditorReady}
-                onScrollerReady={handleScrollerReady}
-                yText={collabState?.yText}
-                undoManager={collabState?.undoManager}
-                awareness={collabState?.awareness}
-              />
-            }
-            previewContent={<MarkdownPreview content={previewContent} />}
-            previewRef={previewRef}
-          />
-        )}
+          {mode === EditorMode.HYBRID && !readOnly && (
+            <SplitView
+              editorContent={
+                <CodeMirrorEditor
+                  content={content}
+                  readOnly={readOnly}
+                  onChange={handleChange}
+                  onEditorReady={handleEditorReady}
+                  onScrollerReady={handleScrollerReady}
+                  yText={collabState?.yText}
+                  undoManager={collabState?.undoManager}
+                  awareness={collabState?.awareness}
+                />
+              }
+              previewContent={<MarkdownPreview content={previewContent} />}
+              previewRef={previewRef}
+            />
+          )}
+        </div>
+
+        <ActivityPanel
+          documentId={document.id}
+          connectedUsers={connectedUsers}
+          isOpen={isPanelOpen}
+          onClose={togglePanel}
+        />
       </div>
     </div>
   );

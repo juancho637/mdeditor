@@ -55,7 +55,7 @@ describe('ListDocumentSnapshotsUseCase', () => {
     mockDocumentRepository.findById.mockResolvedValue(document);
     mockCheckPermission.run.mockResolvedValue(null);
 
-    await expect(useCase.run('doc-1', 1, 20, authUser)).rejects.toThrow('PRM001');
+    await expect(useCase.run('doc-1', 1, 20, authUser)).rejects.toThrow('PRM002');
     expect(mockException.forbiddenException).toHaveBeenCalled();
   });
 

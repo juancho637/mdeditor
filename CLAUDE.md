@@ -16,8 +16,16 @@ make clean                         # Apagar + borrar volumen node_modules (fresh
 make db                            # Solo PostgreSQL (para desarrollo nativo)
 make logs                          # Ver logs
 make test                          # Unit tests (corre dentro del container)
-make test-e2e                      # E2E tests con Playwright (requiere make dev corriendo)
+make test-e2e                      # E2E tests completos con Playwright
+make test-e2e-grep GREP="Story X"  # E2E tests filtrados por patrón (usar SIEMPRE para validar cambios puntuales)
+make typecheck                     # TypeScript check (ambos apps, dentro del container)
+make typecheck-web                 # TypeScript check solo frontend
+make typecheck-api                 # TypeScript check solo backend
 ```
+
+**IMPORTANTE: Todo se ejecuta con Docker vía Makefile. NUNCA ejecutar comandos directos de docker compose, npm, npx, pnpm, node, o tsc en el host. Siempre usar `make <target>`. Si no existe un target apropiado, agregarlo al Makefile primero.**
+
+**EFICIENCIA en tests:** Cuando se están validando cambios de una story específica, usar `make test-e2e-grep GREP="Story X-Y"` para correr SOLO los tests relevantes. Reservar `make test-e2e` (suite completa) para validación final antes de marcar la story como done. Esto ahorra minutos en cada iteración.
 
 ## Estructura del proyecto
 
@@ -148,8 +156,8 @@ chore: update docker compose for dev hot reload
 - `CORS_ORIGIN`, `API_PORT`
 
 **Frontend** (`apps/web/.env`):
-- `NEXT_PUBLIC_API_URL` — URL del API para el browser
-- `API_INTERNAL_URL` — URL interna para el proxy server-side (en Docker: `http://api:3000`)
+- `NEXT_PUBLIC_API_URL` — URL del API. En Docker: `http://api:3000`
+- `NEXT_PUBLIC_WS_URL` — URL del WebSocket. En Docker: `ws://api:3000`
 
 ## Docker
 

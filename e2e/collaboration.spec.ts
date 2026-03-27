@@ -3,42 +3,28 @@ import {
   resetAndSeedUsers,
   resetCollaborationData,
   setupCollaborationTest,
+  querySQL,
 } from './helpers/api';
 
 test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
 
   test.describe('API: Database Schema', () => {
     test('AC#5: Collaboration tables exist after migration', async () => {
-      const { execSync } = await import('child_process');
-
-      const tablesResult = execSync(
-        `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "SELECT table_name FROM information_schema.tables WHERE table_name IN ('document_updates', 'document_snapshots') ORDER BY table_name;"`,
-        { cwd: process.cwd(), encoding: 'utf8' },
-      );
+      const tablesResult = querySQL("SELECT table_name FROM information_schema.tables WHERE table_name IN ('document_updates', 'document_snapshots') ORDER BY table_name;");
 
       expect(tablesResult).toContain('document_snapshots');
       expect(tablesResult).toContain('document_updates');
     });
 
     test('AC#5: Documents table has yjs_state column', async () => {
-      const { execSync } = await import('child_process');
-
-      const columnResult = execSync(
-        `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'documents' AND column_name = 'yjs_state';"`,
-        { cwd: process.cwd(), encoding: 'utf8' },
-      );
+      const columnResult = querySQL("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'documents' AND column_name = 'yjs_state';");
 
       expect(columnResult).toContain('yjs_state');
       expect(columnResult).toContain('bytea');
     });
 
     test('AC#5: document_updates has correct schema', async () => {
-      const { execSync } = await import('child_process');
-
-      const columnsResult = execSync(
-        `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "SELECT column_name FROM information_schema.columns WHERE table_name = 'document_updates' ORDER BY ordinal_position;"`,
-        { cwd: process.cwd(), encoding: 'utf8' },
-      );
+      const columnsResult = querySQL("SELECT column_name FROM information_schema.columns WHERE table_name = 'document_updates' ORDER BY ordinal_position;");
 
       expect(columnsResult).toContain('id');
       expect(columnsResult).toContain('document_id');
