@@ -7,22 +7,33 @@ import { useCollaborationStore } from '../state/use-collaboration.store';
 import { getAccessToken } from '@/common/helpers/token-storage.utils';
 import { getColorForUser } from '../helpers/cursor-colors';
 import { decodeTokenPayload } from '../helpers/decode-token';
+import { ConnectionStatus } from '../../domain/enums/connection-status.enum';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
+const OFFLINE_THRESHOLD_MS = 10_000;
 
 export function useCollaborationViewModel() {
   const providerRef = useRef<WebsocketProvider | null>(null);
   const yDocRef = useRef<Y.Doc | null>(null);
   const undoManagerRef = useRef<Y.UndoManager | null>(null);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const store = useCollaborationStore();
+
+  const clearOfflineTimer = () => {
+    if (offlineTimerRef.current) {
+      clearTimeout(offlineTimerRef.current);
+      offlineTimerRef.current = null;
+    }
+  };
 
   const destroyCollaboration = useCallback(() => {
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current);
       syncTimeoutRef.current = null;
     }
+    clearOfflineTimer();
     if (providerRef.current) {
       providerRef.current.destroy();
       providerRef.current = null;
@@ -55,6 +66,7 @@ export function useCollaborationViewModel() {
     const provider = new WebsocketProvider(wsUrl, documentId, yDoc, {
       params: { token, documentId },
       connect: true,
+      resyncInterval: 20_000, // Send sync every 20s to keep WS alive (y-websocket closes after 30s of silence)
     });
 
     // Set awareness local state with user metadata for cursors/presence
@@ -71,7 +83,32 @@ export function useCollaborationViewModel() {
     }
 
     provider.on('status', (event: { status: string }) => {
-      useCollaborationStore.getState().setConnected(event.status === 'connected');
+      const storeState = useCollaborationStore.getState();
+      storeState.setConnected(event.status === 'connected');
+
+      if (event.status === 'connected') {
+        clearOfflineTimer();
+        storeState.setConnectionStatus(ConnectionStatus.CONNECTED);
+        storeState.setDisconnectedAt(null);
+      } else if (event.status === 'disconnected') {
+        const currentStatus = useCollaborationStore.getState().connectionStatus;
+        // Only show reconnection UI if we were previously connected
+        // Ignore disconnects during initial connection (DISCONNECTED state)
+        if (currentStatus === ConnectionStatus.CONNECTED ||
+            currentStatus === ConnectionStatus.RECONNECTING ||
+            currentStatus === ConnectionStatus.OFFLINE) {
+          if (currentStatus === ConnectionStatus.CONNECTED) {
+            storeState.setDisconnectedAt(Date.now());
+          }
+          storeState.setConnectionStatus(ConnectionStatus.RECONNECTING);
+
+          // Start timer to transition to OFFLINE after 10s
+          clearOfflineTimer();
+          offlineTimerRef.current = setTimeout(() => {
+            useCollaborationStore.getState().setConnectionStatus(ConnectionStatus.OFFLINE);
+          }, OFFLINE_THRESHOLD_MS);
+        }
+      }
     });
 
     provider.on('synced', (synced: boolean) => {
@@ -105,5 +142,6 @@ export function useCollaborationViewModel() {
     isSynced: store.isSynced,
     connectedUsers: store.connectedUsers,
     saveStatus: store.saveStatus,
+    connectionStatus: store.connectionStatus,
   };
 }
