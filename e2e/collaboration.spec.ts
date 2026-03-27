@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  resetUsers,
+  resetAndSeedUsers,
   resetCollaborationData,
   setupCollaborationTest,
 } from './helpers/api';
@@ -51,7 +51,7 @@ test.describe('Story 5-1: Edición Colaborativa con Yjs y WebSocket', () => {
   test.describe('UI: Collaborative Editor', () => {
     test.beforeEach(async () => {
       await resetCollaborationData();
-      await resetUsers();
+      await resetAndSeedUsers();
     });
 
     test('AC#3: Editor loads and allows editing with collaboration module active', async ({ page }) => {

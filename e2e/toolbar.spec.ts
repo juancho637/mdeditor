@@ -1,16 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
+import { resetAndSeedUsers } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
 }
 
 async function createFolder(token: string, name: string): Promise<string> {
@@ -52,14 +46,16 @@ async function loginAndOpenDocument(page: import('@playwright/test').Page, folde
 }
 
 test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
+  let adminToken: string;
+
   test.describe('UI: Toolbar Visibility', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#1: Toolbar visible in Editor mode with 4 groups of buttons', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'ToolbarDocs');
       await createDocument(token, 'Toolbar Test', folderId);
 
@@ -89,7 +85,7 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
     });
 
     test('AC#1: Toolbar visible in Hybrid mode', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'HybridDocs');
       await createDocument(token, 'Hybrid Test', folderId);
 
@@ -101,7 +97,7 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
     });
 
     test('AC#7: Toolbar hidden in Preview mode', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'PreviewDocs');
       await createDocument(token, 'Preview Test', folderId);
 
@@ -117,11 +113,11 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
   test.describe('UI: Toolbar Actions', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#2: Click Bold with text selected wraps with **', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'BoldDocs');
       const docId = await createDocument(token, 'Bold Test', folderId);
 
@@ -152,7 +148,7 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
     });
 
     test('AC#3: Click Bold without selection inserts placeholder', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'PlaceholderDocs');
       await createDocument(token, 'Placeholder Test', folderId);
 
@@ -170,7 +166,7 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
     });
 
     test('AC#4: Header dropdown shows H1-H6, selecting H2 inserts ## ', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'HeaderDocs');
       await createDocument(token, 'Header Test', folderId);
 
@@ -194,7 +190,7 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
     });
 
     test('AC#5: Link popover inserts [text](url)', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'LinkDocs');
       await createDocument(token, 'Link Test', folderId);
 
@@ -221,7 +217,7 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
     });
 
     test('AC#6: Table dropdown inserts table template', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'TableDocs');
       await createDocument(token, 'Table Test', folderId);
 
@@ -249,11 +245,11 @@ test.describe('Story 4-4: Toolbar de Asistencia Markdown', () => {
   test.describe('UI: Keyboard Shortcuts', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('Ctrl+B, Ctrl+I, Ctrl+K, Ctrl+E shortcuts work', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'ShortcutDocs');
       await createDocument(token, 'Shortcut Test', folderId);
 

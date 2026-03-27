@@ -1,13 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, extractCookies } from './helpers/api';
+import { resetUsers, postSetup, postSignIn, extractCookies, getAdminToken } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
-
-async function getAdminToken(): Promise<string> {
-  const setupRes = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await setupRes.json();
-  return json.data.access_token;
-}
 
 async function createInvitedUser(adminToken: string, email: string): Promise<string> {
   // Create invitation

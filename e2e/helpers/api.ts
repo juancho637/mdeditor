@@ -1,13 +1,10 @@
 const API_URL = process.env.API_URL ?? 'http://localhost:3000';
 
-export async function resetUsers(): Promise<void> {
-  // Direct DB cleanup via API or docker exec
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM users;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+function authHeaders(token: string) {
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
+
+// ─── Core auth helpers ──────────────────────────────────────────
 
 export async function getSetupStatus(): Promise<{ setup_completed: boolean }> {
   const res = await fetch(`${API_URL}/api/auth/status`);
@@ -44,7 +41,6 @@ export async function postSignIn(data: {
   });
 }
 
-/** Extract Set-Cookie header from response for use in subsequent requests */
 export function extractCookies(res: Response): string {
   return res.headers.getSetCookie?.().join('; ') ?? res.headers.get('set-cookie') ?? '';
 }
@@ -52,61 +48,119 @@ export function extractCookies(res: Response): string {
 export async function postRefreshWithCookie(cookies: string): Promise<Response> {
   return fetch(`${API_URL}/api/auth/refresh`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: cookies,
-    },
+    headers: { 'Content-Type': 'application/json', Cookie: cookies },
   });
 }
 
 export async function postLogout(cookies: string): Promise<Response> {
   return fetch(`${API_URL}/api/auth/logout`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: cookies,
-    },
+    headers: { 'Content-Type': 'application/json', Cookie: cookies },
   });
 }
 
-// ─── Collaboration test helpers ─────────────────────────────────
+// ─── User & token helpers ───────────────────────────────────────
 
-function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
+/** Creates admin via setup (fresh DB) or signs in (existing admin). */
 export async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
+  // Try setup first — works on fresh DB and doesn't hit login throttle
+  const setupRes = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+  const setupJson = await setupRes.json();
+  if (setupJson.data?.access_token) return setupJson.data.access_token;
+
+  // Admin already exists — sign in
+  const signInRes = await postSignIn({ email: 'admin@test.com', password: 'password123' });
+  const signInJson = await signInRes.json();
+  if (signInJson.data?.access_token) return signInJson.data.access_token;
+
+  // Throttled — wait and retry once
+  await new Promise((r) => setTimeout(r, 2000));
+  const retryRes = await postSignIn({ email: 'admin@test.com', password: 'password123' });
+  const retryJson = await retryRes.json();
+  return retryJson.data.access_token;
 }
 
-export async function createSecondUser(adminToken: string): Promise<{ email: string; password: string; token: string }> {
-  const email = 'user2@test.com';
-  const password = 'password123';
+export async function getUserIdFromToken(token: string): Promise<string> {
+  const parts = token.split('.');
+  const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+  return payload.sub;
+}
 
-  // Create invitation
+// ─── Reset helpers ──────────────────────────────────────────────
+
+/** Deletes all users from the database. */
+export async function resetUsers(): Promise<void> {
+  const { execSync } = await import('child_process');
+  execSync(
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM users;"`,
+    { cwd: process.cwd(), stdio: 'pipe' },
+  );
+}
+
+/**
+ * Full reset + seed: deletes everything, creates admin + user2 with "Editors" group.
+ * Returns admin token (from postSetup, no sign-in needed — avoids throttle).
+ */
+export async function resetAndSeedUsers(): Promise<string> {
+  const { execSync } = await import('child_process');
+
+  // Clean all tables + flush in-memory throttler via Redis
+  execSync(
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders; DELETE FROM users;"`,
+    { cwd: process.cwd(), stdio: 'pipe' },
+  );
+  // Note: @nestjs/throttler uses in-memory storage. Redis FLUSHALL doesn't reset it.
+  // Throttle limit is 30/min which is enough for the test suite.
+
+  // Create admin via setup (returns token directly, no sign-in)
+  const adminToken = await getAdminToken();
+
+  // Create user2 via invitation (no sign-in needed)
   const inviteRes = await fetch(`${API_URL}/api/invitations`, {
     method: 'POST',
     headers: authHeaders(adminToken),
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email: 'user2@test.com' }),
   });
   const inviteJson = await inviteRes.json();
-  const inviteToken = inviteJson.data.token;
 
-  // Accept invitation
-  await fetch(`${API_URL}/api/invitations/${inviteToken}/accept`, {
+  await fetch(`${API_URL}/api/invitations/${inviteJson.data.token}/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Usuario 2', password }),
+    body: JSON.stringify({ name: 'Usuario 2', password: 'password123' }),
   });
 
-  // Sign in to get token
-  const signInRes = await postSignIn({ email, password });
-  const signInJson = await signInRes.json();
+  // Get user2 ID from DB (avoids sign-in)
+  const user2Id = execSync(
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -t -c "SELECT id FROM users WHERE email='user2@test.com';"`,
+    { cwd: process.cwd(), encoding: 'utf8' },
+  ).trim();
 
-  return { email, password, token: signInJson.data.access_token };
+  // Create "Editors" group and add user2
+  const groupRes = await fetch(`${API_URL}/api/groups`, {
+    method: 'POST',
+    headers: authHeaders(adminToken),
+    body: JSON.stringify({ name: 'Editors' }),
+  });
+  const groupJson = await groupRes.json();
+
+  await fetch(`${API_URL}/api/groups/${groupJson.data.id}/users`, {
+    method: 'POST',
+    headers: authHeaders(adminToken),
+    body: JSON.stringify({ user_id: user2Id }),
+  });
+
+  return adminToken;
 }
+
+export async function resetCollaborationData(): Promise<void> {
+  const { execSync } = await import('child_process');
+  execSync(
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders;"`,
+    { cwd: process.cwd(), stdio: 'pipe' },
+  );
+}
+
+// ─── CRUD helpers ───────────────────────────────────────────────
 
 export async function createFolder(token: string, name: string): Promise<string> {
   const res = await fetch(`${API_URL}/api/folders`, {
@@ -154,38 +208,30 @@ export async function setFolderPermission(token: string, folderId: string, group
   });
 }
 
-export async function getUserIdFromToken(token: string): Promise<string> {
-  const parts = token.split('.');
-  const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-  return payload.sub;
+export async function grantUser2EditPermission(adminToken: string, folderId: string): Promise<void> {
+  const { execSync } = await import('child_process');
+  const groupId = execSync(
+    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -t -c "SELECT id FROM groups WHERE name='Editors' LIMIT 1;"`,
+    { cwd: process.cwd(), encoding: 'utf8' },
+  ).trim();
+
+  if (groupId) {
+    await setFolderPermission(adminToken, folderId, groupId, 'edit');
+  }
 }
 
-/** Full setup: admin + user2 + folder + document + permissions. Returns everything needed for collab tests. */
+// ─── Collaboration test helpers ─────────────────────────────────
+
 export async function setupCollaborationTest(): Promise<{
   adminToken: string;
-  user2Token: string;
   user2Email: string;
   folderId: string;
   documentId: string;
 }> {
-  const adminToken = await getAdminToken();
-  const user2 = await createSecondUser(adminToken);
+  const adminToken = await resetAndSeedUsers();
   const folderId = await createFolder(adminToken, 'Collab Folder');
   const documentId = await createDocument(adminToken, 'Collab Doc', folderId);
+  await grantUser2EditPermission(adminToken, folderId);
 
-  // Give user2 edit permissions
-  const groupId = await createGroup(adminToken, 'Editors');
-  const user2Id = await getUserIdFromToken(user2.token);
-  await addUserToGroup(adminToken, groupId, user2Id);
-  await setFolderPermission(adminToken, folderId, groupId, 'edit');
-
-  return { adminToken, user2Token: user2.token, user2Email: user2.email, folderId, documentId };
-}
-
-export async function resetCollaborationData(): Promise<void> {
-  const { execSync } = await import('child_process');
-  execSync(
-    `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T postgres psql -U markdown -d markdown -c "DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders;"`,
-    { cwd: process.cwd(), stdio: 'pipe' },
-  );
+  return { adminToken, user2Email: 'user2@test.com', folderId, documentId };
 }

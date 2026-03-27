@@ -1,16 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn } from './helpers/api';
+import { resetAndSeedUsers, postSignIn } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
 }
 
 async function createInvitedUser(adminToken: string, email: string): Promise<{ userId: string; token: string }> {
@@ -66,14 +60,16 @@ async function resetAll(): Promise<void> {
 }
 
 test.describe('Story 3-2: Enforcement de Permisos', () => {
+  let adminToken: string;
+
   test.describe('API: Permission Enforcement', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#4: Admin can access any document regardless of permissions', async () => {
-      const adminToken = await getAdminToken();
+
       const folderId = await createFolder(adminToken, 'Secret');
       const docId = await createDocument(adminToken, 'Confidential', folderId);
 
@@ -88,7 +84,7 @@ test.describe('Story 3-2: Enforcement de Permisos', () => {
     });
 
     test('AC#3: User without permission gets 403 on document access', async () => {
-      const adminToken = await getAdminToken();
+
       const folderId = await createFolder(adminToken, 'Secret');
       const docId = await createDocument(adminToken, 'Confidential', folderId);
 
@@ -103,7 +99,7 @@ test.describe('Story 3-2: Enforcement de Permisos', () => {
     });
 
     test('AC#1+#2: User with VIEW can read but not edit', async () => {
-      const adminToken = await getAdminToken();
+
       const folderId = await createFolder(adminToken, 'Marketing');
       const docId = await createDocument(adminToken, 'Brief', folderId);
       const groupId = await createGroup(adminToken, 'Viewers');
@@ -138,11 +134,11 @@ test.describe('Story 3-2: Enforcement de Permisos', () => {
     });
 
     test('AC#5: Multiple groups — highest permission wins', async () => {
-      const adminToken = await getAdminToken();
+
       const folderId = await createFolder(adminToken, 'Shared');
       const docId = await createDocument(adminToken, 'Doc', folderId);
       const viewGroup = await createGroup(adminToken, 'Viewers');
-      const editGroup = await createGroup(adminToken, 'Editors');
+      const editGroup = await createGroup(adminToken, 'Writers');
 
       const { userId, token: userToken } = await createInvitedUser(adminToken, 'multi@test.com');
 
@@ -183,7 +179,7 @@ test.describe('Story 3-2: Enforcement de Permisos', () => {
     });
 
     test('GET /api/permissions/me returns user effective permissions', async () => {
-      const adminToken = await getAdminToken();
+
       const folder1 = await createFolder(adminToken, 'Folder1');
       const folder2 = await createFolder(adminToken, 'Folder2');
       const groupId = await createGroup(adminToken, 'Team');

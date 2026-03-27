@@ -1,13 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup } from './helpers/api';
+import { resetAndSeedUsers } from './helpers/api';
 
 const API_URL = 'http://localhost:3000';
-
-async function getAdminToken(): Promise<string> {
-  const res = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
-  const json = await res.json();
-  return json.data.access_token;
-}
 
 function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -40,16 +34,18 @@ async function resetAll(): Promise<void> {
 }
 
 test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
+  let adminToken: string;
+
   // ─── UI Tests FIRST ──────────────────────────────────────────
 
   test.describe('UI: Permission Matrix', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('AC#1: Admin sees permission matrix with folders and groups', async ({ page }) => {
-      const token = await getAdminToken();
+      const token = adminToken;
       await createFolder(token, 'Marketing');
       await createGroup(token, 'Dev');
 
@@ -65,7 +61,7 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
 
       await expect(page.getByText('Marketing')).toBeVisible({ timeout: 5_000 });
       await expect(page.getByText('Dev')).toBeVisible();
-      await expect(page.locator('select')).toBeVisible();
+      await expect(page.locator('select').first()).toBeVisible();
     });
   });
 
@@ -74,11 +70,11 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
   test.describe('API: Permission CRUD', () => {
     test.beforeEach(async () => {
       await resetAll();
-      await resetUsers();
+      adminToken = await resetAndSeedUsers();
     });
 
     test('PUT /api/permissions sets permission for folder+group', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
       const groupId = await createGroup(token, 'Dev');
 
@@ -96,7 +92,7 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
     });
 
     test('PUT /api/permissions updates existing permission', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
       const groupId = await createGroup(token, 'Dev');
 
@@ -118,7 +114,7 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
     });
 
     test('DELETE /api/permissions/:id then GET shows empty list', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
       const groupId = await createGroup(token, 'Dev');
 
@@ -141,7 +137,7 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
     });
 
     test('GET /api/permissions lists all permissions', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
       const group1 = await createGroup(token, 'Dev');
       const group2 = await createGroup(token, 'Marketing');
@@ -171,7 +167,7 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
     });
 
     test('DELETE /api/permissions/:id removes permission', async () => {
-      const token = await getAdminToken();
+      const token = adminToken;
       const folderId = await createFolder(token, 'Root');
       const groupId = await createGroup(token, 'Dev');
 
