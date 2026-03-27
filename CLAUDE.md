@@ -226,7 +226,11 @@ Cada historia de usuario (HU) sigue este ciclo completo. **Todos los pasos son o
                        feat:, fix:, test:, docs:, chore:
                        SIN Co-Authored-By.
 
-10. Reportar        → Resumen de lo implementado + resultado de tests.
+10. Marcar Done     → Actualizar sprint-status.yaml y story file a status: done.
+                       Commitear el cambio en la rama feat/.
+                       El usuario hace el PR y merge manualmente — Claude NO hace merge ni checkout a develop.
+
+11. Reportar        → Resumen de lo implementado + resultado de tests.
 ```
 
 ### Reglas del ciclo
@@ -265,6 +269,10 @@ make test && make test-e2e
 
 # 9. Commits
 git add ... && git commit -m "feat: add login and session management"
+
+# 10. Marcar Done
+# Actualizar sprint-status.yaml + story file a done, commitear en la rama
+# El usuario hace el PR y merge manualmente
 ```
 
 ## BMad (opcional)
