@@ -151,13 +151,13 @@ chore: update docker compose for dev hot reload
 **Backend** (`apps/api/.env`):
 - `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_NAME`
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`
-- `REDIS_HOST`, `REDIS_PORT`
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`, `REDIS_DB`, `REDIS_TLS`, `REDIS_PREFIX`
 - `THROTTLE_GLOBAL_TTL`, `THROTTLE_GLOBAL_LIMIT`, `THROTTLE_LOGIN_TTL`, `THROTTLE_LOGIN_LIMIT`
 - `CORS_ORIGIN`, `API_PORT`
 
 **Frontend** (`apps/web/.env`):
-- `NEXT_PUBLIC_API_URL` — URL del API. En Docker: `http://api:3000`
-- `NEXT_PUBLIC_WS_URL` — URL del WebSocket. En Docker: `ws://api:3000`
+- `NEXT_PUBLIC_API_URL` — URL del API para el browser. Vacío en dev (usa rewrites). Producción: `https://tu-dominio.com`
+- `NEXT_PUBLIC_WS_URL` — URL del WebSocket para el browser. Vacío en dev (auto-detecta). Producción: `wss://tu-dominio.com`
 
 ## Docker
 
