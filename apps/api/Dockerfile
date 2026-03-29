@@ -28,11 +28,12 @@ COPY apps/api ./apps/api
 COPY packages ./packages
 COPY turbo.json tsconfig.json ./
 RUN cd apps/api && npx nest build
+RUN pnpm --filter=api deploy /prod/api
 
 # ---- Runner (production) ----
 FROM node:20-alpine AS runner
 WORKDIR /app
 COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /prod/api/node_modules ./node_modules
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
