@@ -17,5 +17,5 @@ export function getColorForUser(userId: string): { light: string; dark: string }
     hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
   }
   const index = Math.abs(hash) % CURSOR_COLORS.length;
-  return CURSOR_COLORS[index];
+  return CURSOR_COLORS[index]!;
 }
