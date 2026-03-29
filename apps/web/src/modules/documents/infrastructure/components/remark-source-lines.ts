@@ -1,4 +1,5 @@
-import type { Plugin } from 'unified';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Plugin = () => (tree: any) => void;
 
 const BLOCK_TYPES = new Set([
   'heading', 'paragraph', 'blockquote', 'code',
