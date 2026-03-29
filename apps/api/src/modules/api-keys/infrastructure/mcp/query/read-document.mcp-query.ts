@@ -18,10 +18,17 @@ export class ReadDocumentMcpQuery {
     server.tool(
       'read_document',
       'Read the full markdown content of a document',
-      { document_id: z.string().uuid().describe('The UUID of the document to read') },
+      {
+        document_id: z
+          .string()
+          .uuid()
+          .describe('The UUID of the document to read'),
+      },
       async (args) => {
         try {
-          const document = await this.documentRepository.findById(args.document_id);
+          const document = await this.documentRepository.findById(
+            args.document_id,
+          );
           if (!document) {
             throw this.exception.notFoundException({
               message: apiKeyErrorsCodes.AKY004,
@@ -29,7 +36,10 @@ export class ReadDocumentMcpQuery {
             });
           }
 
-          const permission = await this.checkPermission.run(userId, document.folderId);
+          const permission = await this.checkPermission.run(
+            userId,
+            document.folderId,
+          );
           if (permission === null) {
             throw this.exception.forbiddenException({
               message: {
@@ -40,17 +50,27 @@ export class ReadDocumentMcpQuery {
             });
           }
 
-          return { content: [{ type: 'text' as const, text: document.contentMarkdown }] };
-        } catch (error: any) {
-          return { content: [{ type: 'text' as const, text: this.formatError(error) }], isError: true };
+          return {
+            content: [
+              { type: 'text' as const, text: document.contentMarkdown },
+            ],
+          };
+        } catch (error: unknown) {
+          return {
+            content: [{ type: 'text' as const, text: this.formatError(error) }],
+            isError: true,
+          };
         }
       },
     );
   }
 
-  private formatError(error: any): string {
-    return error?.response?.code_error
-      ? `${error.response.code_error}: ${error.response.message}`
+  private formatError(error: unknown): string {
+    const err = error as {
+      response?: { code_error?: string; message?: string };
+    };
+    return err?.response?.code_error
+      ? `${err.response.code_error}: ${err.response.message}`
       : 'Operation failed.';
   }
 }

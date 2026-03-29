@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Delete, Req, Res, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Req,
+  Res,
+  Inject,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { randomUUID } from 'crypto';
@@ -17,7 +25,7 @@ export class McpController {
 
   @Post('api/mcp')
   async handlePost(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const userId = (req as any).user?.id as string | undefined;
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;

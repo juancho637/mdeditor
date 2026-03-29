@@ -2,12 +2,24 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { ExceptionProvidersEnum, ExceptionServiceInterface } from '@common/exception/domain';
-import { McpCommonProvidersEnum, McpServerService } from '@common/mcp/infrastructure';
+import {
+  ExceptionProvidersEnum,
+  ExceptionServiceInterface,
+} from '@common/exception/domain';
+import {
+  McpCommonProvidersEnum,
+  McpServerService,
+} from '@common/mcp/infrastructure';
 import { McpCommonModule } from '@common/mcp/infrastructure';
-import { FolderProvidersEnum, FolderRepositoryInterface } from '@modules/folders/domain';
+import {
+  FolderProvidersEnum,
+  FolderRepositoryInterface,
+} from '@modules/folders/domain';
 import { FoldersModule } from '@modules/folders/infrastructure';
-import { DocumentProvidersEnum, DocumentRepositoryInterface } from '@modules/documents/domain';
+import {
+  DocumentProvidersEnum,
+  DocumentRepositoryInterface,
+} from '@modules/documents/domain';
 import { DocumentsModule } from '@modules/documents/infrastructure';
 import { PermissionProvidersEnum } from '@modules/permissions/domain';
 import { PermissionsModule } from '@modules/permissions/infrastructure';
@@ -35,22 +47,33 @@ import { ReadDocumentMcpQuery } from './mcp/query/read-document.mcp-query';
   providers: [
     // Repository
     {
-      inject: [getRepositoryToken(ApiKeyEntity), ExceptionProvidersEnum.EXCEPTION_SERVICE],
+      inject: [
+        getRepositoryToken(ApiKeyEntity),
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
       provide: ApiKeyProvidersEnum.API_KEY_REPOSITORY,
-      useFactory: (repo: Repository<ApiKeyEntity>, ex: ExceptionServiceInterface) =>
-        new ApiKeyOrmRepository(repo, ex),
+      useFactory: (
+        repo: Repository<ApiKeyEntity>,
+        ex: ExceptionServiceInterface,
+      ) => new ApiKeyOrmRepository(repo, ex),
     },
     // Use cases
     {
-      inject: [ApiKeyProvidersEnum.API_KEY_REPOSITORY, ExceptionProvidersEnum.EXCEPTION_SERVICE],
+      inject: [
+        ApiKeyProvidersEnum.API_KEY_REPOSITORY,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
       provide: ApiKeyProvidersEnum.VALIDATE_API_KEY_USE_CASE,
-      useFactory: (repo: ApiKeyRepositoryInterface, ex: ExceptionServiceInterface) =>
-        new ValidateApiKeyUseCase(repo, ex),
+      useFactory: (
+        repo: ApiKeyRepositoryInterface,
+        ex: ExceptionServiceInterface,
+      ) => new ValidateApiKeyUseCase(repo, ex),
     },
     {
       inject: [ApiKeyProvidersEnum.API_KEY_REPOSITORY],
       provide: ApiKeyProvidersEnum.CREATE_API_KEY_USE_CASE,
-      useFactory: (repo: ApiKeyRepositoryInterface) => new CreateApiKeyUseCase(repo),
+      useFactory: (repo: ApiKeyRepositoryInterface) =>
+        new CreateApiKeyUseCase(repo),
     },
     // Guard
     ApiKeyAuthGuard,
@@ -72,12 +95,27 @@ import { ReadDocumentMcpQuery } from './mcp/query/read-document.mcp-query';
         exception: ExceptionServiceInterface,
       ) => {
         const listFolders = new ListFoldersMcpQuery(folderRepo, checkPerm);
-        const listDocuments = new ListDocumentsMcpQuery(folderRepo, docRepo, checkPerm, exception);
-        const readDocument = new ReadDocumentMcpQuery(docRepo, checkPerm, exception);
+        const listDocuments = new ListDocumentsMcpQuery(
+          folderRepo,
+          docRepo,
+          checkPerm,
+          exception,
+        );
+        const readDocument = new ReadDocumentMcpQuery(
+          docRepo,
+          checkPerm,
+          exception,
+        );
 
-        mcpService.registerTools((server, userId) => listFolders.register(server, userId));
-        mcpService.registerTools((server, userId) => listDocuments.register(server, userId));
-        mcpService.registerTools((server, userId) => readDocument.register(server, userId));
+        mcpService.registerTools((server, userId) =>
+          listFolders.register(server, userId),
+        );
+        mcpService.registerTools((server, userId) =>
+          listDocuments.register(server, userId),
+        );
+        mcpService.registerTools((server, userId) =>
+          readDocument.register(server, userId),
+        );
 
         return true;
       },
@@ -99,7 +137,12 @@ export class ApiKeysModule implements NestModule {
 }
 
 // Middleware that applies ApiKeyAuthGuard for MCP protocol routes
-import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+  ExecutionContext,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { RequestMethod } from '@nestjs/common';
 
@@ -110,13 +153,16 @@ class ApiKeyAuthMiddleware implements NestMiddleware {
   async use(req: Request, _res: Response, next: NextFunction): Promise<void> {
     const fakeContext = {
       switchToHttp: () => ({ getRequest: () => req }),
-    } as any;
+    } as unknown as ExecutionContext;
 
     try {
       await this.guard.canActivate(fakeContext);
       next();
     } catch {
-      throw new UnauthorizedException({ code_error: 'AKY001', message: 'Invalid or revoked API key.' });
+      throw new UnauthorizedException({
+        code_error: 'AKY001',
+        message: 'Invalid or revoked API key.',
+      });
     }
   }
 }

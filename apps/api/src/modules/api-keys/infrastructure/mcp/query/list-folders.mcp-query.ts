@@ -17,26 +17,52 @@ export class ListFoldersMcpQuery {
       async () => {
         try {
           const allFolders = await this.folderRepository.findAll();
-          const accessible: Array<{ id: string; name: string; slug: string; parentId: string | null }> = [];
+          const accessible: Array<{
+            id: string;
+            name: string;
+            slug: string;
+            parentId: string | null;
+          }> = [];
 
           for (const folder of allFolders) {
-            const permission = await this.checkPermission.run(userId, folder.id);
+            const permission = await this.checkPermission.run(
+              userId,
+              folder.id,
+            );
             if (permission !== null) {
-              accessible.push({ id: folder.id, name: folder.name, slug: folder.slug, parentId: folder.parentId });
+              accessible.push({
+                id: folder.id,
+                name: folder.name,
+                slug: folder.slug,
+                parentId: folder.parentId,
+              });
             }
           }
 
-          return { content: [{ type: 'text' as const, text: JSON.stringify(accessible, null, 2) }] };
-        } catch (error: any) {
-          return { content: [{ type: 'text' as const, text: this.formatError(error) }], isError: true };
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: JSON.stringify(accessible, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          return {
+            content: [{ type: 'text' as const, text: this.formatError(error) }],
+            isError: true,
+          };
         }
       },
     );
   }
 
-  private formatError(error: any): string {
-    return error?.response?.code_error
-      ? `${error.response.code_error}: ${error.response.message}`
+  private formatError(error: unknown): string {
+    const err = error as {
+      response?: { code_error?: string; message?: string };
+    };
+    return err?.response?.code_error
+      ? `${err.response.code_error}: ${err.response.message}`
       : 'Operation failed.';
   }
 }

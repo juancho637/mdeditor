@@ -1,5 +1,8 @@
 import { AcceptInvitationUseCase } from '../accept-invitation.use-case';
-import { InvitationRepositoryInterface, InvitationStatus } from '../../../domain';
+import {
+  InvitationRepositoryInterface,
+  InvitationStatus,
+} from '../../../domain';
 import { AuthServiceInterface } from '@modules/auth/domain';
 import { CreateUserUseCase } from '@modules/users/application';
 import { ExceptionServiceInterface } from '@common/exception/domain';
@@ -30,26 +33,41 @@ describe('AcceptInvitationUseCase', () => {
       markAccepted: jest.fn(),
     };
 
-    createUserUseCase = { run: jest.fn() } as any;
+    createUserUseCase = { run: jest.fn() } as jest.Mocked<
+      Pick<CreateUserUseCase, 'run'>
+    > as jest.Mocked<CreateUserUseCase>;
     authService = { generateTokens: jest.fn() };
 
     exception = {
-      badRequestException: jest.fn().mockImplementation(({ message }) => new Error(message.message)),
+      badRequestException: jest
+        .fn()
+        .mockImplementation(({ message }) => new Error(message.message)),
       unauthorizedException: jest.fn(),
       forbiddenException: jest.fn(),
-      notFoundException: jest.fn().mockImplementation(({ message }) => new Error(message.message)),
+      notFoundException: jest
+        .fn()
+        .mockImplementation(({ message }) => new Error(message.message)),
       conflictException: jest.fn(),
       internalServerErrorException: jest.fn(),
     };
 
-    useCase = new AcceptInvitationUseCase(invitationRepository, createUserUseCase, authService, exception);
+    useCase = new AcceptInvitationUseCase(
+      invitationRepository,
+      createUserUseCase,
+      authService,
+      exception,
+    );
   });
 
   it('should accept invitation, create user, and return tokens', async () => {
     invitationRepository.findByToken.mockResolvedValue(mockPendingInvitation);
     createUserUseCase.run.mockResolvedValue({
-      id: 'user-new', name: 'Invited User', email: 'invited@test.com',
-      isAdmin: false, createdAt: new Date(), updatedAt: new Date(),
+      id: 'user-new',
+      name: 'Invited User',
+      email: 'invited@test.com',
+      isAdmin: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     authService.generateTokens.mockResolvedValue({
       accessToken: 'access-token',
@@ -76,7 +94,11 @@ describe('AcceptInvitationUseCase', () => {
     invitationRepository.findByToken.mockResolvedValue(null);
 
     await expect(
-      useCase.run({ token: 'nonexistent', name: 'Name', password: 'password123' }),
+      useCase.run({
+        token: 'nonexistent',
+        name: 'Name',
+        password: 'password123',
+      }),
     ).rejects.toThrow('Invitation not found.');
 
     expect(createUserUseCase.run).not.toHaveBeenCalled();
@@ -90,7 +112,11 @@ describe('AcceptInvitationUseCase', () => {
     });
 
     await expect(
-      useCase.run({ token: 'valid-token', name: 'Name', password: 'password123' }),
+      useCase.run({
+        token: 'valid-token',
+        name: 'Name',
+        password: 'password123',
+      }),
     ).rejects.toThrow('This invitation has already been used.');
 
     expect(createUserUseCase.run).not.toHaveBeenCalled();

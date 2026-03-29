@@ -18,7 +18,7 @@ export class ResponseInterceptor implements NestInterceptor {
       map((data) => ({
         data,
         path: request.url,
-        request_id: request['requestId'] || 'unknown',
+        request_id: request.requestId || 'unknown',
         duration: `${Date.now() - start}ms`,
         method: request.method,
       })),

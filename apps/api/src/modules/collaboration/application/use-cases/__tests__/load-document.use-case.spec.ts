@@ -1,12 +1,24 @@
 import * as Y from 'yjs';
 import { LoadDocumentUseCase } from '../load-document.use-case';
+import { DocumentRepositoryInterface } from '@modules/documents/domain';
+import {
+  DocumentSnapshotRepositoryInterface,
+  DocumentUpdateRepositoryInterface,
+} from '../../../domain';
+import { ExceptionServiceInterface } from '@common/exception/domain';
 
 describe('LoadDocumentUseCase', () => {
   let useCase: LoadDocumentUseCase;
-  let mockDocumentRepository: any;
-  let mockSnapshotRepository: any;
-  let mockUpdateRepository: any;
-  let mockException: any;
+  let mockDocumentRepository: jest.Mocked<
+    Pick<DocumentRepositoryInterface, 'findById'>
+  >;
+  let mockSnapshotRepository: jest.Mocked<DocumentSnapshotRepositoryInterface>;
+  let mockUpdateRepository: jest.Mocked<
+    Pick<DocumentUpdateRepositoryInterface, 'getUpdatesSince'>
+  >;
+  let mockException: jest.Mocked<
+    Pick<ExceptionServiceInterface, 'notFoundException'>
+  >;
 
   beforeEach(() => {
     mockDocumentRepository = {
@@ -14,6 +26,7 @@ describe('LoadDocumentUseCase', () => {
     };
     mockSnapshotRepository = {
       getLatestSnapshot: jest.fn(),
+      saveSnapshot: jest.fn(),
     };
     mockUpdateRepository = {
       getUpdatesSince: jest.fn(),

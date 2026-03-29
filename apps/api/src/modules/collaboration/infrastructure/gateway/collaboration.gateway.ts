@@ -8,10 +8,20 @@ import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import { WebSocketServer, WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
-import { DocumentSyncServiceInterface, CollaborationProvidersEnum } from '../../domain';
+import type { Duplex } from 'stream';
+import {
+  DocumentSyncServiceInterface,
+  CollaborationProvidersEnum,
+} from '../../domain';
 import { CheckPermissionUseCase } from '@modules/permissions/application';
-import { PermissionLevel, PermissionProvidersEnum } from '@modules/permissions/domain';
-import { DocumentRepositoryInterface, DocumentProvidersEnum } from '@modules/documents/domain';
+import {
+  PermissionLevel,
+  PermissionProvidersEnum,
+} from '@modules/permissions/domain';
+import {
+  DocumentRepositoryInterface,
+  DocumentProvidersEnum,
+} from '@modules/documents/domain';
 
 const MSG_SYNC = 0;
 const MSG_AWARENESS = 1;
@@ -28,9 +38,15 @@ interface AuthenticatedClient {
 @Injectable()
 export class CollaborationGateway implements OnModuleInit {
   private readonly logger = new Logger(CollaborationGateway.name);
-  private readonly documentClients = new Map<string, Set<AuthenticatedClient>>();
+  private readonly documentClients = new Map<
+    string,
+    Set<AuthenticatedClient>
+  >();
   private readonly clientMap = new Map<WebSocket, AuthenticatedClient>();
-  private readonly awarenessMap = new Map<string, awarenessProtocol.Awareness>();
+  private readonly awarenessMap = new Map<
+    string,
+    awarenessProtocol.Awareness
+  >();
   private wss!: WebSocketServer;
 
   constructor(
@@ -49,18 +65,25 @@ export class CollaborationGateway implements OnModuleInit {
 
     this.wss = new WebSocketServer({ noServer: true });
 
-    httpServer.on('upgrade', (request: IncomingMessage, socket: any, head: Buffer) => {
-      const pathname = new URL(request.url || '', 'http://localhost').pathname;
+    httpServer.on(
+      'upgrade',
+      (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+        const pathname = new URL(request.url || '', 'http://localhost')
+          .pathname;
 
-      if (pathname.startsWith(COLLAB_PATH_PREFIX)) {
-        this.wss.handleUpgrade(request, socket, head, (ws) => {
-          this.handleConnection(ws, request).catch((err) => {
-            this.logger.error('Connection handler error', (err as Error).stack);
-            ws.close(4000, 'Internal error');
+        if (pathname.startsWith(COLLAB_PATH_PREFIX)) {
+          this.wss.handleUpgrade(request, socket, head, (ws) => {
+            this.handleConnection(ws, request).catch((err) => {
+              this.logger.error(
+                'Connection handler error',
+                (err as Error).stack,
+              );
+              ws.close(4000, 'Internal error');
+            });
           });
-        });
-      }
-    });
+        }
+      },
+    );
 
     this.wss.on('connection', () => {
       // Connection handled in handleConnection
@@ -71,16 +94,23 @@ export class CollaborationGateway implements OnModuleInit {
       this.disconnectDocumentClients(documentId);
     });
 
-    this.logger.log('Collaboration WebSocket server initialized on /collaboration/*');
+    this.logger.log(
+      'Collaboration WebSocket server initialized on /collaboration/*',
+    );
   }
 
-  private async handleConnection(client: WebSocket, request: IncomingMessage): Promise<void> {
+  private async handleConnection(
+    client: WebSocket,
+    request: IncomingMessage,
+  ): Promise<void> {
     try {
       const url = new URL(request.url || '', 'http://localhost');
       const token = url.searchParams.get('token');
 
       // Extract documentId from path: /collaboration/{documentId}
-      const pathDocumentId = url.pathname.replace(COLLAB_PATH_PREFIX, '').split('/')[0];
+      const pathDocumentId = url.pathname
+        .replace(COLLAB_PATH_PREFIX, '')
+        .split('/')[0];
       const documentId = pathDocumentId || url.searchParams.get('documentId');
 
       if (!token || !documentId) {
@@ -107,7 +137,10 @@ export class CollaborationGateway implements OnModuleInit {
       }
 
       // Check permission
-      const permissionLevel = await this.checkPermission.run(userId, document.folderId);
+      const permissionLevel = await this.checkPermission.run(
+        userId,
+        document.folderId,
+      );
       if (!permissionLevel) {
         client.close(4003, 'Insufficient permissions');
         return;
@@ -146,7 +179,10 @@ export class CollaborationGateway implements OnModuleInit {
 
       // Initialize awareness for document if not exists
       if (!this.awarenessMap.has(documentId)) {
-        this.awarenessMap.set(documentId, new awarenessProtocol.Awareness(yDoc));
+        this.awarenessMap.set(
+          documentId,
+          new awarenessProtocol.Awareness(yDoc),
+        );
       }
 
       // Send sync step 1 to client proactively.
@@ -175,10 +211,15 @@ export class CollaborationGateway implements OnModuleInit {
 
       // Handle errors to prevent unhandled EventEmitter crashes
       client.on('error', (err) => {
-        this.logger.error(`WebSocket error for ${userId}`, (err as Error).stack);
+        this.logger.error(
+          `WebSocket error for ${userId}`,
+          (err as Error).stack,
+        );
       });
 
-      this.logger.log(`Client ${userId} connected to document ${documentId} (${permissionLevel})`);
+      this.logger.log(
+        `Client ${userId} connected to document ${documentId} (${permissionLevel})`,
+      );
     } catch (error) {
       this.logger.error('Connection error', (error as Error).stack);
       client.close(4000, 'Connection error');
@@ -194,10 +235,17 @@ export class CollaborationGateway implements OnModuleInit {
     // Remove awareness states for this client and broadcast removal
     const awareness = this.awarenessMap.get(documentId);
     if (awareness && authClient.awarenessClientIds.size > 0) {
-      awarenessProtocol.removeAwarenessStates(awareness, Array.from(authClient.awarenessClientIds), 'connection closed');
+      awarenessProtocol.removeAwarenessStates(
+        awareness,
+        Array.from(authClient.awarenessClientIds),
+        'connection closed',
+      );
 
       // Broadcast awareness removal to remaining clients
-      const removalUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(authClient.awarenessClientIds));
+      const removalUpdate = awarenessProtocol.encodeAwarenessUpdate(
+        awareness,
+        Array.from(authClient.awarenessClientIds),
+      );
       const removalEncoder = encoding.createEncoder();
       encoding.writeVarUint(removalEncoder, MSG_AWARENESS);
       encoding.writeVarUint8Array(removalEncoder, removalUpdate);
@@ -229,10 +277,15 @@ export class CollaborationGateway implements OnModuleInit {
     try {
       await this.syncService.releaseDocument(documentId);
     } catch (error) {
-      this.logger.error(`Failed to release document ${documentId}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to release document ${documentId}`,
+        (error as Error).stack,
+      );
     }
 
-    this.logger.log(`Client ${userId} disconnected from document ${documentId}`);
+    this.logger.log(
+      `Client ${userId} disconnected from document ${documentId}`,
+    );
   }
 
   private disconnectDocumentClients(documentId: string): void {
@@ -242,13 +295,19 @@ export class CollaborationGateway implements OnModuleInit {
     const clients = this.documentClients.get(documentId);
     if (!clients) return;
 
-    this.logger.log(`Disconnecting ${clients.size} client(s) from document ${documentId} for restore`);
+    this.logger.log(
+      `Disconnecting ${clients.size} client(s) from document ${documentId} for restore`,
+    );
     for (const client of Array.from(clients)) {
       client.ws.close(4010, 'Document restored');
     }
   }
 
-  private handleMessage(authClient: AuthenticatedClient, yDoc: Y.Doc, message: Uint8Array): void {
+  private handleMessage(
+    authClient: AuthenticatedClient,
+    yDoc: Y.Doc,
+    message: Uint8Array,
+  ): void {
     if (authClient.ws.readyState !== 1) return; // Ignore messages from closing/closed connections
 
     try {
@@ -278,7 +337,9 @@ export class CollaborationGateway implements OnModuleInit {
     encoding.writeVarUint(encoder, MSG_SYNC);
 
     const syncMessageType = decoding.readVarUint(decoder);
-    this.logger.debug(`Sync message type: ${syncMessageType} from ${authClient.userId}`);
+    this.logger.debug(
+      `Sync message type: ${syncMessageType} from ${authClient.userId}`,
+    );
 
     switch (syncMessageType) {
       case syncProtocol.messageYjsSyncStep1: {
@@ -293,7 +354,9 @@ export class CollaborationGateway implements OnModuleInit {
         const serverStep1Encoder = encoding.createEncoder();
         encoding.writeVarUint(serverStep1Encoder, MSG_SYNC);
         syncProtocol.writeSyncStep1(serverStep1Encoder, yDoc);
-        this.logger.debug(`Sending server syncStep1: ${encoding.length(serverStep1Encoder)} bytes`);
+        this.logger.debug(
+          `Sending server syncStep1: ${encoding.length(serverStep1Encoder)} bytes`,
+        );
         authClient.ws.send(encoding.toUint8Array(serverStep1Encoder));
         break;
       }
@@ -316,11 +379,14 @@ export class CollaborationGateway implements OnModuleInit {
         Y.applyUpdate(yDoc, update, authClient);
 
         // Persist the incremental update
-        this.syncService.applyUpdate(authClient.documentId, update, authClient.userId)
-          .catch((err) => this.logger.error(
-            `Failed to persist update for document ${authClient.documentId}`,
-            (err as Error).stack,
-          ));
+        this.syncService
+          .applyUpdate(authClient.documentId, update, authClient.userId)
+          .catch((err) =>
+            this.logger.error(
+              `Failed to persist update for document ${authClient.documentId}`,
+              (err as Error).stack,
+            ),
+          );
 
         // Broadcast the update to all other clients on this document
         const broadcastEncoder = encoding.createEncoder();
@@ -342,7 +408,10 @@ export class CollaborationGateway implements OnModuleInit {
     }
   }
 
-  private handleAwarenessMessage(authClient: AuthenticatedClient, decoder: decoding.Decoder): void {
+  private handleAwarenessMessage(
+    authClient: AuthenticatedClient,
+    decoder: decoding.Decoder,
+  ): void {
     const awareness = this.awarenessMap.get(authClient.documentId);
     if (!awareness) return;
 

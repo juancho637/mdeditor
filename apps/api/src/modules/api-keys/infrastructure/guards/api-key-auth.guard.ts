@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request } from 'express';
 
 import { ApiKeyProvidersEnum } from '../../domain';
@@ -16,21 +22,30 @@ export class ApiKeyAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException({ code_error: 'AKY001', message: 'Invalid or revoked API key.' });
+      throw new UnauthorizedException({
+        code_error: 'AKY001',
+        message: 'Invalid or revoked API key.',
+      });
     }
 
     const rawKey = authHeader.substring(7);
 
     if (!rawKey.startsWith('mk_')) {
-      throw new UnauthorizedException({ code_error: 'AKY001', message: 'Invalid or revoked API key.' });
+      throw new UnauthorizedException({
+        code_error: 'AKY001',
+        message: 'Invalid or revoked API key.',
+      });
     }
 
     try {
       const { userId } = await this.validateApiKey.run(rawKey);
-      request['user'] = { id: userId, email: '', name: '', isAdmin: false };
+      request.user = { id: userId, email: '', name: '', isAdmin: false };
       return true;
     } catch {
-      throw new UnauthorizedException({ code_error: 'AKY001', message: 'Invalid or revoked API key.' });
+      throw new UnauthorizedException({
+        code_error: 'AKY001',
+        message: 'Invalid or revoked API key.',
+      });
     }
   }
 }

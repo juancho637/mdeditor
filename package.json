@@ -12,12 +12,17 @@
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "test:playwright": "playwright test"
+    "test:playwright": "playwright test",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@playwright/test": "^1.58.2",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.2.5",
     "turbo": "^2.8.19"
   },

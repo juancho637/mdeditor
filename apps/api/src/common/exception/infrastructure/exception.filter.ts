@@ -16,7 +16,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const requestId = request['requestId'] || 'unknown';
+    const requestId = request.requestId || 'unknown';
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let codeError = 'SYS001';
@@ -35,7 +35,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    const isUnhandled = status === HttpStatus.INTERNAL_SERVER_ERROR && !(exception instanceof HttpException);
+    const isUnhandled =
+      status === HttpStatus.INTERNAL_SERVER_ERROR &&
+      !(exception instanceof HttpException);
 
     this.logger.error(
       JSON.stringify({
@@ -47,7 +49,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         codeError,
         message,
         ...(isUnhandled && {
-          trace: exception instanceof Error ? exception.stack : String(exception),
+          trace:
+            exception instanceof Error ? exception.stack : String(exception),
         }),
       }),
     );

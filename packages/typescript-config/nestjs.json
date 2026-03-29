@@ -10,7 +10,7 @@
     "module": "commonjs",
     "moduleResolution": "Node10",
     "noFallthroughCasesInSwitch": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "removeComments": true,
     "sourceMap": true,
     "strictNullChecks": false,

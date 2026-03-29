@@ -20,7 +20,12 @@ export class ListDocumentsMcpQuery {
     server.tool(
       'list_documents',
       'List all documents in a folder',
-      { folder_id: z.string().uuid().describe('The UUID of the folder to list documents from') },
+      {
+        folder_id: z
+          .string()
+          .uuid()
+          .describe('The UUID of the folder to list documents from'),
+      },
       async (args) => {
         try {
           const folder = await this.folderRepository.findById(args.folder_id);
@@ -31,7 +36,10 @@ export class ListDocumentsMcpQuery {
             });
           }
 
-          const permission = await this.checkPermission.run(userId, args.folder_id);
+          const permission = await this.checkPermission.run(
+            userId,
+            args.folder_id,
+          );
           if (permission === null) {
             throw this.exception.forbiddenException({
               message: {
@@ -42,7 +50,9 @@ export class ListDocumentsMcpQuery {
             });
           }
 
-          const documents = await this.documentRepository.findByFolderId(args.folder_id);
+          const documents = await this.documentRepository.findByFolderId(
+            args.folder_id,
+          );
           const result = documents.map((doc) => ({
             id: doc.id,
             title: doc.title,
@@ -50,17 +60,27 @@ export class ListDocumentsMcpQuery {
             updatedAt: doc.updatedAt,
           }));
 
-          return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-        } catch (error: any) {
-          return { content: [{ type: 'text' as const, text: this.formatError(error) }], isError: true };
+          return {
+            content: [
+              { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            ],
+          };
+        } catch (error: unknown) {
+          return {
+            content: [{ type: 'text' as const, text: this.formatError(error) }],
+            isError: true,
+          };
         }
       },
     );
   }
 
-  private formatError(error: any): string {
-    return error?.response?.code_error
-      ? `${error.response.code_error}: ${error.response.message}`
+  private formatError(error: unknown): string {
+    const err = error as {
+      response?: { code_error?: string; message?: string };
+    };
+    return err?.response?.code_error
+      ? `${err.response.code_error}: ${err.response.message}`
       : 'Operation failed.';
   }
 }
