@@ -12,6 +12,11 @@ import { RedisProvidersEnum } from './redis-providers.enum';
         return new Redis({
           host: configService.get<string>('REDIS_HOST', 'localhost'),
           port: configService.get<number>('REDIS_PORT', 6379),
+          username: configService.get<string>('REDIS_USERNAME') || undefined,
+          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+          db: configService.get<number>('REDIS_DB', 0),
+          tls: configService.get<boolean>('REDIS_TLS') ? {} : undefined,
+          keyPrefix: configService.get<string>('REDIS_PREFIX') || undefined,
           maxRetriesPerRequest: 3,
         });
       },

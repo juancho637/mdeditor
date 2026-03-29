@@ -1,5 +1,3 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
-
 // Detect if running inside Docker (container has /.dockerenv or /app mount)
 const IS_DOCKER = (() => {
   try {
@@ -9,6 +7,8 @@ const IS_DOCKER = (() => {
     return false;
   }
 })();
+
+export const API_URL = process.env.API_URL ?? (IS_DOCKER ? 'http://api:3000' : 'http://localhost:3000');
 
 const PSQL_PREFIX = IS_DOCKER
   ? 'PGPASSWORD=markdown_secret psql -h postgres -U markdown -d markdown'
