@@ -17,6 +17,7 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/config/database.config.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
     "@nestjs/common": "^11.1.11",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.11",
@@ -44,7 +45,8 @@
     "typeorm": "0.3.28",
     "ws": "^8.20.0",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.30"
+    "yjs": "^13.6.30",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",

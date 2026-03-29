@@ -12,6 +12,7 @@ import { DocumentsModule } from '@modules/documents/infrastructure';
 import { PermissionsModule } from '@modules/permissions/infrastructure';
 import { CollaborationModule } from '@modules/collaboration/infrastructure';
 import { HistoryModule } from '@modules/history/infrastructure';
+import { McpModule } from '@modules/mcp/infrastructure';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { HistoryModule } from '@modules/history/infrastructure';
     PermissionsModule,
     CollaborationModule,
     HistoryModule,
+    McpModule,
   ],
 })
 export class AppModule implements NestModule {

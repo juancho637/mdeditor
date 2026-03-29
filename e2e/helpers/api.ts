@@ -132,7 +132,7 @@ export async function resetUsers(): Promise<void> {
  */
 export async function resetAndSeedUsers(): Promise<string> {
   // Clean all tables
-  runSQL('DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders; DELETE FROM users;');
+  runSQL('DELETE FROM api_keys; DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders; DELETE FROM users;');
   // Note: @nestjs/throttler uses in-memory storage. Redis FLUSHALL doesn't reset it.
   // Throttle limit is 30/min which is enough for the test suite.
 
@@ -174,7 +174,7 @@ export async function resetAndSeedUsers(): Promise<string> {
 }
 
 export async function resetCollaborationData(): Promise<void> {
-  runSQL('DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders;');
+  runSQL('DELETE FROM api_keys; DELETE FROM document_snapshots; DELETE FROM document_updates; DELETE FROM documents; DELETE FROM folder_permissions; DELETE FROM user_groups; DELETE FROM groups; DELETE FROM invitations; DELETE FROM folders;');
 }
 
 // ─── CRUD helpers ───────────────────────────────────────────────
