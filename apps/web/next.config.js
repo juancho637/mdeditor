@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   allowedDevOrigins: ['http://localhost:3000'],
   async rewrites() {
     const target = 'http://api:3000';
