@@ -35,20 +35,20 @@ function buildLineMap(previewEl: HTMLElement): { line: number; top: number }[] {
  */
 function interpolateScrollTop(targetLine: number, lineMap: { line: number; top: number }[]): number {
   if (lineMap.length === 0) return 0;
-  if (targetLine <= lineMap[0].line) return lineMap[0].top;
-  if (targetLine >= lineMap[lineMap.length - 1].line) return lineMap[lineMap.length - 1].top;
+  if (targetLine <= lineMap[0]!.line) return lineMap[0]!.top;
+  if (targetLine >= lineMap[lineMap.length - 1]!.line) return lineMap[lineMap.length - 1]!.top;
 
   // Binary search for the surrounding entries
   let lo = 0;
   let hi = lineMap.length - 1;
   while (lo < hi - 1) {
     const mid = (lo + hi) >> 1;
-    if (lineMap[mid].line <= targetLine) lo = mid;
+    if (lineMap[mid]!.line <= targetLine) lo = mid;
     else hi = mid;
   }
 
-  const a = lineMap[lo];
-  const b = lineMap[hi];
+  const a = lineMap[lo]!;
+  const b = lineMap[hi]!;
   if (a.line === b.line) return a.top;
 
   // Linear interpolation between the two bracketing entries
@@ -94,12 +94,12 @@ export function useSyncScroll({ enabled, editorView }: UseSyncScrollOptions) {
       let hi = lineMap.length - 1;
       while (lo < hi - 1) {
         const mid = (lo + hi) >> 1;
-        if (lineMap[mid].top <= currentScroll) lo = mid;
+        if (lineMap[mid]!.top <= currentScroll) lo = mid;
         else hi = mid;
       }
 
-      const a = lineMap[lo];
-      const b = lineMap[hi];
+      const a = lineMap[lo]!;
+      const b = lineMap[hi]!;
       let targetLine: number;
 
       if (a.top === b.top || a.line === b.line) {

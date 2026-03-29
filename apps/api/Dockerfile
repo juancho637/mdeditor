@@ -28,7 +28,7 @@ COPY apps/api ./apps/api
 COPY packages ./packages
 COPY turbo.json tsconfig.json ./
 RUN cd apps/api && npx nest build
-RUN pnpm --filter=api deploy /prod/api
+RUN pnpm --filter=api deploy --prod /prod/api --ignore-scripts
 
 # ---- Runner (production) ----
 FROM node:20-alpine AS runner

@@ -108,7 +108,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     setEditorScroller(el);
   }, [setEditorScroller]);
 
-  const handleEditorReady = useCallback((view: EditorView) => {
+  const handleEditorReady = useCallback((view: EditorView | null) => {
     setEditorView(view);
   }, []);
 
@@ -162,6 +162,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     const onSynced = (synced: boolean) => {
       if (synced) activateCollab();
     };
+    // @ts-expect-error y-websocket 'synced' event not in type definitions
     result.provider.on('synced', onSynced);
 
     // If already synced (e.g. fast connection), activate immediately
@@ -176,6 +177,7 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     result.yText.observe(observer);
 
     return () => {
+      // @ts-expect-error y-websocket 'synced' event not in type definitions
       result.provider.off('synced', onSynced);
       result.yText.unobserve(observer);
       destroyCollaboration();
