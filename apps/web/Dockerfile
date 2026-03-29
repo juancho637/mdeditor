@@ -28,6 +28,10 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ---- Builder (production) ----
 FROM deps AS builder
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 COPY apps/web ./apps/web
 COPY packages ./packages
 COPY turbo.json tsconfig.json ./
