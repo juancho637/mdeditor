@@ -116,6 +116,7 @@ export function useCollaborationViewModel() {
       }
     });
 
+    // @ts-expect-error y-websocket 'synced' event not in type definitions
     provider.on('synced', (synced: boolean) => {
       useCollaborationStore.getState().setSynced(synced);
     });

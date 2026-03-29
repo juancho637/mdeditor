@@ -127,7 +127,7 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
         const { yCollab } = await import('y-codemirror.next');
         if (cancelled) return;
         baseExtensions.push(
-          yCollab(yText, awareness ?? null, { undoManager: undoManager ?? undefined }),
+          yCollab(yText, awareness ?? null, { undoManager: undoManager || false }),
         );
         // Workaround: y-codemirror.next@0.3.5 never clears cursor on blur
         // (dead code: `cursor != null && hasFocus` is always false when hasFocus is false)
@@ -192,6 +192,7 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
   // Reconfigure syntax highlighting when theme changes
   useEffect(() => {
     const view = viewRef.current;
+    // @ts-expect-error EditorView.destroyed exists at runtime but not in type defs
     if (!view || view.destroyed) return;
     const isDark = resolvedTheme === Theme.DARK;
     view.dispatch({
