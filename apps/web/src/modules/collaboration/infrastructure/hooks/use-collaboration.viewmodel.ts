@@ -9,7 +9,12 @@ import { getColorForUser } from '../helpers/cursor-colors';
 import { decodeTokenPayload } from '../helpers/decode-token';
 import { ConnectionStatus } from '../../domain/enums/connection-status.enum';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000';
+function resolveWsUrl(): string {
+  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+  if (typeof window === 'undefined') return 'ws://localhost:3001';
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}`;
+}
 const OFFLINE_THRESHOLD_MS = 10_000;
 
 export function useCollaborationViewModel() {
@@ -61,7 +66,7 @@ export function useCollaborationViewModel() {
     const yText = yDoc.getText('content');
     const undoManager = new Y.UndoManager(yText);
 
-    const wsUrl = `${WS_URL}/collaboration`;
+    const wsUrl = `${resolveWsUrl()}/collaboration`;
 
     const provider = new WebsocketProvider(wsUrl, documentId, yDoc, {
       params: { token, documentId },

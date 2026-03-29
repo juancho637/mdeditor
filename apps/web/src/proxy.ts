@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 const PUBLIC_PATHS = ['/setup', '/sign-in'];
 const PUBLIC_PREFIXES = ['/invite'];
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api:3000';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
