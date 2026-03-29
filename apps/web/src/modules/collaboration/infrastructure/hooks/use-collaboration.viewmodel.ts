@@ -133,6 +133,18 @@ export function useCollaborationViewModel() {
       }, 300);
     });
 
+    // Force reconnect when tab regains focus (browser throttles WS in background tabs)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && provider.wsconnected === false) {
+        provider.connect();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // @ts-expect-error y-websocket 'destroy' event not in type definitions
+    provider.on('destroy', () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    });
+
     yDocRef.current = yDoc;
     undoManagerRef.current = undoManager;
     providerRef.current = provider;
