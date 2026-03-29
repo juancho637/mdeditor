@@ -12,7 +12,8 @@ import { DocumentsModule } from '@modules/documents/infrastructure';
 import { PermissionsModule } from '@modules/permissions/infrastructure';
 import { CollaborationModule } from '@modules/collaboration/infrastructure';
 import { HistoryModule } from '@modules/history/infrastructure';
-import { McpModule } from '@modules/mcp/infrastructure';
+import { McpCommonModule } from '@common/mcp/infrastructure';
+import { ApiKeysModule } from '@modules/api-keys/infrastructure';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { McpModule } from '@modules/mcp/infrastructure';
     DatabaseModule,
     ExceptionModule,
     ThrottlerModule,
+    McpCommonModule,
     AuthModule,
     InvitationsModule,
     GroupsModule,
@@ -28,7 +30,7 @@ import { McpModule } from '@modules/mcp/infrastructure';
     PermissionsModule,
     CollaborationModule,
     HistoryModule,
-    McpModule,
+    ApiKeysModule,
   ],
 })
 export class AppModule implements NestModule {
