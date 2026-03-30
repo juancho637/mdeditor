@@ -1,15 +1,47 @@
 import { GetSnapshotDetailUseCase } from '../get-snapshot-detail.use-case';
+import { HistoryRepositoryInterface } from '../../../domain';
+import { DocumentRepositoryInterface } from '@modules/documents/domain';
+import { CheckPermissionUseCase } from '@modules/permissions/application';
+import { ExceptionServiceInterface } from '@common/exception/domain';
 
 describe('GetSnapshotDetailUseCase', () => {
   let useCase: GetSnapshotDetailUseCase;
-  let mockHistoryRepository: any;
-  let mockDocumentRepository: any;
-  let mockCheckPermission: any;
-  let mockException: any;
+  let mockHistoryRepository: jest.Mocked<
+    Pick<HistoryRepositoryInterface, 'findSnapshotById'>
+  >;
+  let mockDocumentRepository: jest.Mocked<
+    Pick<DocumentRepositoryInterface, 'findById'>
+  >;
+  let mockCheckPermission: jest.Mocked<Pick<CheckPermissionUseCase, 'run'>>;
+  let mockException: jest.Mocked<
+    Pick<ExceptionServiceInterface, 'notFoundException' | 'forbiddenException'>
+  >;
 
-  const authUser = { id: 'user-1', email: 'test@test.com', name: 'Test', isAdmin: false };
-  const snapshot = { id: 'snap-1', documentId: 'doc-1', authorId: 'user-1', authorName: 'Test', contentMarkdown: '# Hello', createdAt: new Date() };
-  const document = { id: 'doc-1', folderId: 'folder-1', title: 'Test', slug: 'test', contentMarkdown: '', yjsState: null, createdBy: 'user-1', createdAt: new Date(), updatedAt: new Date() };
+  const authUser = {
+    id: 'user-1',
+    email: 'test@test.com',
+    name: 'Test',
+    isAdmin: false,
+  };
+  const snapshot = {
+    id: 'snap-1',
+    documentId: 'doc-1',
+    authorId: 'user-1',
+    authorName: 'Test',
+    contentMarkdown: '# Hello',
+    createdAt: new Date(),
+  };
+  const document = {
+    id: 'doc-1',
+    folderId: 'folder-1',
+    title: 'Test',
+    slug: 'test',
+    contentMarkdown: '',
+    yjsState: null,
+    createdBy: 'user-1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   beforeEach(() => {
     mockHistoryRepository = {
@@ -25,7 +57,12 @@ describe('GetSnapshotDetailUseCase', () => {
       notFoundException: jest.fn((data) => new Error(data.message.codeError)),
       forbiddenException: jest.fn((data) => new Error(data.message.codeError)),
     };
-    useCase = new GetSnapshotDetailUseCase(mockHistoryRepository, mockDocumentRepository, mockCheckPermission, mockException);
+    useCase = new GetSnapshotDetailUseCase(
+      mockHistoryRepository,
+      mockDocumentRepository,
+      mockCheckPermission,
+      mockException,
+    );
   });
 
   it('should return snapshot detail for authorized user', async () => {
@@ -42,14 +79,18 @@ describe('GetSnapshotDetailUseCase', () => {
   it('should throw HST001 if snapshot does not exist', async () => {
     mockHistoryRepository.findSnapshotById.mockResolvedValue(null);
 
-    await expect(useCase.run('doc-1', 'snap-999', authUser)).rejects.toThrow('HST001');
+    await expect(useCase.run('doc-1', 'snap-999', authUser)).rejects.toThrow(
+      'HST001',
+    );
     expect(mockException.notFoundException).toHaveBeenCalled();
   });
 
   it('should throw HST001 if snapshot belongs to different document', async () => {
     mockHistoryRepository.findSnapshotById.mockResolvedValue(snapshot);
 
-    await expect(useCase.run('doc-other', 'snap-1', authUser)).rejects.toThrow('HST001');
+    await expect(useCase.run('doc-other', 'snap-1', authUser)).rejects.toThrow(
+      'HST001',
+    );
     expect(mockException.notFoundException).toHaveBeenCalled();
   });
 
@@ -58,7 +99,9 @@ describe('GetSnapshotDetailUseCase', () => {
     mockDocumentRepository.findById.mockResolvedValue(document);
     mockCheckPermission.run.mockResolvedValue(null);
 
-    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow('PRM002');
+    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow(
+      'PRM002',
+    );
     expect(mockException.forbiddenException).toHaveBeenCalled();
   });
 });

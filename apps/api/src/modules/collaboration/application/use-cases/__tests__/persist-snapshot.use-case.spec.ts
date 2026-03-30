@@ -1,11 +1,22 @@
 import * as Y from 'yjs';
 import { PersistSnapshotUseCase } from '../persist-snapshot.use-case';
+import { DocumentRepositoryInterface } from '@modules/documents/domain';
+import {
+  DocumentSnapshotRepositoryInterface,
+  DocumentUpdateRepositoryInterface,
+} from '../../../domain';
 
 describe('PersistSnapshotUseCase', () => {
   let useCase: PersistSnapshotUseCase;
-  let mockDocumentRepository: any;
-  let mockSnapshotRepository: any;
-  let mockUpdateRepository: any;
+  let mockDocumentRepository: jest.Mocked<
+    Pick<DocumentRepositoryInterface, 'update'>
+  >;
+  let mockSnapshotRepository: jest.Mocked<
+    Pick<DocumentSnapshotRepositoryInterface, 'saveSnapshot'>
+  >;
+  let mockUpdateRepository: jest.Mocked<
+    Pick<DocumentUpdateRepositoryInterface, 'deleteBeforeDate'>
+  >;
 
   beforeEach(() => {
     mockDocumentRepository = {
@@ -17,7 +28,11 @@ describe('PersistSnapshotUseCase', () => {
     mockUpdateRepository = {
       deleteBeforeDate: jest.fn().mockResolvedValue(undefined),
     };
-    useCase = new PersistSnapshotUseCase(mockDocumentRepository, mockSnapshotRepository, mockUpdateRepository);
+    useCase = new PersistSnapshotUseCase(
+      mockDocumentRepository,
+      mockSnapshotRepository,
+      mockUpdateRepository,
+    );
   });
 
   it('should save snapshot, update document, and cleanup old updates', async () => {
@@ -38,7 +53,10 @@ describe('PersistSnapshotUseCase', () => {
       contentMarkdown: '# Test Content',
     });
 
-    expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith('doc-1', expect.any(Date));
+    expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith(
+      'doc-1',
+      expect.any(Date),
+    );
 
     yDoc.destroy();
   });
@@ -55,7 +73,10 @@ describe('PersistSnapshotUseCase', () => {
       undefined,
     );
 
-    expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith('doc-1', expect.any(Date));
+    expect(mockUpdateRepository.deleteBeforeDate).toHaveBeenCalledWith(
+      'doc-1',
+      expect.any(Date),
+    );
 
     yDoc.destroy();
   });

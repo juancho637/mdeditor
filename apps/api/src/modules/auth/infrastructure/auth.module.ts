@@ -18,7 +18,11 @@ import {
   AuthServiceInterface,
   TokenRevocationRepositoryInterface,
 } from '../domain';
-import { SetupUseCase, SignInUseCase, RefreshTokenUseCase } from '../application';
+import {
+  SetupUseCase,
+  SignInUseCase,
+  RefreshTokenUseCase,
+} from '../application';
 import {
   UsersProvidersEnum,
   UserRepositoryInterface,
@@ -42,12 +46,19 @@ import { RedisModule } from '@common/redis/infrastructure/redis.module';
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.getOrThrow<string>('JWT_EXPIRATION') as any,
+          expiresIn: configService.getOrThrow('JWT_EXPIRATION') as never,
         },
       }),
     }),
   ],
-  controllers: [SetupController, StatusController, HealthController, SignInController, RefreshTokenController, LogoutController],
+  controllers: [
+    SetupController,
+    StatusController,
+    HealthController,
+    SignInController,
+    RefreshTokenController,
+    LogoutController,
+  ],
   providers: [
     JwtStrategy,
     JwtAuthGuard,
@@ -60,8 +71,7 @@ import { RedisModule } from '@common/redis/infrastructure/redis.module';
     {
       inject: [RedisProvidersEnum.REDIS_CLIENT],
       provide: AuthUseCasesEnum.TOKEN_REVOCATION_REPOSITORY,
-      useFactory: (redis: Redis) =>
-        new TokenRevocationRedisRepository(redis),
+      useFactory: (redis: Redis) => new TokenRevocationRedisRepository(redis),
     },
     {
       inject: [
@@ -76,7 +86,13 @@ import { RedisModule } from '@common/redis/infrastructure/redis.module';
         createUserUseCase: CreateUserUseCase,
         authService: AuthServiceInterface,
         exception: ExceptionServiceInterface,
-      ) => new SetupUseCase(userRepository, createUserUseCase, authService, exception),
+      ) =>
+        new SetupUseCase(
+          userRepository,
+          createUserUseCase,
+          authService,
+          exception,
+        ),
     },
     {
       inject: [
@@ -108,9 +124,22 @@ import { RedisModule } from '@common/redis/infrastructure/redis.module';
         exception: ExceptionServiceInterface,
         configService: ConfigService,
         tokenRevocation: TokenRevocationRepositoryInterface,
-      ) => new RefreshTokenUseCase(jwtService, userRepository, authService, exception, configService, tokenRevocation),
+      ) =>
+        new RefreshTokenUseCase(
+          jwtService,
+          userRepository,
+          authService,
+          exception,
+          configService,
+          tokenRevocation,
+        ),
     },
   ],
-  exports: [AuthUseCasesEnum.SETUP_USE_CASE, AuthUseCasesEnum.AUTH_SERVICE, JwtAuthGuard, JwtModule],
+  exports: [
+    AuthUseCasesEnum.SETUP_USE_CASE,
+    AuthUseCasesEnum.AUTH_SERVICE,
+    JwtAuthGuard,
+    JwtModule,
+  ],
 })
 export class AuthModule {}

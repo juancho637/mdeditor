@@ -1,14 +1,32 @@
 import { RestoreSnapshotUseCase } from '../restore-snapshot.use-case';
+import { HistoryRepositoryInterface } from '../../../domain';
+import { DocumentRepositoryInterface } from '@modules/documents/domain';
+import { CheckPermissionUseCase } from '@modules/permissions/application';
+import { DocumentSyncServiceInterface } from '@modules/collaboration/domain';
+import { ExceptionServiceInterface } from '@common/exception/domain';
 
 describe('RestoreSnapshotUseCase', () => {
   let useCase: RestoreSnapshotUseCase;
-  let mockHistoryRepository: any;
-  let mockDocumentRepository: any;
-  let mockCheckPermission: any;
-  let mockSyncService: any;
-  let mockException: any;
+  let mockHistoryRepository: jest.Mocked<
+    Pick<HistoryRepositoryInterface, 'findSnapshotById' | 'saveSnapshot'>
+  >;
+  let mockDocumentRepository: jest.Mocked<
+    Pick<DocumentRepositoryInterface, 'findById' | 'update'>
+  >;
+  let mockCheckPermission: jest.Mocked<Pick<CheckPermissionUseCase, 'run'>>;
+  let mockSyncService: jest.Mocked<
+    Pick<DocumentSyncServiceInterface, 'forceDocumentReload'>
+  >;
+  let mockException: jest.Mocked<
+    Pick<ExceptionServiceInterface, 'notFoundException' | 'forbiddenException'>
+  >;
 
-  const authUser = { id: 'user-1', email: 'test@test.com', name: 'Test', isAdmin: false };
+  const authUser = {
+    id: 'user-1',
+    email: 'test@test.com',
+    name: 'Test',
+    isAdmin: false,
+  };
   const snapshot = {
     id: 'snap-1',
     documentId: 'doc-1',
@@ -87,14 +105,18 @@ describe('RestoreSnapshotUseCase', () => {
   it('should throw HST001 if snapshot does not exist', async () => {
     mockHistoryRepository.findSnapshotById.mockResolvedValue(null);
 
-    await expect(useCase.run('doc-1', 'snap-999', authUser)).rejects.toThrow('HST001');
+    await expect(useCase.run('doc-1', 'snap-999', authUser)).rejects.toThrow(
+      'HST001',
+    );
     expect(mockException.notFoundException).toHaveBeenCalled();
   });
 
   it('should throw HST001 if snapshot belongs to different document', async () => {
     mockHistoryRepository.findSnapshotById.mockResolvedValue(snapshot);
 
-    await expect(useCase.run('doc-other', 'snap-1', authUser)).rejects.toThrow('HST001');
+    await expect(useCase.run('doc-other', 'snap-1', authUser)).rejects.toThrow(
+      'HST001',
+    );
     expect(mockException.notFoundException).toHaveBeenCalled();
   });
 
@@ -102,7 +124,9 @@ describe('RestoreSnapshotUseCase', () => {
     mockHistoryRepository.findSnapshotById.mockResolvedValue(snapshot);
     mockDocumentRepository.findById.mockResolvedValue(null);
 
-    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow('DOC001');
+    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow(
+      'DOC001',
+    );
     expect(mockException.notFoundException).toHaveBeenCalled();
   });
 
@@ -111,7 +135,9 @@ describe('RestoreSnapshotUseCase', () => {
     mockDocumentRepository.findById.mockResolvedValue(document);
     mockCheckPermission.run.mockResolvedValue(null);
 
-    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow('PRM002');
+    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow(
+      'PRM002',
+    );
     expect(mockException.forbiddenException).toHaveBeenCalled();
   });
 
@@ -120,7 +146,9 @@ describe('RestoreSnapshotUseCase', () => {
     mockDocumentRepository.findById.mockResolvedValue(document);
     mockCheckPermission.run.mockResolvedValue('view');
 
-    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow('PRM002');
+    await expect(useCase.run('doc-1', 'snap-1', authUser)).rejects.toThrow(
+      'PRM002',
+    );
     expect(mockException.forbiddenException).toHaveBeenCalled();
   });
 });

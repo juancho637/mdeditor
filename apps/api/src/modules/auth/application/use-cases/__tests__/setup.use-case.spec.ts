@@ -19,11 +19,15 @@ describe('SetupUseCase', () => {
       count: jest.fn(),
     };
 
-    createUserUseCase = { run: jest.fn() } as any;
+    createUserUseCase = { run: jest.fn() } as jest.Mocked<
+      Pick<CreateUserUseCase, 'run'>
+    > as jest.Mocked<CreateUserUseCase>;
     authService = { generateTokens: jest.fn() };
 
     exception = {
-      badRequestException: jest.fn().mockReturnValue(new Error('Setup already completed.')),
+      badRequestException: jest
+        .fn()
+        .mockReturnValue(new Error('Setup already completed.')),
       unauthorizedException: jest.fn(),
       forbiddenException: jest.fn(),
       notFoundException: jest.fn(),
@@ -31,7 +35,12 @@ describe('SetupUseCase', () => {
       internalServerErrorException: jest.fn(),
     };
 
-    setupUseCase = new SetupUseCase(userRepository, createUserUseCase, authService, exception);
+    setupUseCase = new SetupUseCase(
+      userRepository,
+      createUserUseCase,
+      authService,
+      exception,
+    );
   });
 
   it('should create admin user and return tokens when no users exist', async () => {
@@ -69,7 +78,11 @@ describe('SetupUseCase', () => {
     userRepository.count.mockResolvedValue(1);
 
     await expect(
-      setupUseCase.run({ name: 'Admin', email: 'admin@test.com', password: 'password123' }),
+      setupUseCase.run({
+        name: 'Admin',
+        email: 'admin@test.com',
+        password: 'password123',
+      }),
     ).rejects.toThrow('Setup already completed.');
 
     expect(exception.badRequestException).toHaveBeenCalledWith(

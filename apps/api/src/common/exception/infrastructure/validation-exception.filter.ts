@@ -16,8 +16,11 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const requestId = request['requestId'] || 'unknown';
-    const exceptionResponse = exception.getResponse() as Record<string, unknown>;
+    const requestId = request.requestId || 'unknown';
+    const exceptionResponse = exception.getResponse() as Record<
+      string,
+      unknown
+    >;
 
     // class-validator errors: message is string[]
     if (Array.isArray(exceptionResponse.message)) {

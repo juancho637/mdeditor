@@ -1,5 +1,8 @@
 import { CreateInvitationUseCase } from '../create-invitation.use-case';
-import { InvitationRepositoryInterface } from '../../../domain';
+import {
+  InvitationRepositoryInterface,
+  InvitationStatus,
+} from '../../../domain';
 import { UserRepositoryInterface } from '@modules/users/domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
 
@@ -27,7 +30,9 @@ describe('CreateInvitationUseCase', () => {
     };
 
     exception = {
-      badRequestException: jest.fn().mockImplementation(({ message }) => new Error(message.message)),
+      badRequestException: jest
+        .fn()
+        .mockImplementation(({ message }) => new Error(message.message)),
       unauthorizedException: jest.fn(),
       forbiddenException: jest.fn(),
       notFoundException: jest.fn(),
@@ -35,7 +40,11 @@ describe('CreateInvitationUseCase', () => {
       internalServerErrorException: jest.fn(),
     };
 
-    useCase = new CreateInvitationUseCase(invitationRepository, userRepository, exception);
+    useCase = new CreateInvitationUseCase(
+      invitationRepository,
+      userRepository,
+      exception,
+    );
   });
 
   it('should create invitation when email is valid and not registered', async () => {
@@ -45,13 +54,16 @@ describe('CreateInvitationUseCase', () => {
       id: 'inv-1',
       email: 'new@test.com',
       token: 'uuid-token',
-      status: 'pending' as any,
+      status: InvitationStatus.PENDING,
       invitedBy: 'admin-1',
       createdAt: new Date(),
       acceptedAt: null,
     });
 
-    const result = await useCase.run({ email: 'New@Test.com', invitedBy: 'admin-1' });
+    const result = await useCase.run({
+      email: 'New@Test.com',
+      invitedBy: 'admin-1',
+    });
 
     expect(result.email).toBe('new@test.com');
     expect(userRepository.findByEmail).toHaveBeenCalledWith('new@test.com');
@@ -62,8 +74,12 @@ describe('CreateInvitationUseCase', () => {
 
   it('should throw INV003 when email already has an account', async () => {
     userRepository.findByEmail.mockResolvedValue({
-      id: 'user-1', name: 'Existing', email: 'exists@test.com',
-      isAdmin: false, createdAt: new Date(), updatedAt: new Date(),
+      id: 'user-1',
+      name: 'Existing',
+      email: 'exists@test.com',
+      isAdmin: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     await expect(
@@ -76,9 +92,13 @@ describe('CreateInvitationUseCase', () => {
   it('should throw INV004 when pending invitation exists', async () => {
     userRepository.findByEmail.mockResolvedValue(null);
     invitationRepository.findPendingByEmail.mockResolvedValue({
-      id: 'inv-old', email: 'pending@test.com', token: 'old-token',
-      status: 'pending' as any, invitedBy: 'admin-1',
-      createdAt: new Date(), acceptedAt: null,
+      id: 'inv-old',
+      email: 'pending@test.com',
+      token: 'old-token',
+      status: InvitationStatus.PENDING,
+      invitedBy: 'admin-1',
+      createdAt: new Date(),
+      acceptedAt: null,
     });
 
     await expect(

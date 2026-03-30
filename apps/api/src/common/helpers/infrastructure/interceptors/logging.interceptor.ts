@@ -11,9 +11,10 @@ import { Request } from 'express';
 
 function extractIp(request: Request): string {
   const forwarded = request.headers['x-forwarded-for'];
-  const raw = typeof forwarded === 'string'
-    ? (forwarded.split(',')[0] ?? '').trim()
-    : request.socket.remoteAddress || 'unknown';
+  const raw =
+    typeof forwarded === 'string'
+      ? (forwarded.split(',')[0] ?? '').trim()
+      : request.socket.remoteAddress || 'unknown';
   return raw.replace(/^::ffff:/, '');
 }
 
@@ -24,7 +25,7 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
     const { method, url } = request;
-    const requestId = request['requestId'] || 'unknown';
+    const requestId = request.requestId || 'unknown';
     const ip = extractIp(request);
     const start = Date.now();
 
