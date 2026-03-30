@@ -1,11 +1,21 @@
 import * as Y from 'yjs';
-import { DocumentRepositoryInterface, documentErrorsCodes } from '@modules/documents/domain';
+import {
+  DocumentRepositoryInterface,
+  documentErrorsCodes,
+} from '@modules/documents/domain';
 import { CheckPermissionUseCase } from '@modules/permissions/application';
-import { PermissionLevel, permissionErrorsCodes } from '@modules/permissions/domain';
-import { DocumentSyncServiceInterface } from '@modules/collaboration/domain';
+import {
+  PermissionLevel,
+  permissionErrorsCodes,
+} from '@modules/permissions/domain';
+import { DocumentSyncServiceInterface } from '@modules/documents/domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
 import { AuthenticatedUserType } from '@common/helpers/domain/types/authenticated-user.type';
-import { HistoryRepositoryInterface, RestoreSnapshotResultType, historyErrorsCodes } from '../../domain';
+import {
+  HistoryRepositoryInterface,
+  RestoreSnapshotResultType,
+  historyErrorsCodes,
+} from '../../domain';
 
 export class RestoreSnapshotUseCase {
   private readonly context = RestoreSnapshotUseCase.name;
@@ -39,7 +49,10 @@ export class RestoreSnapshotUseCase {
       });
     }
 
-    const permission = await this.checkPermission.run(authUser.id, document.folderId);
+    const permission = await this.checkPermission.run(
+      authUser.id,
+      document.folderId,
+    );
     if (!permission || permission === PermissionLevel.VIEW) {
       throw this.exception.forbiddenException({
         message: permissionErrorsCodes.PRM002,

@@ -8,11 +8,12 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { ApiKeyAuth } from '@common/helpers/infrastructure';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { randomUUID } from 'crypto';
 
 import { McpServerService } from '../services/mcp-server.service';
-import { McpCommonProvidersEnum } from '../mcp-common-providers.enum';
+import { McpCommonProvidersEnum } from '../../domain/mcp-common-providers.enum';
 
 @Controller()
 export class McpController {
@@ -23,6 +24,7 @@ export class McpController {
     private readonly mcpServerService: McpServerService,
   ) {}
 
+  @ApiKeyAuth()
   @Post('api/mcp')
   async handlePost(@Req() req: Request, @Res() res: Response): Promise<void> {
     const userId = (req as Request & { user?: { id: string } }).user?.id;
@@ -68,6 +70,7 @@ export class McpController {
     }
   }
 
+  @ApiKeyAuth()
   @Get('api/mcp')
   async handleGet(@Req() req: Request, @Res() res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -81,6 +84,7 @@ export class McpController {
     await transport.handleRequest(req, res);
   }
 
+  @ApiKeyAuth()
   @Delete('api/mcp')
   async handleDelete(@Req() req: Request, @Res() res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
