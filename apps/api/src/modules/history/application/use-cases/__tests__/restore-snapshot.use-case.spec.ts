@@ -2,7 +2,7 @@ import { RestoreSnapshotUseCase } from '../restore-snapshot.use-case';
 import { HistoryRepositoryInterface } from '../../../domain';
 import { DocumentRepositoryInterface } from '@modules/documents/domain';
 import { CheckPermissionUseCase } from '@modules/permissions/application';
-import { DocumentSyncServiceInterface } from '@modules/collaboration/domain';
+import { DocumentSyncServiceInterface } from '@modules/documents/domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
 
 describe('RestoreSnapshotUseCase', () => {

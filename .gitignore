@@ -3,6 +3,9 @@ node_modules
 .pnp
 .pnp.js
 
+# MCP configuration (contains API keys)
+.mcp.json
+
 # Environment files (only .env.example gets committed)
 .env
 .env.local

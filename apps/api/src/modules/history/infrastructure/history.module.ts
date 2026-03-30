@@ -4,15 +4,24 @@ import { Repository } from 'typeorm';
 import { DocumentSnapshotEntity } from '@modules/documents/infrastructure/persistence/document-snapshot.entity';
 import { DocumentsModule } from '@modules/documents/infrastructure';
 import { PermissionsModule } from '@modules/permissions/infrastructure';
-import { CollaborationModule } from '@modules/collaboration/infrastructure';
-import { DocumentProvidersEnum, DocumentRepositoryInterface } from '@modules/documents/domain';
+import {
+  DocumentProvidersEnum,
+  DocumentRepositoryInterface,
+  DocumentSyncServiceInterface,
+} from '@modules/documents/domain';
 import { PermissionProvidersEnum } from '@modules/permissions/domain';
 import { CheckPermissionUseCase } from '@modules/permissions/application';
-import { CollaborationProvidersEnum, DocumentSyncServiceInterface } from '@modules/collaboration/domain';
-import { ExceptionProvidersEnum, ExceptionServiceInterface } from '@common/exception/domain';
+import {
+  ExceptionProvidersEnum,
+  ExceptionServiceInterface,
+} from '@common/exception/domain';
 import { HistoryProvidersEnum, HistoryRepositoryInterface } from '../domain';
 import { HistoryOrmRepository } from './persistence/history-orm.repository';
-import { ListDocumentSnapshotsUseCase, GetSnapshotDetailUseCase, RestoreSnapshotUseCase } from '../application';
+import {
+  ListDocumentSnapshotsUseCase,
+  GetSnapshotDetailUseCase,
+  RestoreSnapshotUseCase,
+} from '../application';
 import { ListDocumentSnapshotsController } from './api/list-document-snapshots.controller';
 import { GetSnapshotDetailController } from './api/get-snapshot-detail.controller';
 import { RestoreSnapshotController } from './api/restore-snapshot.controller';
@@ -22,7 +31,6 @@ import { RestoreSnapshotController } from './api/restore-snapshot.controller';
     TypeOrmModule.forFeature([DocumentSnapshotEntity]),
     DocumentsModule,
     PermissionsModule,
-    CollaborationModule,
   ],
   controllers: [
     ListDocumentSnapshotsController,
@@ -31,10 +39,15 @@ import { RestoreSnapshotController } from './api/restore-snapshot.controller';
   ],
   providers: [
     {
-      inject: [getRepositoryToken(DocumentSnapshotEntity), ExceptionProvidersEnum.EXCEPTION_SERVICE],
+      inject: [
+        getRepositoryToken(DocumentSnapshotEntity),
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
       provide: HistoryProvidersEnum.HISTORY_REPOSITORY,
-      useFactory: (repo: Repository<DocumentSnapshotEntity>, ex: ExceptionServiceInterface) =>
-        new HistoryOrmRepository(repo, ex),
+      useFactory: (
+        repo: Repository<DocumentSnapshotEntity>,
+        ex: ExceptionServiceInterface,
+      ) => new HistoryOrmRepository(repo, ex),
     },
     {
       inject: [
@@ -49,7 +62,13 @@ import { RestoreSnapshotController } from './api/restore-snapshot.controller';
         docRepo: DocumentRepositoryInterface,
         checkPermission: CheckPermissionUseCase,
         ex: ExceptionServiceInterface,
-      ) => new ListDocumentSnapshotsUseCase(historyRepo, docRepo, checkPermission, ex),
+      ) =>
+        new ListDocumentSnapshotsUseCase(
+          historyRepo,
+          docRepo,
+          checkPermission,
+          ex,
+        ),
     },
     {
       inject: [
@@ -64,14 +83,15 @@ import { RestoreSnapshotController } from './api/restore-snapshot.controller';
         docRepo: DocumentRepositoryInterface,
         checkPermission: CheckPermissionUseCase,
         ex: ExceptionServiceInterface,
-      ) => new GetSnapshotDetailUseCase(historyRepo, docRepo, checkPermission, ex),
+      ) =>
+        new GetSnapshotDetailUseCase(historyRepo, docRepo, checkPermission, ex),
     },
     {
       inject: [
         HistoryProvidersEnum.HISTORY_REPOSITORY,
         DocumentProvidersEnum.DOCUMENT_REPOSITORY,
         PermissionProvidersEnum.CHECK_PERMISSION_USE_CASE,
-        CollaborationProvidersEnum.DOCUMENT_SYNC_SERVICE,
+        DocumentProvidersEnum.DOCUMENT_SYNC_SERVICE,
         ExceptionProvidersEnum.EXCEPTION_SERVICE,
       ],
       provide: HistoryProvidersEnum.RESTORE_SNAPSHOT_USE_CASE,
@@ -81,7 +101,14 @@ import { RestoreSnapshotController } from './api/restore-snapshot.controller';
         checkPermission: CheckPermissionUseCase,
         syncService: DocumentSyncServiceInterface,
         ex: ExceptionServiceInterface,
-      ) => new RestoreSnapshotUseCase(historyRepo, docRepo, checkPermission, syncService, ex),
+      ) =>
+        new RestoreSnapshotUseCase(
+          historyRepo,
+          docRepo,
+          checkPermission,
+          syncService,
+          ex,
+        ),
     },
   ],
 })

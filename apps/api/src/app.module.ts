@@ -10,7 +10,6 @@ import { GroupsModule } from '@modules/groups/infrastructure';
 import { FoldersModule } from '@modules/folders/infrastructure';
 import { DocumentsModule } from '@modules/documents/infrastructure';
 import { PermissionsModule } from '@modules/permissions/infrastructure';
-import { CollaborationModule } from '@modules/collaboration/infrastructure';
 import { HistoryModule } from '@modules/history/infrastructure';
 import { McpCommonModule } from '@common/mcp/infrastructure';
 import { ApiKeysModule } from '@modules/api-keys/infrastructure';
@@ -28,7 +27,6 @@ import { ApiKeysModule } from '@modules/api-keys/infrastructure';
     FoldersModule,
     DocumentsModule,
     PermissionsModule,
-    CollaborationModule,
     HistoryModule,
     ApiKeysModule,
   ],
