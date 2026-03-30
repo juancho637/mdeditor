@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 
-import { ApiKeyProvidersEnum } from '../../domain';
-import { ValidateApiKeyUseCase } from '../../application';
+import { ApiKeyProvidersEnum } from '@modules/api-keys/domain';
+import { ValidateApiKeyUseCase } from '@modules/api-keys/application';
 
 @Injectable()
 export class ApiKeyAuthGuard implements CanActivate {
