@@ -17,18 +17,29 @@ import { ActivityPanel } from '@/modules/history/infrastructure/components/Activ
 import { useHistoryStore } from '@/modules/history/infrastructure/state/history.state';
 
 const CodeMirrorEditor = dynamic(
-  () => import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
-  { ssr: false, loading: () => <div className="flex-1 animate-pulse bg-muted" /> },
+  () =>
+    import('./CodeMirrorEditor').then((m) => ({ default: m.CodeMirrorEditor })),
+  {
+    ssr: false,
+    loading: () => <div className="flex-1 animate-pulse bg-muted" />,
+  },
 );
 
 const MarkdownPreview = dynamic(
-  () => import('./MarkdownPreview').then((m) => ({ default: m.MarkdownPreview })),
-  { ssr: false, loading: () => <div className="flex-1 animate-pulse bg-muted" /> },
+  () =>
+    import('./MarkdownPreview').then((m) => ({ default: m.MarkdownPreview })),
+  {
+    ssr: false,
+    loading: () => <div className="flex-1 animate-pulse bg-muted" />,
+  },
 );
 
 const SplitView = dynamic(
   () => import('./SplitView').then((m) => ({ default: m.SplitView })),
-  { ssr: false, loading: () => <div className="flex-1 animate-pulse bg-muted" /> },
+  {
+    ssr: false,
+    loading: () => <div className="flex-1 animate-pulse bg-muted" />,
+  },
 );
 
 enum EditorMode {
@@ -42,7 +53,11 @@ const EDITOR_MODE_STORAGE_KEY = 'editor-mode-preference';
 function getStoredMode(): EditorMode {
   if (typeof window === 'undefined') return EditorMode.HYBRID;
   const stored = localStorage.getItem(EDITOR_MODE_STORAGE_KEY);
-  if (stored === EditorMode.EDITOR || stored === EditorMode.HYBRID || stored === EditorMode.PREVIEW) {
+  if (
+    stored === EditorMode.EDITOR ||
+    stored === EditorMode.HYBRID ||
+    stored === EditorMode.PREVIEW
+  ) {
     return stored;
   }
   return EditorMode.HYBRID;
@@ -63,7 +78,12 @@ interface DocumentEditorProps {
   onSave: (id: string, contentMarkdown: string) => Promise<void>;
 }
 
-export function DocumentEditor({ document, saveStatus, readOnly, onSave }: DocumentEditorProps) {
+export function DocumentEditor({
+  document,
+  saveStatus,
+  readOnly,
+  onSave,
+}: DocumentEditorProps) {
   const [content, setContent] = useState(document.contentMarkdown);
   const [mode, setMode] = useState<EditorMode>(() =>
     readOnly ? EditorMode.PREVIEW : getStoredMode(),
@@ -76,8 +96,10 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
 
   // Collaboration state
   const {
-    initCollaboration, destroyCollaboration,
-    isSynced, saveStatus: collabSaveStatus,
+    initCollaboration,
+    destroyCollaboration,
+    isSynced,
+    saveStatus: collabSaveStatus,
     connectionStatus,
   } = useCollaborationViewModel();
   const [collabState, setCollabState] = useState<{
@@ -85,7 +107,9 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     undoManager: Y.UndoManager;
     awareness: any;
   } | null>(null);
-  const [previewContent, setPreviewContent] = useState(document.contentMarkdown);
+  const [previewContent, setPreviewContent] = useState(
+    document.contentMarkdown,
+  );
 
   const { connectedUsers } = usePresence(collabState?.awareness ?? null);
   const { isPanelOpen, togglePanel } = useHistoryStore();
@@ -100,13 +124,19 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
     editorView,
   });
 
-  const previewRef = useCallback((el: HTMLDivElement | null) => {
-    setPreviewScroller(el);
-  }, [setPreviewScroller]);
+  const previewRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      setPreviewScroller(el);
+    },
+    [setPreviewScroller],
+  );
 
-  const handleScrollerReady = useCallback((el: HTMLElement | null) => {
-    setEditorScroller(el);
-  }, [setEditorScroller]);
+  const handleScrollerReady = useCallback(
+    (el: HTMLElement | null) => {
+      setEditorScroller(el);
+    },
+    [setEditorScroller],
+  );
 
   const handleEditorReady = useCallback((view: EditorView | null) => {
     setEditorView(view);
@@ -130,7 +160,8 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
   useEffect(() => {
     if (mode === EditorMode.PREVIEW || mode === EditorMode.HYBRID) {
       const restoreScroll = () => {
-        const previewEl = globalThis.document?.querySelector('.prose-container');
+        const previewEl =
+          globalThis.document?.querySelector('.prose-container');
         if (previewEl && previewScrollRef.current > 0) {
           previewEl.scrollTop = previewScrollRef.current;
         }
@@ -146,7 +177,9 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
 
     const result = initCollaboration(document.id);
     if (!result) {
-      return () => { destroyCollaboration(); };
+      return () => {
+        destroyCollaboration();
+      };
     }
 
     // Switch to collaborative mode once synced
@@ -233,8 +266,10 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
 
   const saveStatusLabel = useMemo(() => {
     if (readOnly) return 'Solo lectura';
-    if (effectiveSaveStatus === 'saving' || effectiveSaveStatus === 'syncing') return 'Guardando...';
-    if (effectiveSaveStatus === 'saved' || effectiveSaveStatus === 'synced') return '✓ Guardado';
+    if (effectiveSaveStatus === 'saving' || effectiveSaveStatus === 'syncing')
+      return 'Guardando...';
+    if (effectiveSaveStatus === 'saved' || effectiveSaveStatus === 'synced')
+      return '✓ Guardado';
     return '';
   }, [readOnly, effectiveSaveStatus]);
 
@@ -243,7 +278,10 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-medium">{document.title}</h2>
-          <div className="flex gap-1 bg-muted rounded-md p-0.5" data-testid="mode-tabs">
+          <div
+            className="flex gap-1 bg-muted rounded-md p-0.5"
+            data-testid="mode-tabs"
+          >
             {!readOnly && (
               <>
                 <button
@@ -316,7 +354,11 @@ export function DocumentEditor({ document, saveStatus, readOnly, onSave }: Docum
             />
           )}
 
-          {mode === EditorMode.PREVIEW && <MarkdownPreview content={previewContent} />}
+          {mode === EditorMode.PREVIEW && (
+            <div className="h-full overflow-y-auto">
+              <MarkdownPreview content={previewContent} />
+            </div>
+          )}
 
           {mode === EditorMode.HYBRID && !readOnly && (
             <SplitView
