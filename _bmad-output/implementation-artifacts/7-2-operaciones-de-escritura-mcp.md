@@ -1,6 +1,6 @@
 # Story 7.2: Operaciones de Escritura MCP
 
-Status: review
+Status: done
 
 ## Story
 

@@ -89,7 +89,7 @@ development_status:
   # Epic 7: Integración MCP para Herramientas de IA
   epic-7: in-progress
   7-1-servidor-mcp-con-operaciones-de-lectura: done
-  7-2-operaciones-de-escritura-mcp: review
+  7-2-operaciones-de-escritura-mcp: done
   7-3-gestion-de-api-keys: backlog
   epic-7-retrospective: optional
 
