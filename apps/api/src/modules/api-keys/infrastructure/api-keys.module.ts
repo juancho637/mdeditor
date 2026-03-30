@@ -8,14 +8,25 @@ import {
 } from '@common/exception/domain';
 
 import { ApiKeyProvidersEnum, ApiKeyRepositoryInterface } from '../domain';
-import { ValidateApiKeyUseCase, CreateApiKeyUseCase } from '../application';
+import {
+  ValidateApiKeyUseCase,
+  CreateApiKeyUseCase,
+  ListApiKeysUseCase,
+  RevokeApiKeyUseCase,
+} from '../application';
 import { ApiKeyEntity } from './persistence/api-key.entity';
 import { ApiKeyOrmRepository } from './persistence/api-key-orm.repository';
 import { CreateApiKeyController } from './api/create-api-key.controller';
+import { ListApiKeysController } from './api/list-api-keys.controller';
+import { RevokeApiKeyController } from './api/revoke-api-key.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ApiKeyEntity])],
-  controllers: [CreateApiKeyController],
+  controllers: [
+    CreateApiKeyController,
+    ListApiKeysController,
+    RevokeApiKeyController,
+  ],
   providers: [
     {
       inject: [
@@ -40,10 +51,27 @@ import { CreateApiKeyController } from './api/create-api-key.controller';
       ) => new ValidateApiKeyUseCase(repo, ex),
     },
     {
-      inject: [ApiKeyProvidersEnum.API_KEY_REPOSITORY],
+      inject: [
+        ApiKeyProvidersEnum.API_KEY_REPOSITORY,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
       provide: ApiKeyProvidersEnum.CREATE_API_KEY_USE_CASE,
+      useFactory: (
+        repo: ApiKeyRepositoryInterface,
+        ex: ExceptionServiceInterface,
+      ) => new CreateApiKeyUseCase(repo, ex),
+    },
+    {
+      inject: [ApiKeyProvidersEnum.API_KEY_REPOSITORY],
+      provide: ApiKeyProvidersEnum.LIST_API_KEYS_USE_CASE,
       useFactory: (repo: ApiKeyRepositoryInterface) =>
-        new CreateApiKeyUseCase(repo),
+        new ListApiKeysUseCase(repo),
+    },
+    {
+      inject: [ApiKeyProvidersEnum.API_KEY_REPOSITORY],
+      provide: ApiKeyProvidersEnum.REVOKE_API_KEY_USE_CASE,
+      useFactory: (repo: ApiKeyRepositoryInterface) =>
+        new RevokeApiKeyUseCase(repo),
     },
   ],
   exports: [

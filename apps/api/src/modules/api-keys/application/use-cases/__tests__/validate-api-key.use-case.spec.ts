@@ -25,17 +25,24 @@ describe('ValidateApiKeyUseCase', () => {
   beforeEach(() => {
     apiKeyRepository = {
       findByKeyHash: jest.fn(),
+      findByUserId: jest.fn(),
+      countActiveByUserId: jest.fn(),
       create: jest.fn(),
+      deactivate: jest.fn(),
       updateLastUsed: jest.fn().mockResolvedValue(undefined),
     };
 
     exceptionService = {
-      unauthorizedException: jest.fn().mockReturnValue(new Error('Unauthorized')),
+      unauthorizedException: jest
+        .fn()
+        .mockReturnValue(new Error('Unauthorized')),
       badRequestException: jest.fn().mockReturnValue(new Error('Bad Request')),
       forbiddenException: jest.fn().mockReturnValue(new Error('Forbidden')),
       notFoundException: jest.fn().mockReturnValue(new Error('Not Found')),
       conflictException: jest.fn().mockReturnValue(new Error('Conflict')),
-      internalServerErrorException: jest.fn().mockReturnValue(new Error('Internal')),
+      internalServerErrorException: jest
+        .fn()
+        .mockReturnValue(new Error('Internal')),
     };
 
     useCase = new ValidateApiKeyUseCase(apiKeyRepository, exceptionService);
@@ -62,7 +69,10 @@ describe('ValidateApiKeyUseCase', () => {
   });
 
   it('should throw AKY001 when key is inactive', async () => {
-    apiKeyRepository.findByKeyHash.mockResolvedValue({ ...mockApiKey, isActive: false });
+    apiKeyRepository.findByKeyHash.mockResolvedValue({
+      ...mockApiKey,
+      isActive: false,
+    });
 
     await expect(useCase.run(rawKey)).rejects.toThrow();
     expect(exceptionService.unauthorizedException).toHaveBeenCalledWith({

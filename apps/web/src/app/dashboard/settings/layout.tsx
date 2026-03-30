@@ -7,9 +7,14 @@ const settingsLinks = [
   { href: '/dashboard/settings/users', label: 'Usuarios' },
   { href: '/dashboard/settings/groups', label: 'Grupos' },
   { href: '/dashboard/settings/permissions', label: 'Permisos' },
+  { href: '/dashboard/settings/api-keys', label: 'API Keys' },
 ];
 
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+export default function SettingsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
 
   return (

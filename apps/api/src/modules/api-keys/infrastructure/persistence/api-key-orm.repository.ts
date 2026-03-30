@@ -2,7 +2,12 @@ import { Repository } from 'typeorm';
 
 import { ExceptionServiceInterface } from '@common/exception/domain';
 
-import { ApiKeyRepositoryInterface, ApiKeyType, CreateApiKeyType, apiKeyErrorsCodes } from '../../domain';
+import {
+  ApiKeyRepositoryInterface,
+  ApiKeyType,
+  CreateApiKeyType,
+  apiKeyErrorsCodes,
+} from '../../domain';
 import { ApiKeyEntity } from './api-key.entity';
 
 export class ApiKeyOrmRepository implements ApiKeyRepositoryInterface {
@@ -37,6 +42,63 @@ export class ApiKeyOrmRepository implements ApiKeyRepositoryInterface {
       const saved = await this.repository.save(entity);
       return this.toDomain(saved);
     } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: apiKeyErrorsCodes.AKY001,
+        context: ApiKeyOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
+
+  async findByUserId(userId: string): Promise<ApiKeyType[]> {
+    try {
+      const entities = await this.repository.find({
+        where: { userId },
+        order: { createdAt: 'DESC' },
+      });
+      return entities.map((entity) => this.toDomain(entity));
+    } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: apiKeyErrorsCodes.AKY001,
+        context: ApiKeyOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
+
+  async countActiveByUserId(userId: string): Promise<number> {
+    try {
+      return await this.repository.count({
+        where: { userId, isActive: true },
+      });
+    } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: apiKeyErrorsCodes.AKY001,
+        context: ApiKeyOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
+
+  async deactivate(id: string, userId: string): Promise<void> {
+    try {
+      const result = await this.repository.update(
+        { id, userId, isActive: true },
+        { isActive: false },
+      );
+      if (result.affected === 0) {
+        throw new Error('API key not found or does not belong to user');
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'API key not found or does not belong to user'
+      ) {
+        throw this.exception.notFoundException({
+          message: apiKeyErrorsCodes.AKY006,
+          context: ApiKeyOrmRepository.name,
+        });
+      }
       throw this.exception.internalServerErrorException({
         message: apiKeyErrorsCodes.AKY001,
         context: ApiKeyOrmRepository.name,

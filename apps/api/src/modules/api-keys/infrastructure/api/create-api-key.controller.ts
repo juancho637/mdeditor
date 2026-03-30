@@ -6,6 +6,7 @@ import { AuthenticatedUserType } from '@common/helpers/domain/types/authenticate
 import { ApiKeyProvidersEnum } from '../../domain';
 import { CreateApiKeyUseCase } from '../../application';
 import { CreateApiKeyDto } from '../dto/create-api-key.dto';
+import { ApiKeyPresenter } from '../presenters/api-key.presenter';
 
 @Controller()
 export class CreateApiKeyController {
@@ -25,12 +26,6 @@ export class CreateApiKeyController {
       name: dto.name,
     });
 
-    return {
-      api_key: rawKey,
-      prefix: apiKey.prefix,
-      name: apiKey.name,
-      id: apiKey.id,
-      created_at: apiKey.createdAt.toISOString(),
-    };
+    return ApiKeyPresenter.toCreateResponse(apiKey, rawKey);
   }
 }
