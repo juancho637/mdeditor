@@ -1,20 +1,37 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, extractCookies, getAdminToken, API_URL, runSQL } from './helpers/api';
+import {
+  resetUsers,
+  postSetup,
+  postSignIn,
+  extractCookies,
+  getAdminToken,
+  API_URL,
+  runSQL,
+} from './helpers/api';
 
-async function createInvitedUser(adminToken: string, email: string): Promise<string> {
+async function createInvitedUser(
+  adminToken: string,
+  email: string,
+): Promise<string> {
   // Create invitation
   const invRes = await fetch(`${API_URL}/api/invitations`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminToken}`,
+    },
     body: JSON.stringify({ email }),
   });
   const invJson = await invRes.json();
   // Accept invitation
-  const acceptRes = await fetch(`${API_URL}/api/invitations/${invJson.data.token}/accept`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'User', password: 'password123' }),
-  });
+  const acceptRes = await fetch(
+    `${API_URL}/api/invitations/${invJson.data.token}/accept`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'User', password: 'password123' }),
+    },
+  );
   const acceptJson = await acceptRes.json();
   // Get user ID by signing in
   const signInRes = await postSignIn({ email, password: 'password123' });
@@ -23,12 +40,17 @@ async function createInvitedUser(adminToken: string, email: string): Promise<str
   // For now, let's use the setup admin to list — but we don't have a users list endpoint
   // Workaround: parse the JWT to get the sub (user id)
   const token = acceptJson.data.access_token;
-  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+  const payload = JSON.parse(
+    Buffer.from(token.split('.')[1], 'base64').toString(),
+  );
   return payload.sub;
 }
 
 function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 async function resetGroups(): Promise<void> {
@@ -51,8 +73,14 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
       await resetUsers();
     });
 
-    test('AC#1: Admin can create group and see it in list', async ({ page }) => {
-      await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+    test('AC#1: Admin can create group and see it in list', async ({
+      page,
+    }) => {
+      await postSetup({
+        name: 'Admin',
+        email: 'admin@test.com',
+        password: 'password123',
+      });
 
       await page.goto('/sign-in');
       await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
@@ -62,7 +90,7 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
 
       await page.getByText('Configuración').click();
       await page.getByText('Grupos').click();
-      await expect(page).toHaveURL(/\/dashboard\/settings\/groups/);
+      await expect(page).toHaveURL(/\/settings\/groups/);
 
       await page.getByRole('textbox', { name: /nombre/i }).fill('Marketing');
       await page.getByRole('button', { name: 'Crear grupo' }).click();
@@ -74,7 +102,8 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
     test('AC#6: Duplicate group name shows error', async ({ page }) => {
       const token = await getAdminToken();
       await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Existing' }),
       });
 
@@ -90,7 +119,9 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
       await page.getByRole('textbox', { name: /nombre/i }).fill('Existing');
       await page.getByRole('button', { name: 'Crear grupo' }).click();
 
-      await expect(page.locator('[class*="bg-destructive"]')).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator('[class*="bg-destructive"]')).toBeVisible({
+        timeout: 5_000,
+      });
     });
   });
 
@@ -139,15 +170,19 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
     test('GET /api/groups lists all groups', async () => {
       const token = await getAdminToken();
       await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Dev' }),
       });
       await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Marketing' }),
       });
 
-      const res = await fetch(`${API_URL}/api/groups`, { headers: authHeaders(token) });
+      const res = await fetch(`${API_URL}/api/groups`, {
+        headers: authHeaders(token),
+      });
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.data.length).toBe(2);
@@ -156,13 +191,15 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
     test('PUT /api/groups/:id updates group name', async () => {
       const token = await getAdminToken();
       const createRes = await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Old Name' }),
       });
       const createJson = await createRes.json();
 
       const res = await fetch(`${API_URL}/api/groups/${createJson.data.id}`, {
-        method: 'PUT', headers: authHeaders(token),
+        method: 'PUT',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'New Name' }),
       });
 
@@ -174,19 +211,23 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
     test('DELETE /api/groups/:id deletes group', async () => {
       const token = await getAdminToken();
       const createRes = await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'ToDelete' }),
       });
       const createJson = await createRes.json();
 
       const res = await fetch(`${API_URL}/api/groups/${createJson.data.id}`, {
-        method: 'DELETE', headers: authHeaders(token),
+        method: 'DELETE',
+        headers: authHeaders(token),
       });
 
       expect(res.status).toBe(200);
 
       // Verify deleted
-      const listRes = await fetch(`${API_URL}/api/groups`, { headers: authHeaders(token) });
+      const listRes = await fetch(`${API_URL}/api/groups`, {
+        headers: authHeaders(token),
+      });
       const listJson = await listRes.json();
       expect(listJson.data.length).toBe(0);
     });
@@ -214,23 +255,31 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
 
       // Create group
       const groupRes = await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Dev' }),
       });
       const groupJson = await groupRes.json();
 
       // Add user
-      const res = await fetch(`${API_URL}/api/groups/${groupJson.data.id}/users`, {
-        method: 'POST', headers: authHeaders(token),
-        body: JSON.stringify({ user_id: userId }),
-      });
+      const res = await fetch(
+        `${API_URL}/api/groups/${groupJson.data.id}/users`,
+        {
+          method: 'POST',
+          headers: authHeaders(token),
+          body: JSON.stringify({ user_id: userId }),
+        },
+      );
 
       expect(res.status).toBe(201);
 
       // Verify member in group detail
-      const detailRes = await fetch(`${API_URL}/api/groups/${groupJson.data.id}`, {
-        headers: authHeaders(token),
-      });
+      const detailRes = await fetch(
+        `${API_URL}/api/groups/${groupJson.data.id}`,
+        {
+          headers: authHeaders(token),
+        },
+      );
       const detailJson = await detailRes.json();
       expect(detailJson.data.members.length).toBe(1);
       expect(detailJson.data.members[0].email).toBe('member@test.com');
@@ -241,27 +290,36 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
       const userId = await createInvitedUser(token, 'remove@test.com');
 
       const groupRes = await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Dev' }),
       });
       const groupJson = await groupRes.json();
 
       // Add then remove
       await fetch(`${API_URL}/api/groups/${groupJson.data.id}/users`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ user_id: userId }),
       });
 
-      const res = await fetch(`${API_URL}/api/groups/${groupJson.data.id}/users/${userId}`, {
-        method: 'DELETE', headers: authHeaders(token),
-      });
+      const res = await fetch(
+        `${API_URL}/api/groups/${groupJson.data.id}/users/${userId}`,
+        {
+          method: 'DELETE',
+          headers: authHeaders(token),
+        },
+      );
 
       expect(res.status).toBe(200);
 
       // Verify removed
-      const detailRes = await fetch(`${API_URL}/api/groups/${groupJson.data.id}`, {
-        headers: authHeaders(token),
-      });
+      const detailRes = await fetch(
+        `${API_URL}/api/groups/${groupJson.data.id}`,
+        {
+          headers: authHeaders(token),
+        },
+      );
       const detailJson = await detailRes.json();
       expect(detailJson.data.members.length).toBe(0);
     });
@@ -271,21 +329,27 @@ test.describe('Story 1-4: Gestión de Grupos de Usuarios', () => {
       const userId = await createInvitedUser(token, 'dup@test.com');
 
       const groupRes = await fetch(`${API_URL}/api/groups`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ name: 'Dev' }),
       });
       const groupJson = await groupRes.json();
 
       // Add twice
       await fetch(`${API_URL}/api/groups/${groupJson.data.id}/users`, {
-        method: 'POST', headers: authHeaders(token),
+        method: 'POST',
+        headers: authHeaders(token),
         body: JSON.stringify({ user_id: userId }),
       });
 
-      const res = await fetch(`${API_URL}/api/groups/${groupJson.data.id}/users`, {
-        method: 'POST', headers: authHeaders(token),
-        body: JSON.stringify({ user_id: userId }),
-      });
+      const res = await fetch(
+        `${API_URL}/api/groups/${groupJson.data.id}/users`,
+        {
+          method: 'POST',
+          headers: authHeaders(token),
+          body: JSON.stringify({ user_id: userId }),
+        },
+      );
 
       expect(res.status).toBe(400);
       const json = await res.json();
