@@ -19,7 +19,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@/common/components/ui/tabs';
-import { ClipboardList, MoreVertical } from 'lucide-react';
+import { ClipboardList, MoreVertical, Share2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -345,7 +345,7 @@ export function DocumentEditor({
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="relative flex items-center gap-2 shrink-0">
           {isCollaborative && connectedUsers.length > 0 && (
             <PresenceIndicator users={connectedUsers} />
           )}
@@ -356,10 +356,10 @@ export function DocumentEditor({
             {saveStatusLabel}
           </span>
           {!readOnly && (
-            <div className="relative">
+            <>
               <button
                 onClick={() => setShareOpen((v) => !v)}
-                className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
+                className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors hidden sm:inline"
                 title="Compartir documento"
                 data-testid="share-document-btn"
               >
@@ -374,7 +374,7 @@ export function DocumentEditor({
                   onRevokeShare={revokeShare}
                 />
               )}
-            </div>
+            </>
           )}
           {/* Desktop: botones individuales */}
           <button
@@ -408,7 +408,7 @@ export function DocumentEditor({
           >
             <ClipboardList className="w-4 h-4" />
           </button>
-          {/* Mobile: menú overflow con export + historial */}
+          {/* Mobile: menú overflow con compartir + export + historial */}
           <DropdownMenu>
             <DropdownMenuTrigger
               className="p-1.5 rounded-md text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors sm:hidden"
@@ -418,6 +418,15 @@ export function DocumentEditor({
               <MoreVertical className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {!readOnly && (
+                <DropdownMenuItem
+                  onClick={() => setShareOpen((v) => !v)}
+                  data-testid="mobile-share-document-btn"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Compartir
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => {
                   const exportContent = isCollaborationActive
