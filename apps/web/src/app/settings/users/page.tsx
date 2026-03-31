@@ -5,7 +5,8 @@ import { InvitationList } from '@/modules/invitations/infrastructure/components/
 import { useInvitationViewModel } from '@/modules/invitations/infrastructure/hooks/use-invitation.viewmodel';
 
 export default function SettingsUsersPage() {
-  const { invitations, isLoading, error, createInvitation } = useInvitationViewModel();
+  const { invitations, isLoading, error, createInvitation } =
+    useInvitationViewModel();
 
   return (
     <div className="space-y-8">

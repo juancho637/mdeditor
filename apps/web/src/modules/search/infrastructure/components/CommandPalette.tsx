@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
 import { useSearchViewModel } from '../hooks/use-search.viewmodel';
-import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/use-document.viewmodel';
 import type { SearchResult } from '../../domain/types/search-result.type';
 
 export function CommandPalette() {
+  const router = useRouter();
   const { isOpen, query, results, isLoading, closeSearch, search } =
     useSearchViewModel();
-  const { loadDocument } = useDocumentViewModel();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) closeSearch();
@@ -34,7 +34,8 @@ export function CommandPalette() {
   if (!isOpen) return null;
 
   const handleSelect = (result: SearchResult) => {
-    loadDocument(result.id);
+    if (!result.folderId || !result.id) return;
+    router.push(`/dashboard/${result.folderId}/${result.id}`);
     closeSearch();
   };
 

@@ -62,8 +62,8 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Protected routes (dashboard/*)
-    if (pathname.startsWith('/dashboard')) {
+    // Protected routes (dashboard/* and settings/*)
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/settings')) {
       if (!accessToken) {
         return NextResponse.redirect(new URL('/sign-in', request.url));
       }

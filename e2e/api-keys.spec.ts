@@ -39,7 +39,7 @@ async function loginAndNavigateToApiKeys(page: Page) {
   await page.locator('input[type="password"]').fill('password123');
   await page.getByRole('button', { name: 'Iniciar sesión' }).click();
   await page.waitForURL('/dashboard');
-  await page.goto('/dashboard/settings/api-keys');
+  await page.goto('/settings/api-keys');
   await page.waitForLoadState('networkidle');
 }
 
@@ -238,7 +238,7 @@ test.describe('Story 7-3: Gestión de API Keys', () => {
       await loginAndNavigateToApiKeys(page);
 
       // Navigation link exists
-      const navLink = page.locator('a[href="/dashboard/settings/api-keys"]');
+      const navLink = page.locator('a[href="/settings/api-keys"]');
       await expect(navLink).toBeVisible();
       await expect(navLink).toHaveText('API Keys');
 

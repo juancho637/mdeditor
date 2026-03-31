@@ -209,7 +209,7 @@ test.describe('Story 8-4: Compartir Documento Público', () => {
       expect(doc.title).toBe('Doc Público');
       expect(doc.content_markdown).toContain('Hola mundo');
       expect(doc).not.toHaveProperty('id');
-      expect(doc).not.toHaveProperty('folder_id');
+      expect(doc).toHaveProperty('folder_id');
       expect(doc).not.toHaveProperty('yjs_state');
     });
 

@@ -455,14 +455,14 @@ export function DocumentEditor({
               <button
                 onClick={() => handleModeChange(EditorMode.EDITOR)}
                 className={modeTabClass(EditorMode.EDITOR)}
-                data-testid="mode-editor"
+                data-testid="mode-editor-mobile"
               >
                 Editor
               </button>
               <button
                 onClick={() => handleModeChange(EditorMode.PREVIEW)}
                 className={modeTabClass(EditorMode.PREVIEW)}
-                data-testid="mode-preview"
+                data-testid="mode-preview-mobile"
               >
                 Preview
               </button>

@@ -32,6 +32,7 @@ export class GetDocumentByShareTokenUseCase {
 
     return {
       id: doc.id,
+      folderId: doc.folderId,
       title: doc.title,
       contentMarkdown: doc.contentMarkdown,
       updatedAt: doc.updatedAt,

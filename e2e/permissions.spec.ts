@@ -2,12 +2,16 @@ import { test, expect } from '@playwright/test';
 import { resetAndSeedUsers, API_URL, runSQL } from './helpers/api';
 
 function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 async function createFolder(token: string, name: string): Promise<string> {
   const res = await fetch(`${API_URL}/api/folders`, {
-    method: 'POST', headers: authHeaders(token),
+    method: 'POST',
+    headers: authHeaders(token),
     body: JSON.stringify({ name }),
   });
   const json = await res.json();
@@ -16,7 +20,8 @@ async function createFolder(token: string, name: string): Promise<string> {
 
 async function createGroup(token: string, name: string): Promise<string> {
   const res = await fetch(`${API_URL}/api/groups`, {
-    method: 'POST', headers: authHeaders(token),
+    method: 'POST',
+    headers: authHeaders(token),
     body: JSON.stringify({ name }),
   });
   const json = await res.json();
@@ -24,7 +29,9 @@ async function createGroup(token: string, name: string): Promise<string> {
 }
 
 async function resetAll(): Promise<void> {
-  runSQL('DELETE FROM folder_permissions; DELETE FROM documents; DELETE FROM folders; DELETE FROM user_groups; DELETE FROM groups;');
+  runSQL(
+    'DELETE FROM folder_permissions; DELETE FROM documents; DELETE FROM folders; DELETE FROM user_groups; DELETE FROM groups;',
+  );
 }
 
 test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
@@ -38,7 +45,9 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
       adminToken = await resetAndSeedUsers();
     });
 
-    test('AC#1: Admin sees permission matrix with folders and groups', async ({ page }) => {
+    test('AC#1: Admin sees permission matrix with folders and groups', async ({
+      page,
+    }) => {
       const token = adminToken;
       await createFolder(token, 'Marketing');
       await createGroup(token, 'Dev');
@@ -51,7 +60,7 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
 
       await page.getByText('Configuración').click();
       await page.getByText('Permisos').click();
-      await expect(page).toHaveURL(/\/dashboard\/settings\/permissions/);
+      await expect(page).toHaveURL(/\/settings\/permissions/);
 
       await expect(page.getByText('Marketing')).toBeVisible({ timeout: 5_000 });
       await expect(page.getByText('Dev')).toBeVisible();
@@ -75,7 +84,11 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
       const res = await fetch(`${API_URL}/api/permissions`, {
         method: 'PUT',
         headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: 'edit' }),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: groupId,
+          permission_level: 'edit',
+        }),
       });
 
       expect(res.status).toBe(200);
@@ -92,14 +105,24 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
 
       // Set to view
       await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: 'view' }),
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: groupId,
+          permission_level: 'view',
+        }),
       });
 
       // Update to edit
       const res = await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: 'edit' }),
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: groupId,
+          permission_level: 'edit',
+        }),
       });
 
       expect(res.status).toBe(200);
@@ -114,18 +137,26 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
 
       // Create permission
       const createRes = await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: 'view' }),
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: groupId,
+          permission_level: 'view',
+        }),
       });
       const createJson = await createRes.json();
 
       // Delete
       await fetch(`${API_URL}/api/permissions/${createJson.data.id}`, {
-        method: 'DELETE', headers: authHeaders(token),
+        method: 'DELETE',
+        headers: authHeaders(token),
       });
 
       // Verify removed
-      const listRes = await fetch(`${API_URL}/api/permissions`, { headers: authHeaders(token) });
+      const listRes = await fetch(`${API_URL}/api/permissions`, {
+        headers: authHeaders(token),
+      });
       const listJson = await listRes.json();
       expect(listJson.data.length).toBe(0);
     });
@@ -137,15 +168,27 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
       const group2 = await createGroup(token, 'Marketing');
 
       await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: group1, permission_level: 'edit' }),
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: group1,
+          permission_level: 'edit',
+        }),
       });
       await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: group2, permission_level: 'view' }),
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: group2,
+          permission_level: 'view',
+        }),
       });
 
-      const res = await fetch(`${API_URL}/api/permissions`, { headers: authHeaders(token) });
+      const res = await fetch(`${API_URL}/api/permissions`, {
+        headers: authHeaders(token),
+      });
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.data.length).toBe(2);
@@ -155,7 +198,11 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
       const res = await fetch(`${API_URL}/api/permissions`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folder_id: 'x', group_id: 'y', permission_level: 'view' }),
+        body: JSON.stringify({
+          folder_id: 'x',
+          group_id: 'y',
+          permission_level: 'view',
+        }),
       });
       expect(res.status).toBe(401);
     });
@@ -166,14 +213,23 @@ test.describe('Story 3-1: Asignación de Permisos por Carpeta', () => {
       const groupId = await createGroup(token, 'Dev');
 
       const createRes = await fetch(`${API_URL}/api/permissions`, {
-        method: 'PUT', headers: authHeaders(token),
-        body: JSON.stringify({ folder_id: folderId, group_id: groupId, permission_level: 'edit' }),
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          folder_id: folderId,
+          group_id: groupId,
+          permission_level: 'edit',
+        }),
       });
       const createJson = await createRes.json();
 
-      const res = await fetch(`${API_URL}/api/permissions/${createJson.data.id}`, {
-        method: 'DELETE', headers: authHeaders(token),
-      });
+      const res = await fetch(
+        `${API_URL}/api/permissions/${createJson.data.id}`,
+        {
+          method: 'DELETE',
+          headers: authHeaders(token),
+        },
+      );
 
       expect(res.status).toBe(200);
     });

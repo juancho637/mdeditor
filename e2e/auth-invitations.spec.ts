@@ -1,14 +1,31 @@
 import { test, expect } from '@playwright/test';
-import { resetUsers, postSetup, postSignIn, extractCookies, API_URL, runSQL } from './helpers/api';
+import {
+  resetUsers,
+  postSetup,
+  postSignIn,
+  extractCookies,
+  API_URL,
+  runSQL,
+} from './helpers/api';
 
-async function createAdminAndGetToken(): Promise<{ accessToken: string; cookies: string }> {
-  const setupRes = await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+async function createAdminAndGetToken(): Promise<{
+  accessToken: string;
+  cookies: string;
+}> {
+  const setupRes = await postSetup({
+    name: 'Admin',
+    email: 'admin@test.com',
+    password: 'password123',
+  });
   const cookies = extractCookies(setupRes);
   const json = await setupRes.json();
   return { accessToken: json.data.access_token, cookies };
 }
 
-async function postInvitation(accessToken: string, email: string): Promise<Response> {
+async function postInvitation(
+  accessToken: string,
+  email: string,
+): Promise<Response> {
   return fetch(`${API_URL}/api/invitations`, {
     method: 'POST',
     headers: {
@@ -23,7 +40,10 @@ async function getInvitation(token: string): Promise<Response> {
   return fetch(`${API_URL}/api/invitations/${token}`);
 }
 
-async function acceptInvitation(token: string, data: { name: string; password: string }): Promise<Response> {
+async function acceptInvitation(
+  token: string,
+  data: { name: string; password: string },
+): Promise<Response> {
   return fetch(`${API_URL}/api/invitations/${token}/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -147,10 +167,16 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
       const createJson = await createRes.json();
 
       // Accept first time
-      await acceptInvitation(createJson.data.token, { name: 'User', password: 'password123' });
+      await acceptInvitation(createJson.data.token, {
+        name: 'User',
+        password: 'password123',
+      });
 
       // Try again
-      const res = await acceptInvitation(createJson.data.token, { name: 'User2', password: 'password456' });
+      const res = await acceptInvitation(createJson.data.token, {
+        name: 'User2',
+        password: 'password456',
+      });
 
       expect(res.status).toBe(400);
       const json = await res.json();
@@ -160,7 +186,10 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
     test('POST /api/invitations/:token/accept with invalid token returns 404', async () => {
       await createAdminAndGetToken();
 
-      const res = await acceptInvitation('fake-token', { name: 'User', password: 'password123' });
+      const res = await acceptInvitation('fake-token', {
+        name: 'User',
+        password: 'password123',
+      });
 
       expect(res.status).toBe(404);
     });
@@ -174,9 +203,15 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
       await resetUsers();
     });
 
-    test('AC#1: Admin can create invitation and see copiable link', async ({ page }) => {
+    test('AC#1: Admin can create invitation and see copiable link', async ({
+      page,
+    }) => {
       // Setup admin via API
-      await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+      await postSetup({
+        name: 'Admin',
+        email: 'admin@test.com',
+        password: 'password123',
+      });
 
       // Login via UI
       await page.goto('/sign-in');
@@ -187,18 +222,24 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
 
       // Navigate to settings
       await page.getByText('Configuración').click();
-      await expect(page).toHaveURL(/\/dashboard\/settings\/users/);
+      await expect(page).toHaveURL(/\/settings\/users/);
 
       // Create invitation
-      await page.getByRole('textbox', { name: /email/i }).fill('invited@test.com');
+      await page
+        .getByRole('textbox', { name: /email/i })
+        .fill('invited@test.com');
       await page.getByRole('button', { name: 'Invitar' }).click();
 
       // Should see toast and copiable link
-      await expect(page.getByText('Invitación creada')).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByText('Invitación creada')).toBeVisible({
+        timeout: 5_000,
+      });
       await expect(page.locator('code')).toContainText('/invite/');
     });
 
-    test('AC#2: Invited user can register via invitation link', async ({ page }) => {
+    test('AC#2: Invited user can register via invitation link', async ({
+      page,
+    }) => {
       // Create invitation via API
       const { accessToken } = await createAdminAndGetToken();
       const createRes = await postInvitation(accessToken, 'invited@test.com');
@@ -222,7 +263,9 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
     });
 
-    test('AC#4: Used invitation shows already-used message', async ({ page }) => {
+    test('AC#4: Used invitation shows already-used message', async ({
+      page,
+    }) => {
       // Create and accept invitation via API
       const { accessToken } = await createAdminAndGetToken();
       const createRes = await postInvitation(accessToken, 'used@test.com');
@@ -238,7 +281,11 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
     });
 
     test('Invalid invitation token shows error', async ({ page }) => {
-      await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+      await postSetup({
+        name: 'Admin',
+        email: 'admin@test.com',
+        password: 'password123',
+      });
 
       await page.goto('/invite/nonexistent-token');
 
@@ -253,7 +300,11 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
     });
 
     test('AC#3: Inviting existing user email shows error', async ({ page }) => {
-      await postSetup({ name: 'Admin', email: 'admin@test.com', password: 'password123' });
+      await postSetup({
+        name: 'Admin',
+        email: 'admin@test.com',
+        password: 'password123',
+      });
 
       await page.goto('/sign-in');
       await page.getByRole('textbox', { name: 'Email' }).fill('admin@test.com');
@@ -262,10 +313,14 @@ test.describe('Story 1-3: Invitación de Nuevos Usuarios', () => {
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
 
       await page.getByText('Configuración').click();
-      await page.getByRole('textbox', { name: /email/i }).fill('admin@test.com');
+      await page
+        .getByRole('textbox', { name: /email/i })
+        .fill('admin@test.com');
       await page.getByRole('button', { name: 'Invitar' }).click();
 
-      await expect(page.locator('[class*="bg-destructive"]')).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator('[class*="bg-destructive"]')).toBeVisible({
+        timeout: 5_000,
+      });
     });
   });
 });

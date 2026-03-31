@@ -12,6 +12,7 @@ type PageState = 'loading' | 'loaded' | 'not-found';
 
 interface PublicDoc {
   documentId: string;
+  folderId: string;
   title: string;
   contentMarkdown: string;
 }
@@ -31,6 +32,7 @@ export default function PublicDocumentPage() {
       .then((data) => {
         setDoc({
           documentId: data.data?.document_id ?? data.document_id,
+          folderId: data.data?.folder_id ?? data.folder_id,
           title: data.data?.title ?? data.title,
           contentMarkdown: data.data?.content_markdown ?? data.content_markdown,
         });
@@ -40,15 +42,21 @@ export default function PublicDocumentPage() {
   }, [token]);
 
   useEffect(() => {
-    if (state === 'loaded' && doc?.documentId && getAccessToken()) {
-      router.replace(`/dashboard?doc=${doc.documentId}`);
+    if (
+      state === 'loaded' &&
+      doc?.documentId &&
+      doc?.folderId &&
+      getAccessToken()
+    ) {
+      router.replace(`/dashboard/${doc.folderId}/${doc.documentId}`);
     }
   }, [state, doc, router]);
 
   const isAuthenticated = !!getAccessToken();
-  const dashboardUrl = doc?.documentId
-    ? `/dashboard?doc=${doc.documentId}`
-    : '/dashboard';
+  const dashboardUrl =
+    doc?.folderId && doc?.documentId
+      ? `/dashboard/${doc.folderId}/${doc.documentId}`
+      : '/dashboard';
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
