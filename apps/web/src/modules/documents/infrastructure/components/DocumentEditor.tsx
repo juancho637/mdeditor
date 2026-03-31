@@ -19,7 +19,13 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@/common/components/ui/tabs';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/common/components/ui/dropdown-menu';
 import { ActivityPanel } from '@/modules/history/infrastructure/components/ActivityPanel';
 import { useHistoryStore } from '@/modules/history/infrastructure/state/history.state';
 import { SharePanel } from './SharePanel';
@@ -370,6 +376,7 @@ export function DocumentEditor({
               )}
             </div>
           )}
+          {/* Desktop: botones individuales */}
           <button
             onClick={() => {
               const exportContent = isCollaborationActive
@@ -401,6 +408,44 @@ export function DocumentEditor({
           >
             <ClipboardList className="w-4 h-4" />
           </button>
+          {/* Mobile: menú overflow con export + historial */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="p-1.5 rounded-md text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors sm:hidden"
+              aria-label="Más opciones"
+              data-testid="mobile-more-menu"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  const exportContent = isCollaborationActive
+                    ? previewContent
+                    : content;
+                  const blob = new Blob([exportContent], {
+                    type: 'text/plain',
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = globalThis.document.createElement('a');
+                  a.href = url;
+                  a.download = `${document.title}.md`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                data-testid="mobile-export-document"
+              >
+                ↓ Exportar .md
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={togglePanel}
+                data-testid="mobile-activity-panel-toggle"
+              >
+                <ClipboardList className="w-4 h-4 mr-2" />
+                Historial
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
