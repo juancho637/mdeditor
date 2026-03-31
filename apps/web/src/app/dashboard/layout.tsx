@@ -150,6 +150,7 @@ export default function DashboardLayout({
             <SheetContent
               side="left"
               className="p-0 w-[280px] sm:max-w-[280px]"
+              hideClose
             >
               <SheetTitle className="sr-only">Navegación</SheetTitle>
               <SheetDescription className="sr-only">
@@ -158,6 +159,7 @@ export default function DashboardLayout({
               <FolderSidebar
                 {...sidebarProps}
                 collapsed={false}
+                onToggleSidebar={closeMobileSidebar}
                 onDocumentSelect={closeMobileSidebar}
               />
             </SheetContent>
