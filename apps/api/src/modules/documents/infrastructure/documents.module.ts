@@ -38,6 +38,7 @@ import {
   CreateDocumentWithContentUseCase,
   ReplaceDocumentContentUseCase,
   SearchDocumentsUseCase,
+  ImportDocumentsUseCase,
 } from '../application';
 
 import { DocumentEntity } from './persistence/document.entity';
@@ -56,6 +57,7 @@ import { DeleteDocumentController } from './api/delete-document.controller';
 import { ListDocumentsByFolderController } from './api/list-documents-by-folder.controller';
 import { MoveDocumentController } from './api/move-document.controller';
 import { SearchDocumentsController } from './api/search-documents.controller';
+import { ImportDocumentsController } from './api/import-documents.controller';
 
 import { ListAccessibleFoldersUseCase } from '@modules/folders/application';
 import { ListFoldersMcpTool } from '@modules/folders/infrastructure/mcp/list-folders.mcp-tool';
@@ -76,6 +78,7 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
     AuthModule,
   ],
   controllers: [
+    ImportDocumentsController,
     SearchDocumentsController,
     CreateDocumentController,
     GetDocumentController,
@@ -226,6 +229,31 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
       provide: DocumentProvidersEnum.SEARCH_DOCUMENTS_USE_CASE,
       useFactory: (repo: DocumentRepositoryInterface) =>
         new SearchDocumentsUseCase(repo),
+    },
+    // Import Use Case
+    {
+      inject: [
+        DocumentProvidersEnum.DOCUMENT_REPOSITORY,
+        DocumentProvidersEnum.CREATE_DOCUMENT_USE_CASE,
+        DocumentProvidersEnum.DOCUMENT_SYNC_SERVICE,
+        PermissionProvidersEnum.CHECK_PERMISSION_USE_CASE,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
+      provide: DocumentProvidersEnum.IMPORT_DOCUMENTS_USE_CASE,
+      useFactory: (
+        docRepo: DocumentRepositoryInterface,
+        createDoc: CreateDocumentUseCase,
+        syncService: DocumentSyncServiceInterface,
+        checkPerm: CheckPermissionUseCase,
+        ex: ExceptionServiceInterface,
+      ) =>
+        new ImportDocumentsUseCase(
+          docRepo,
+          createDoc,
+          syncService,
+          checkPerm,
+          ex,
+        ),
     },
     // Sync Service
     {

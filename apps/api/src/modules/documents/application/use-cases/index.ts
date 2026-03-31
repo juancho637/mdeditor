@@ -1,4 +1,5 @@
 export * from './apply-update.use-case';
+export * from './import-documents.use-case';
 export * from './create-document-with-content.use-case';
 export * from './create-document.use-case';
 export * from './delete-document.use-case';
