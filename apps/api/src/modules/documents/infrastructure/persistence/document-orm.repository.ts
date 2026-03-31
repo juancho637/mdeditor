@@ -4,6 +4,7 @@ import {
   DocumentRepositoryInterface,
   DocumentType,
   DocumentSummaryType,
+  SearchResultType,
   documentErrorsCodes,
 } from '../../domain';
 import { ExceptionServiceInterface } from '@common/exception/domain';
@@ -14,7 +15,12 @@ export class DocumentOrmRepository implements DocumentRepositoryInterface {
     private readonly exception: ExceptionServiceInterface,
   ) {}
 
-  async create(data: { folderId: string; title: string; slug: string; createdBy: string }): Promise<DocumentType> {
+  async create(data: {
+    folderId: string;
+    title: string;
+    slug: string;
+    createdBy: string;
+  }): Promise<DocumentType> {
     try {
       const entity = this.repository.create(data);
       const saved = await this.repository.save(entity);
@@ -64,7 +70,16 @@ export class DocumentOrmRepository implements DocumentRepositoryInterface {
     }
   }
 
-  async update(id: string, data: { title?: string; slug?: string; contentMarkdown?: string; folderId?: string; yjsState?: Buffer }): Promise<DocumentType> {
+  async update(
+    id: string,
+    data: {
+      title?: string;
+      slug?: string;
+      contentMarkdown?: string;
+      folderId?: string;
+      yjsState?: Buffer;
+    },
+  ): Promise<DocumentType> {
     try {
       await this.repository.update(id, data);
       const entity = await this.repository.findOneOrFail({ where: { id } });
@@ -84,6 +99,64 @@ export class DocumentOrmRepository implements DocumentRepositoryInterface {
     } catch (error) {
       throw this.exception.internalServerErrorException({
         message: documentErrorsCodes.DOC101,
+        context: DocumentOrmRepository.name,
+        error: error as Error,
+      });
+    }
+  }
+
+  async search(userId: string, query: string): Promise<SearchResultType[]> {
+    try {
+      const rows: Array<{
+        id: string;
+        folder_id: string;
+        folder_name: string;
+        title: string;
+        slug: string;
+        preview: string;
+      }> = await this.repository.manager.query(
+        `
+        SELECT
+          d.id,
+          d.folder_id,
+          f.name AS folder_name,
+          d.title,
+          d.slug,
+          ts_headline(
+            'simple',
+            regexp_replace(d.content_markdown, '<[^>]+>', ' ', 'g'),
+            websearch_to_tsquery('simple', $1),
+            'MaxWords=20, MinWords=5, StartSel=<b>, StopSel=</b>, HighlightAll=FALSE'
+          ) AS preview
+        FROM documents d
+        JOIN folders f ON d.folder_id = f.id
+        WHERE d.search_vector @@ websearch_to_tsquery('simple', $1)
+          AND (
+            EXISTS (SELECT 1 FROM users WHERE id = $2 AND is_admin = true)
+            OR d.folder_id IN (
+              SELECT fp.folder_id
+              FROM folder_permissions fp
+              JOIN user_groups ug ON fp.group_id = ug.group_id
+              WHERE ug.user_id = $2
+            )
+          )
+        ORDER BY ts_rank(d.search_vector, websearch_to_tsquery('simple', $1)) DESC
+        LIMIT 20
+        `,
+        [query, userId],
+      );
+
+      return rows.map((row) => ({
+        id: row.id,
+        folderId: row.folder_id,
+        folderName: row.folder_name,
+        title: row.title,
+        slug: row.slug,
+        preview: row.preview ?? '',
+      }));
+    } catch (error) {
+      throw this.exception.internalServerErrorException({
+        message: documentErrorsCodes.DOC100,
         context: DocumentOrmRepository.name,
         error: error as Error,
       });

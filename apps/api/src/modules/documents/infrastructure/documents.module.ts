@@ -37,6 +37,7 @@ import {
   ReadDocumentContentUseCase,
   CreateDocumentWithContentUseCase,
   ReplaceDocumentContentUseCase,
+  SearchDocumentsUseCase,
 } from '../application';
 
 import { DocumentEntity } from './persistence/document.entity';
@@ -54,6 +55,7 @@ import { UpdateDocumentController } from './api/update-document.controller';
 import { DeleteDocumentController } from './api/delete-document.controller';
 import { ListDocumentsByFolderController } from './api/list-documents-by-folder.controller';
 import { MoveDocumentController } from './api/move-document.controller';
+import { SearchDocumentsController } from './api/search-documents.controller';
 
 import { ListAccessibleFoldersUseCase } from '@modules/folders/application';
 import { ListFoldersMcpTool } from '@modules/folders/infrastructure/mcp/list-folders.mcp-tool';
@@ -74,6 +76,7 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
     AuthModule,
   ],
   controllers: [
+    SearchDocumentsController,
     CreateDocumentController,
     GetDocumentController,
     UpdateDocumentController,
@@ -216,6 +219,13 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
         snapRepo: DocumentSnapshotRepositoryInterface,
         updateRepo: DocumentUpdateRepositoryInterface,
       ) => new PersistSnapshotUseCase(docRepo, snapRepo, updateRepo),
+    },
+    // Search Use Case
+    {
+      inject: [DocumentProvidersEnum.DOCUMENT_REPOSITORY],
+      provide: DocumentProvidersEnum.SEARCH_DOCUMENTS_USE_CASE,
+      useFactory: (repo: DocumentRepositoryInterface) =>
+        new SearchDocumentsUseCase(repo),
     },
     // Sync Service
     {
