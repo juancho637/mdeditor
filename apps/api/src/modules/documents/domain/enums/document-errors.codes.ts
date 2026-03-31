@@ -9,6 +9,11 @@ export const documentErrorsCodes = {
     message: 'Document is already in this folder.',
     serverMessage: 'Attempted to move document to its current folder',
   },
+  DOC004: {
+    codeError: 'DOC004',
+    message: 'Documento no encontrado.',
+    serverMessage: 'Share token not found or has been revoked',
+  },
   DOC100: {
     codeError: 'DOC100',
     message: 'Could not process the request at this time.',

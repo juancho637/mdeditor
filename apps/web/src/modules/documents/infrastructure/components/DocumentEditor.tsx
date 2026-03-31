@@ -22,6 +22,8 @@ import {
 import { ClipboardList } from 'lucide-react';
 import { ActivityPanel } from '@/modules/history/infrastructure/components/ActivityPanel';
 import { useHistoryStore } from '@/modules/history/infrastructure/state/history.state';
+import { SharePanel } from './SharePanel';
+import { useDocumentViewModel } from '../hooks/use-document.viewmodel';
 
 const CodeMirrorEditor = dynamic(
   () =>
@@ -120,6 +122,8 @@ export function DocumentEditor({
 
   const { connectedUsers } = usePresence(collabState?.awareness ?? null);
   const { isPanelOpen, togglePanel } = useHistoryStore();
+  const { createShare, getShare, revokeShare } = useDocumentViewModel();
+  const [shareOpen, setShareOpen] = useState(false);
   const isCollaborationActive = !!collabState;
   const isCollaborative = isCollaborationActive && isSynced;
   const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
@@ -328,6 +332,27 @@ export function DocumentEditor({
           <span className="text-xs text-foreground-secondary">
             {saveStatusLabel}
           </span>
+          {!readOnly && (
+            <div className="relative">
+              <button
+                onClick={() => setShareOpen((v) => !v)}
+                className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
+                title="Compartir documento"
+                data-testid="share-document-btn"
+              >
+                Compartir
+              </button>
+              {shareOpen && (
+                <SharePanel
+                  documentId={document.id}
+                  onClose={() => setShareOpen(false)}
+                  onCreateShare={createShare}
+                  onGetShare={getShare}
+                  onRevokeShare={revokeShare}
+                />
+              )}
+            </div>
+          )}
           <button
             onClick={() => {
               const exportContent = isCollaborationActive

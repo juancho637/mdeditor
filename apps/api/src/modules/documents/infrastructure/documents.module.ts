@@ -19,13 +19,18 @@ import { AuthModule } from '@modules/auth/infrastructure';
 import {
   DocumentProvidersEnum,
   DocumentRepositoryInterface,
+  DocumentShareRepositoryInterface,
   DocumentUpdateRepositoryInterface,
   DocumentSnapshotRepositoryInterface,
   DocumentSyncServiceInterface,
 } from '../domain';
 import {
   CreateDocumentUseCase,
+  CreateDocumentShareUseCase,
+  DeleteDocumentShareUseCase,
   GetDocumentByIdUseCase,
+  GetDocumentByShareTokenUseCase,
+  GetDocumentShareUseCase,
   UpdateDocumentUseCase,
   DeleteDocumentUseCase,
   ListDocumentsByFolderUseCase,
@@ -42,16 +47,22 @@ import {
 } from '../application';
 
 import { DocumentEntity } from './persistence/document.entity';
+import { DocumentShareEntity } from './persistence/document-share.entity';
 import { DocumentUpdateEntity } from './persistence/document-update.entity';
 import { DocumentSnapshotEntity } from './persistence/document-snapshot.entity';
 import { DocumentOrmRepository } from './persistence/document-orm.repository';
+import { DocumentShareOrmRepository } from './persistence/document-share-orm.repository';
 import { DocumentUpdateOrmRepository } from './persistence/document-update-orm.repository';
 import { DocumentSnapshotOrmRepository } from './persistence/document-snapshot-orm.repository';
 import { InMemoryDocumentSyncService } from './services/in-memory-document-sync.service';
 import { CollaborationGateway } from './gateway/collaboration.gateway';
 
 import { CreateDocumentController } from './api/create-document.controller';
+import { CreateDocumentShareController } from './api/create-document-share.controller';
+import { DeleteDocumentShareController } from './api/delete-document-share.controller';
 import { GetDocumentController } from './api/get-document.controller';
+import { GetDocumentShareController } from './api/get-document-share.controller';
+import { GetPublicDocumentController } from './api/get-public-document.controller';
 import { UpdateDocumentController } from './api/update-document.controller';
 import { DeleteDocumentController } from './api/delete-document.controller';
 import { ListDocumentsByFolderController } from './api/list-documents-by-folder.controller';
@@ -70,6 +81,7 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
   imports: [
     TypeOrmModule.forFeature([
       DocumentEntity,
+      DocumentShareEntity,
       DocumentUpdateEntity,
       DocumentSnapshotEntity,
     ]),
@@ -81,7 +93,11 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
     ImportDocumentsController,
     SearchDocumentsController,
     CreateDocumentController,
+    CreateDocumentShareController,
+    DeleteDocumentShareController,
     GetDocumentController,
+    GetDocumentShareController,
+    GetPublicDocumentController,
     UpdateDocumentController,
     DeleteDocumentController,
     ListDocumentsByFolderController,
@@ -99,6 +115,17 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
         repo: Repository<DocumentEntity>,
         ex: ExceptionServiceInterface,
       ) => new DocumentOrmRepository(repo, ex),
+    },
+    {
+      inject: [
+        getRepositoryToken(DocumentShareEntity),
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
+      provide: DocumentProvidersEnum.DOCUMENT_SHARE_REPOSITORY,
+      useFactory: (
+        repo: Repository<DocumentShareEntity>,
+        ex: ExceptionServiceInterface,
+      ) => new DocumentShareOrmRepository(repo, ex),
     },
     {
       inject: [
@@ -254,6 +281,45 @@ import { EditDocumentMcpTool } from './mcp/edit-document.mcp-tool';
           checkPerm,
           ex,
         ),
+    },
+    // Share Use Cases
+    {
+      inject: [
+        DocumentProvidersEnum.DOCUMENT_SHARE_REPOSITORY,
+        DocumentProvidersEnum.DOCUMENT_REPOSITORY,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
+      provide: DocumentProvidersEnum.CREATE_DOCUMENT_SHARE_USE_CASE,
+      useFactory: (
+        shareRepo: DocumentShareRepositoryInterface,
+        docRepo: DocumentRepositoryInterface,
+        ex: ExceptionServiceInterface,
+      ) => new CreateDocumentShareUseCase(shareRepo, docRepo, ex),
+    },
+    {
+      inject: [DocumentProvidersEnum.DOCUMENT_SHARE_REPOSITORY],
+      provide: DocumentProvidersEnum.GET_DOCUMENT_SHARE_USE_CASE,
+      useFactory: (shareRepo: DocumentShareRepositoryInterface) =>
+        new GetDocumentShareUseCase(shareRepo),
+    },
+    {
+      inject: [DocumentProvidersEnum.DOCUMENT_SHARE_REPOSITORY],
+      provide: DocumentProvidersEnum.DELETE_DOCUMENT_SHARE_USE_CASE,
+      useFactory: (shareRepo: DocumentShareRepositoryInterface) =>
+        new DeleteDocumentShareUseCase(shareRepo),
+    },
+    {
+      inject: [
+        DocumentProvidersEnum.DOCUMENT_SHARE_REPOSITORY,
+        DocumentProvidersEnum.DOCUMENT_REPOSITORY,
+        ExceptionProvidersEnum.EXCEPTION_SERVICE,
+      ],
+      provide: DocumentProvidersEnum.GET_DOCUMENT_BY_SHARE_TOKEN_USE_CASE,
+      useFactory: (
+        shareRepo: DocumentShareRepositoryInterface,
+        docRepo: DocumentRepositoryInterface,
+        ex: ExceptionServiceInterface,
+      ) => new GetDocumentByShareTokenUseCase(shareRepo, docRepo, ex),
     },
     // Sync Service
     {

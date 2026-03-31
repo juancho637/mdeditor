@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-20
-last_updated: 2026-03-31 # story 8-3 done
+last_updated: 2026-03-31 # story 8-4 created
 project: markdown
 project_key: NOKEY
 tracking_system: file-system
@@ -98,4 +98,5 @@ development_status:
   8-1-busqueda-global-de-contenido: done
   8-2-import-y-export-de-documentos-markdown: done
   8-3-experiencia-responsive-completa: done
+  8-4-compartir-documento-publico: done
   epic-8-retrospective: optional
