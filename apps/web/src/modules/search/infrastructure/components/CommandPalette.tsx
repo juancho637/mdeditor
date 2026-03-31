@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Command } from 'cmdk';
 import { useSearchViewModel } from '../hooks/use-search.viewmodel';
 import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/use-document.viewmodel';
@@ -10,6 +10,7 @@ export function CommandPalette() {
   const { isOpen, query, results, isLoading, closeSearch, search } =
     useSearchViewModel();
   const { loadDocument } = useDocumentViewModel();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -18,6 +19,12 @@ export function CommandPalette() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeSearch]);
+
+  // Delay focus to let any Sheet close animation (300ms) finish first
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 350);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -39,11 +46,11 @@ export function CommandPalette() {
           <div className="flex items-center border-b border-border px-3">
             <span className="text-foreground-secondary mr-2 text-sm">🔍</span>
             <Command.Input
+              ref={inputRef}
               value={query}
               onValueChange={search}
               placeholder="Buscar documentos..."
               className="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-foreground-secondary"
-              autoFocus
             />
             {query && (
               <button

@@ -46,11 +46,18 @@ export default function DashboardLayout({
   } = useFolderViewModel();
 
   const initTheme = useThemeStore((s) => s.initTheme);
-  const { openSearch } = useSearchViewModel();
+  const { isOpen: isSearchOpen, openSearch } = useSearchViewModel();
 
   useEffect(() => {
     initTheme();
   }, [initTheme]);
+
+  // Close mobile Sheet when search opens — avoids Radix focus trap blocking the input
+  useEffect(() => {
+    if (isSearchOpen && mobileSidebarOpen) {
+      closeMobileSidebar();
+    }
+  }, [isSearchOpen, mobileSidebarOpen, closeMobileSidebar]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
