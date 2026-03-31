@@ -186,13 +186,14 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       const folderId = await createFolder(adminToken, 'ToolbarFolder');
       await createDocument(adminToken, 'ToolbarDoc', folderId);
 
-      await page.setViewportSize({ width: 375, height: 812 });
+      // Navigate at desktop so mode-editor is accessible (default is Hybrid)
       await loginAs(page, 'admin@test.com', 'password123');
-
-      await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'ToolbarFolder' }).click();
       await page.getByText('ToolbarDoc').click();
-      await page.getByTestId('mode-editor-mobile').click();
+      await page.getByTestId('mode-editor').click();
+
+      // Shrink to mobile — mode-tabs-mobile visible (mode is Editor, not Hybrid)
+      await page.setViewportSize({ width: 375, height: 812 });
 
       await expect(page.getByTestId('markdown-toolbar')).toBeVisible();
     });
@@ -204,13 +205,14 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       const folderId = await createFolder(adminToken, 'TouchTargetFolder');
       await createDocument(adminToken, 'TouchTargetDoc', folderId);
 
-      await page.setViewportSize({ width: 375, height: 812 });
+      // Navigate at desktop so mode-editor is accessible (default is Hybrid)
       await loginAs(page, 'admin@test.com', 'password123');
-
-      await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'TouchTargetFolder' }).click();
       await page.getByText('TouchTargetDoc').click();
-      await page.getByTestId('mode-editor-mobile').click();
+      await page.getByTestId('mode-editor').click();
+
+      // Shrink to mobile
+      await page.setViewportSize({ width: 375, height: 812 });
 
       const boldBtn = page.getByTestId('toolbar-bold');
       await boldBtn.waitFor();
@@ -226,13 +228,14 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       const folderId = await createFolder(adminToken, 'NoToolbarFolder');
       await createDocument(adminToken, 'NoToolbarDoc', folderId);
 
-      await page.setViewportSize({ width: 375, height: 812 });
+      // Navigate at desktop so mode-preview is accessible (default is Hybrid)
       await loginAs(page, 'admin@test.com', 'password123');
-
-      await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'NoToolbarFolder' }).click();
       await page.getByText('NoToolbarDoc').click();
-      await page.getByTestId('mode-preview-mobile').click();
+      await page.getByTestId('mode-preview').click();
+
+      // Shrink to mobile
+      await page.setViewportSize({ width: 375, height: 812 });
 
       await expect(page.getByTestId('markdown-toolbar')).not.toBeVisible();
     });

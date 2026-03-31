@@ -445,8 +445,8 @@ export function DocumentEditor({
             </DropdownMenu>
           </div>
         </div>
-        {/* Segunda fila: tabs modo — solo mobile */}
-        {!readOnly && (
+        {/* Segunda fila: tabs modo — solo mobile, oculta en Híbrido (usa hybrid-tabs-mobile) */}
+        {!readOnly && mode !== EditorMode.HYBRID && (
           <div className="flex lg:hidden justify-center py-1.5">
             <div
               className="flex gap-1 bg-muted rounded-md p-0.5"
@@ -458,6 +458,13 @@ export function DocumentEditor({
                 data-testid="mode-editor-mobile"
               >
                 Editor
+              </button>
+              <button
+                onClick={() => handleModeChange(EditorMode.HYBRID)}
+                className={modeTabClass(EditorMode.HYBRID)}
+                data-testid="mode-hybrid-mobile"
+              >
+                Híbrido
               </button>
               <button
                 onClick={() => handleModeChange(EditorMode.PREVIEW)}
