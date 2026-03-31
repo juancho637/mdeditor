@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Command } from 'cmdk';
 import { useSearchViewModel } from '../hooks/use-search.viewmodel';
 import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/use-document.viewmodel';
@@ -10,8 +10,6 @@ export function CommandPalette() {
   const { isOpen, query, results, isLoading, closeSearch, search } =
     useSearchViewModel();
   const { loadDocument } = useDocumentViewModel();
-  const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) closeSearch();
@@ -20,11 +18,18 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeSearch]);
 
-  // Delay focus to let any Sheet close animation (300ms) finish first
+  // Focus input when palette opens, after Sheet close animation + Radix focus-restore
   useEffect(() => {
-    const timer = setTimeout(() => inputRef.current?.focus(), 350);
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.querySelector<HTMLInputElement>('[cmdk-input]')?.focus();
+        });
+      });
+    }, 320);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -46,7 +51,6 @@ export function CommandPalette() {
           <div className="flex items-center border-b border-border px-3">
             <span className="text-foreground-secondary mr-2 text-sm">🔍</span>
             <Command.Input
-              ref={inputRef}
               value={query}
               onValueChange={search}
               placeholder="Buscar documentos..."
