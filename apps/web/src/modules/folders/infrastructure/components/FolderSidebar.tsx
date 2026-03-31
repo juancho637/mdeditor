@@ -17,6 +17,7 @@ interface FolderSidebarProps {
   onRename: (id: string, name: string) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
   onCreate: (name: string, parentId: string | null) => Promise<boolean>;
+  onDocumentSelect?: () => void;
 }
 
 export function FolderSidebar({
@@ -30,6 +31,7 @@ export function FolderSidebar({
   onRename,
   onDelete,
   onCreate,
+  onDocumentSelect,
 }: FolderSidebarProps) {
   const [creatingRoot, setCreatingRoot] = useState(false);
   const [rootName, setRootName] = useState('');
@@ -50,7 +52,11 @@ export function FolderSidebar({
   }
 
   return (
-    <aside className="w-[260px] border-r border-border bg-secondary flex flex-col shrink-0">
+    <aside
+      className="w-[260px] border-r border-border bg-secondary flex flex-col shrink-0"
+      role="navigation"
+      aria-label="Carpetas"
+    >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className="text-xs font-medium text-foreground-secondary uppercase tracking-wider">
           Carpetas
@@ -132,6 +138,7 @@ export function FolderSidebar({
             selectedId={selectedId}
             expandedIds={expandedIds}
             onSelect={onSelect}
+            onDocumentSelect={onDocumentSelect}
             onToggle={onToggle}
             onRename={onRename}
             onDelete={onDelete}

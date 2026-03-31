@@ -7,6 +7,7 @@ interface FolderState {
   selectedFolder: FolderDetail | null;
   expandedIds: Set<string>;
   sidebarCollapsed: boolean;
+  mobileSidebarOpen: boolean;
   isLoading: boolean;
   error: string | null;
 }
@@ -16,6 +17,8 @@ interface FolderActions {
   setSelectedFolder: (folder: FolderDetail | null) => void;
   toggleExpanded: (id: string) => void;
   toggleSidebar: () => void;
+  openMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -25,6 +28,7 @@ export const useFolderStore = create<FolderState & FolderActions>((set) => ({
   selectedFolder: null,
   expandedIds: new Set<string>(),
   sidebarCollapsed: false,
+  mobileSidebarOpen: false,
   isLoading: false,
   error: null,
 
@@ -38,6 +42,8 @@ export const useFolderStore = create<FolderState & FolderActions>((set) => ({
       return { expandedIds: next };
     }),
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  openMobileSidebar: () => set({ mobileSidebarOpen: true }),
+  closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
 }));

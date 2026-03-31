@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { FolderTreeNode } from '../../domain/types/folder-tree-node.type';
+import { useLongPress } from '@/common/hooks/use-long-press';
 
 interface FolderTreeItemProps {
   node: FolderTreeNode;
@@ -13,17 +14,29 @@ interface FolderTreeItemProps {
   onRename: (id: string, name: string) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
   onCreate: (name: string, parentId: string) => Promise<boolean>;
+  onDocumentSelect?: () => void;
 }
 
 export function FolderTreeItem({
-  node, level, selectedId, expandedIds,
-  onSelect, onToggle, onRename, onDelete, onCreate,
+  node,
+  level,
+  selectedId,
+  expandedIds,
+  onDocumentSelect,
+  onSelect,
+  onToggle,
+  onRename,
+  onDelete,
+  onCreate,
 }: FolderTreeItemProps) {
   const isExpanded = expandedIds.has(node.id);
   const isSelected = selectedId === node.id;
   const hasChildren = node.children.length > 0;
 
   const [showMenu, setShowMenu] = useState(false);
+  const longPressHandlers = useLongPress(
+    useCallback(() => setShowMenu(true), []),
+  );
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(node.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -33,12 +46,33 @@ export function FolderTreeItem({
   return (
     <div>
       <div
+        role="treeitem"
+        aria-selected={isSelected}
+        aria-expanded={hasChildren ? isExpanded : undefined}
+        aria-label={node.name}
+        tabIndex={0}
         className={`group flex items-center gap-1 px-2 py-1 cursor-pointer text-sm rounded-md transition-colors ${
           isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
         }`}
         style={{ paddingLeft: `${8 + level * 16}px` }}
-        onClick={() => { onSelect(node.id); if (hasChildren) onToggle(node.id); }}
-        onContextMenu={(e) => { e.preventDefault(); setShowMenu(!showMenu); }}
+        onClick={() => {
+          onSelect(node.id);
+          if (hasChildren) onToggle(node.id);
+          onDocumentSelect?.();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect(node.id);
+            if (hasChildren) onToggle(node.id);
+            onDocumentSelect?.();
+          }
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setShowMenu(!showMenu);
+        }}
+        {...longPressHandlers}
       >
         <span className="w-4 text-xs text-foreground-secondary">
           {hasChildren ? (isExpanded ? '▼' : '▶') : ''}
@@ -63,7 +97,9 @@ export function FolderTreeItem({
               onChange={(e) => setNewName(e.target.value)}
               autoFocus
               onBlur={() => setRenaming(false)}
-              onKeyDown={(e) => { if (e.key === 'Escape') setRenaming(false); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setRenaming(false);
+              }}
             />
           </form>
         ) : (
@@ -72,7 +108,10 @@ export function FolderTreeItem({
 
         <button
           className="opacity-0 group-hover:opacity-100 text-xs text-foreground-secondary hover:text-foreground px-1"
-          onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(!showMenu);
+          }}
         >
           ⋯
         </button>
@@ -85,19 +124,29 @@ export function FolderTreeItem({
         >
           <button
             className="block w-full text-left px-3 py-1.5 hover:bg-muted"
-            onClick={() => { setRenaming(true); setNewName(node.name); setShowMenu(false); }}
+            onClick={() => {
+              setRenaming(true);
+              setNewName(node.name);
+              setShowMenu(false);
+            }}
           >
             Renombrar
           </button>
           <button
             className="block w-full text-left px-3 py-1.5 hover:bg-muted"
-            onClick={() => { setCreating(true); setShowMenu(false); }}
+            onClick={() => {
+              setCreating(true);
+              setShowMenu(false);
+            }}
           >
             Nueva subcarpeta
           </button>
           <button
             className="block w-full text-left px-3 py-1.5 hover:bg-muted text-destructive"
-            onClick={() => { setConfirmDelete(true); setShowMenu(false); }}
+            onClick={() => {
+              setConfirmDelete(true);
+              setShowMenu(false);
+            }}
           >
             Eliminar
           </button>
@@ -105,12 +154,18 @@ export function FolderTreeItem({
       )}
 
       {confirmDelete && (
-        <div className="ml-8 mb-1 p-2 bg-destructive/10 border border-destructive/20 rounded-md text-sm" style={{ marginLeft: `${24 + level * 16}px` }}>
+        <div
+          className="ml-8 mb-1 p-2 bg-destructive/10 border border-destructive/20 rounded-md text-sm"
+          style={{ marginLeft: `${24 + level * 16}px` }}
+        >
           <p className="mb-2">Eliminar "{node.name}" y todo su contenido?</p>
           <div className="flex gap-2">
             <button
               className="px-2 py-1 bg-destructive text-white rounded text-xs"
-              onClick={async () => { await onDelete(node.id); setConfirmDelete(false); }}
+              onClick={async () => {
+                await onDelete(node.id);
+                setConfirmDelete(false);
+              }}
             >
               Eliminar grupo
             </button>
@@ -143,26 +198,32 @@ export function FolderTreeItem({
             value={childName}
             onChange={(e) => setChildName(e.target.value)}
             autoFocus
-            onBlur={() => { if (!childName.trim()) setCreating(false); }}
-            onKeyDown={(e) => { if (e.key === 'Escape') setCreating(false); }}
+            onBlur={() => {
+              if (!childName.trim()) setCreating(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setCreating(false);
+            }}
           />
         </form>
       )}
 
-      {isExpanded && node.children.map((child) => (
-        <FolderTreeItem
-          key={child.id}
-          node={child}
-          level={level + 1}
-          selectedId={selectedId}
-          expandedIds={expandedIds}
-          onSelect={onSelect}
-          onToggle={onToggle}
-          onRename={onRename}
-          onDelete={onDelete}
-          onCreate={onCreate}
-        />
-      ))}
+      {isExpanded &&
+        node.children.map((child) => (
+          <FolderTreeItem
+            key={child.id}
+            node={child}
+            level={level + 1}
+            selectedId={selectedId}
+            expandedIds={expandedIds}
+            onSelect={onSelect}
+            onToggle={onToggle}
+            onRename={onRename}
+            onDelete={onDelete}
+            onCreate={onCreate}
+            onDocumentSelect={onDocumentSelect}
+          />
+        ))}
     </div>
   );
 }
