@@ -41,28 +41,93 @@ interface ToolbarButtonConfig {
 const TOOLBAR_GROUPS: ToolbarButtonConfig[][] = [
   // Text group
   [
-    { action: ToolbarAction.HEADING_1, icon: Heading, label: 'Encabezado', type: 'header' },
-    { action: ToolbarAction.BOLD, icon: Bold, label: 'Negrita', shortcut: 'Ctrl+B', type: 'simple' },
-    { action: ToolbarAction.ITALIC, icon: Italic, label: 'Cursiva', shortcut: 'Ctrl+I', type: 'simple' },
-    { action: ToolbarAction.STRIKETHROUGH, icon: Strikethrough, label: 'Tachado', shortcut: 'Ctrl+Shift+S', type: 'simple' },
+    {
+      action: ToolbarAction.HEADING_1,
+      icon: Heading,
+      label: 'Encabezado',
+      type: 'header',
+    },
+    {
+      action: ToolbarAction.BOLD,
+      icon: Bold,
+      label: 'Negrita',
+      shortcut: 'Ctrl+B',
+      type: 'simple',
+    },
+    {
+      action: ToolbarAction.ITALIC,
+      icon: Italic,
+      label: 'Cursiva',
+      shortcut: 'Ctrl+I',
+      type: 'simple',
+    },
+    {
+      action: ToolbarAction.STRIKETHROUGH,
+      icon: Strikethrough,
+      label: 'Tachado',
+      shortcut: 'Ctrl+Shift+S',
+      type: 'simple',
+    },
   ],
   // Lists group
   [
-    { action: ToolbarAction.BULLET_LIST, icon: List, label: 'Lista', type: 'simple' },
-    { action: ToolbarAction.NUMBERED_LIST, icon: ListOrdered, label: 'Lista numerada', type: 'simple' },
-    { action: ToolbarAction.CHECKLIST, icon: ListChecks, label: 'Checklist', type: 'simple' },
+    {
+      action: ToolbarAction.BULLET_LIST,
+      icon: List,
+      label: 'Lista',
+      type: 'simple',
+    },
+    {
+      action: ToolbarAction.NUMBERED_LIST,
+      icon: ListOrdered,
+      label: 'Lista numerada',
+      type: 'simple',
+    },
+    {
+      action: ToolbarAction.CHECKLIST,
+      icon: ListChecks,
+      label: 'Checklist',
+      type: 'simple',
+    },
   ],
   // Insert group
   [
-    { action: ToolbarAction.LINK, icon: Link, label: 'Enlace', shortcut: 'Ctrl+K', type: 'link' },
-    { action: ToolbarAction.IMAGE, icon: Image, label: 'Imagen', type: 'image' },
-    { action: ToolbarAction.CODE, icon: Code, label: 'Código', shortcut: 'Ctrl+E', type: 'simple' },
+    {
+      action: ToolbarAction.LINK,
+      icon: Link,
+      label: 'Enlace',
+      shortcut: 'Ctrl+K',
+      type: 'link',
+    },
+    {
+      action: ToolbarAction.IMAGE,
+      icon: Image,
+      label: 'Imagen',
+      type: 'image',
+    },
+    {
+      action: ToolbarAction.CODE,
+      icon: Code,
+      label: 'Código',
+      shortcut: 'Ctrl+E',
+      type: 'simple',
+    },
     { action: ToolbarAction.TABLE, icon: Table, label: 'Tabla', type: 'table' },
   ],
   // Block group
   [
-    { action: ToolbarAction.BLOCKQUOTE, icon: Quote, label: 'Cita', type: 'simple' },
-    { action: ToolbarAction.HORIZONTAL_RULE, icon: Minus, label: 'Línea horizontal', type: 'simple' },
+    {
+      action: ToolbarAction.BLOCKQUOTE,
+      icon: Quote,
+      label: 'Cita',
+      type: 'simple',
+    },
+    {
+      action: ToolbarAction.HORIZONTAL_RULE,
+      icon: Minus,
+      label: 'Línea horizontal',
+      type: 'simple',
+    },
   ],
 ];
 
@@ -70,7 +135,8 @@ interface MarkdownToolbarProps {
   editorView: EditorView | null;
 }
 
-const BUTTON_CLASS = 'h-7 w-8 p-0 text-muted-foreground hover:bg-muted hover:text-foreground active:bg-primary/10 active:text-primary';
+const BUTTON_CLASS =
+  'p-0 text-muted-foreground hover:bg-muted hover:text-foreground active:bg-primary/10 active:text-primary min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-7 md:w-8';
 
 function ToolbarBtn({
   config,
@@ -88,9 +154,13 @@ function ToolbarBtn({
       variant="ghost"
       className={BUTTON_CLASS}
       disabled={disabled}
-      onClick={type === 'simple' || type === 'image' ? () => {
-        if (editorView) executeToolbarAction(editorView, config.action);
-      } : undefined}
+      onClick={
+        type === 'simple' || type === 'image'
+          ? () => {
+              if (editorView) executeToolbarAction(editorView, config.action);
+            }
+          : undefined
+      }
       data-testid={`toolbar-${config.action}`}
     >
       <Icon className="size-4" />
@@ -100,11 +170,15 @@ function ToolbarBtn({
   const wrapWithDropdown = (children: React.ReactNode) => {
     switch (type) {
       case 'header':
-        return <HeaderDropdown editorView={editorView}>{children}</HeaderDropdown>;
+        return (
+          <HeaderDropdown editorView={editorView}>{children}</HeaderDropdown>
+        );
       case 'link':
         return <LinkPopover editorView={editorView}>{children}</LinkPopover>;
       case 'table':
-        return <TableDropdown editorView={editorView}>{children}</TableDropdown>;
+        return (
+          <TableDropdown editorView={editorView}>{children}</TableDropdown>
+        );
       default:
         return children;
     }
@@ -128,7 +202,7 @@ export function MarkdownToolbar({ editorView }: MarkdownToolbarProps) {
   return (
     <TooltipProvider delayDuration={300}>
       <div
-        className="h-10 bg-secondary border-b border-border flex items-center px-2 gap-1"
+        className="bg-secondary border-border flex items-center px-2 gap-1 overflow-x-auto fixed bottom-0 left-0 right-0 z-40 h-11 border-t md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto md:h-10 md:border-b md:border-t-0"
         data-testid="markdown-toolbar"
         role="toolbar"
         aria-label="Markdown formatting"
@@ -139,7 +213,11 @@ export function MarkdownToolbar({ editorView }: MarkdownToolbarProps) {
               <Separator orientation="vertical" className="mx-1 h-5" />
             )}
             {group.map((config) => (
-              <ToolbarBtn key={config.action} config={config} editorView={editorView} />
+              <ToolbarBtn
+                key={config.action}
+                config={config}
+                editorView={editorView}
+              />
             ))}
           </div>
         ))}
