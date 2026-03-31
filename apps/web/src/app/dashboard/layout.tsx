@@ -30,8 +30,9 @@ export default function DashboardLayout({
 
   // Derive selected folder from URL: /dashboard/[folderId]/...
   const segments = pathname.split('/');
+  const rawSegment = segments.length >= 3 ? segments[2] : null;
   const folderIdFromUrl =
-    segments.length >= 3 && segments[2] ? segments[2] : null;
+    rawSegment && rawSegment !== 'settings' ? rawSegment : null;
 
   const {
     tree,

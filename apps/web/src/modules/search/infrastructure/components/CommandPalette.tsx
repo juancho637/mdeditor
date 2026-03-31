@@ -34,6 +34,7 @@ export function CommandPalette() {
   if (!isOpen) return null;
 
   const handleSelect = (result: SearchResult) => {
+    if (!result.folderId || !result.id) return;
     router.push(`/dashboard/${result.folderId}/${result.id}`);
     closeSearch();
   };

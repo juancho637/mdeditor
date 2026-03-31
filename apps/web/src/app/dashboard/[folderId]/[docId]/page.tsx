@@ -13,15 +13,34 @@ export default function DocumentPage() {
   const docId = params.docId as string;
 
   const { selectFolder } = useFolderViewModel();
-  const { currentDocument, saveStatus, loadDocument, saveContent } =
-    useDocumentViewModel();
+  const {
+    currentDocument,
+    saveStatus,
+    isLoading,
+    error,
+    loadDocument,
+    saveContent,
+    setCurrentDocument,
+  } = useDocumentViewModel();
 
   useEffect(() => {
+    setCurrentDocument(null);
     selectFolder(folderId);
     loadDocument(docId);
   }, [folderId, docId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!currentDocument) {
+  if (error) {
+    return (
+      <div
+        className="flex items-center justify-center"
+        style={{ minHeight: 'calc(100vh - 48px)' }}
+      >
+        <p className="text-sm text-foreground-secondary">{error}</p>
+      </div>
+    );
+  }
+
+  if (isLoading || !currentDocument) {
     return (
       <div
         className="flex items-center justify-center"

@@ -149,7 +149,7 @@ export default function FolderPage() {
               if (e.key === 'Escape') setCreatingDoc(false);
             }}
           />
-          <Button type="submit" size="sm">
+          <Button type="submit" size="sm" disabled={isLoading}>
             Crear
           </Button>
           <Button
