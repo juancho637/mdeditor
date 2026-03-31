@@ -27,7 +27,11 @@ export default function DashboardLayout({
   const { logout } = useAuthViewModel();
   const router = useRouter();
   const pathname = usePathname();
-  const isSettingsPage = pathname.startsWith('/dashboard/settings');
+
+  // Derive selected folder from URL: /dashboard/[folderId]/...
+  const segments = pathname.split('/');
+  const folderIdFromUrl =
+    segments.length >= 3 && segments[2] ? segments[2] : null;
 
   const {
     tree,
@@ -75,12 +79,16 @@ export default function DashboardLayout({
     router.push('/sign-in');
   };
 
+  const handleFolderSelect = (id: string) => {
+    router.push(`/dashboard/${id}`);
+  };
+
   const sidebarProps = {
     tree,
-    selectedId: selectedFolder?.id ?? null,
+    selectedId: folderIdFromUrl,
     expandedIds,
     collapsed: sidebarCollapsed,
-    onSelect: selectFolder,
+    onSelect: handleFolderSelect,
     onToggle: toggleExpanded,
     onToggleSidebar: toggleSidebar,
     onRename: renameFolder,
@@ -101,27 +109,25 @@ export default function DashboardLayout({
       <header className="h-12 border-b border-border bg-background flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Botón hamburguesa — solo visible en móvil */}
-          {!isSettingsPage && (
-            <button
-              onClick={openMobileSidebar}
-              className="lg:hidden shrink-0 text-foreground-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-              aria-label="Abrir navegación"
-              data-testid="mobile-menu-btn"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          )}
+          <button
+            onClick={openMobileSidebar}
+            className="lg:hidden shrink-0 text-foreground-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            aria-label="Abrir navegación"
+            data-testid="mobile-menu-btn"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           <Link
             href="/dashboard"
             className="font-semibold text-foreground shrink-0"
           >
             markdown
           </Link>
-          {selectedFolder && !isSettingsPage && (
+          {selectedFolder && (
             <span className="hidden sm:flex min-w-0">
               <FolderBreadcrumbs
                 path={selectedFolder.path}
-                onNavigate={selectFolder}
+                onNavigate={handleFolderSelect}
               />
             </span>
           )}
@@ -129,7 +135,7 @@ export default function DashboardLayout({
         <div className="flex items-center gap-3 shrink-0">
           <ThemeToggle />
           <Link
-            href="/dashboard/settings/users"
+            href="/settings/users"
             className="hidden sm:block text-sm text-foreground-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
           >
             Configuración
@@ -145,40 +151,36 @@ export default function DashboardLayout({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar desktop — oculto en móvil */}
-        {!isSettingsPage && (
-          <div className="hidden lg:flex">
-            <FolderSidebar {...sidebarProps} />
-          </div>
-        )}
+        <div className="hidden lg:flex">
+          <FolderSidebar {...sidebarProps} />
+        </div>
 
         {/* Sidebar móvil — Sheet overlay */}
-        {!isSettingsPage && (
-          <Sheet
-            open={mobileSidebarOpen}
-            onOpenChange={(open: boolean) => {
-              if (!open) closeMobileSidebar();
-            }}
+        <Sheet
+          open={mobileSidebarOpen}
+          onOpenChange={(open: boolean) => {
+            if (!open) closeMobileSidebar();
+          }}
+        >
+          <SheetContent
+            side="left"
+            className="p-0 w-[260px] sm:max-w-[260px] top-12 shadow-none"
+            overlayClassName="top-12"
+            hideClose
           >
-            <SheetContent
-              side="left"
-              className="p-0 w-[260px] sm:max-w-[260px] top-12 shadow-none"
-              overlayClassName="top-12"
-              hideClose
-            >
-              <SheetTitle className="sr-only">Navegación</SheetTitle>
-              <SheetDescription className="sr-only">
-                Panel de navegación de carpetas
-              </SheetDescription>
-              <FolderSidebar
-                {...sidebarProps}
-                collapsed={false}
-                onToggleSidebar={closeMobileSidebar}
-                onDocumentSelect={closeMobileSidebar}
-                asideClassName="w-full h-full border-r-0"
-              />
-            </SheetContent>
-          </Sheet>
-        )}
+            <SheetTitle className="sr-only">Navegación</SheetTitle>
+            <SheetDescription className="sr-only">
+              Panel de navegación de carpetas
+            </SheetDescription>
+            <FolderSidebar
+              {...sidebarProps}
+              collapsed={false}
+              onToggleSidebar={closeMobileSidebar}
+              onDocumentSelect={closeMobileSidebar}
+              asideClassName="w-full h-full border-r-0"
+            />
+          </SheetContent>
+        </Sheet>
 
         <main id="main-content" className="flex-1 overflow-y-auto">
           {children}

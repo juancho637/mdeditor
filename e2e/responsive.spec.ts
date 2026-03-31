@@ -96,7 +96,7 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       await resetAndSeedUsers();
       await page.setViewportSize({ width: 375, height: 812 });
       await loginAs(page, 'admin@test.com', 'password123');
-      await page.goto('/dashboard/settings/users');
+      await page.goto('/settings/users');
 
       // No hamburger on settings pages
       await expect(page.getByTestId('mobile-menu-btn')).not.toBeVisible();

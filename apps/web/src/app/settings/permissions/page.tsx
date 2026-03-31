@@ -6,7 +6,8 @@ import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-f
 import { useGroupViewModel } from '@/modules/groups/infrastructure/hooks/use-group.viewmodel';
 
 export default function SettingsPermissionsPage() {
-  const { permissions, isLoading, error, setPermission, removePermission } = usePermissionViewModel();
+  const { permissions, isLoading, error, setPermission, removePermission } =
+    usePermissionViewModel();
   const { tree } = useFolderViewModel();
   const { groups } = useGroupViewModel();
 
@@ -15,13 +16,15 @@ export default function SettingsPermissionsPage() {
       <div>
         <h2 className="text-lg font-medium mb-4">Permisos por carpeta</h2>
         <p className="text-sm text-foreground-secondary mb-4">
-          Asigna permisos de visualización o edición para cada grupo en cada carpeta.
-          Editar incluye Ver automáticamente.
+          Asigna permisos de visualización o edición para cada grupo en cada
+          carpeta. Editar incluye Ver automáticamente.
         </p>
       </div>
 
       {error && (
-        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>
+        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+          {error}
+        </div>
       )}
 
       {isLoading ? (

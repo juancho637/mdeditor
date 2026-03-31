@@ -7,9 +7,16 @@ import { useGroupViewModel } from '@/modules/groups/infrastructure/hooks/use-gro
 
 export default function SettingsGroupsPage() {
   const {
-    groups, selectedGroup, isLoading, error,
-    createGroup, editGroup, deleteGroup,
-    loadGroupDetail, addUserToGroup, removeUserFromGroup,
+    groups,
+    selectedGroup,
+    isLoading,
+    error,
+    createGroup,
+    editGroup,
+    deleteGroup,
+    loadGroupDetail,
+    addUserToGroup,
+    removeUserFromGroup,
   } = useGroupViewModel();
 
   return (
@@ -22,7 +29,9 @@ export default function SettingsGroupsPage() {
           submitLabel="Crear grupo"
         />
         {error && !selectedGroup && (
-          <div className="mt-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>
+          <div className="mt-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+            {error}
+          </div>
         )}
       </div>
 
