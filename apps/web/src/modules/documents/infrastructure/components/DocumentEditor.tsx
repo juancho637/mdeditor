@@ -320,6 +320,22 @@ export function DocumentEditor({
             {saveStatusLabel}
           </span>
           <button
+            onClick={() => {
+              const blob = new Blob([content], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = globalThis.document.createElement('a');
+              a.href = url;
+              a.download = `${document.title}.md`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
+            title="Exportar como .md"
+            data-testid="export-document"
+          >
+            ↓ .md
+          </button>
+          <button
             onClick={togglePanel}
             className={`p-1.5 rounded-md transition-colors ${
               isPanelOpen

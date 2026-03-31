@@ -1,4 +1,5 @@
 import { apiClient } from '@/common/adapters/api-client';
+import { getAccessToken } from '@/common/helpers/token-storage.utils';
 import type { DocumentRepository } from '../../domain/repositories/document-repository';
 import type { Document } from '../../domain/types/document.type';
 import type { DocumentSummary } from '../../domain/types/document-summary.type';
@@ -52,23 +53,35 @@ function mapSummary(wire: DocumentSummaryWireResponse): DocumentSummary {
 
 export class DocumentV1Repository implements DocumentRepository {
   async create(title: string, folderId: string): Promise<Document> {
-    const response = await apiClient.post<DocumentWireResponse>('/api/documents', {
-      title,
-      folder_id: folderId,
-    });
+    const response = await apiClient.post<DocumentWireResponse>(
+      '/api/documents',
+      {
+        title,
+        folder_id: folderId,
+      },
+    );
     return mapDocument(response.data);
   }
 
   async getById(id: string): Promise<Document> {
-    const response = await apiClient.get<DocumentWireResponse>(`/api/documents/${id}`);
+    const response = await apiClient.get<DocumentWireResponse>(
+      `/api/documents/${id}`,
+    );
     return mapDocument(response.data);
   }
 
-  async update(id: string, data: { title?: string; contentMarkdown?: string }): Promise<Document> {
+  async update(
+    id: string,
+    data: { title?: string; contentMarkdown?: string },
+  ): Promise<Document> {
     const wireData: Record<string, string> = {};
     if (data.title !== undefined) wireData.title = data.title;
-    if (data.contentMarkdown !== undefined) wireData.content_markdown = data.contentMarkdown;
-    const response = await apiClient.put<DocumentWireResponse>(`/api/documents/${id}`, wireData);
+    if (data.contentMarkdown !== undefined)
+      wireData.content_markdown = data.contentMarkdown;
+    const response = await apiClient.put<DocumentWireResponse>(
+      `/api/documents/${id}`,
+      wireData,
+    );
     return mapDocument(response.data);
   }
 
@@ -77,8 +90,29 @@ export class DocumentV1Repository implements DocumentRepository {
   }
 
   async listByFolder(folderId: string): Promise<DocumentSummary[]> {
-    const response = await apiClient.get<DocumentSummaryWireResponse[]>(`/api/folders/${folderId}/documents`);
+    const response = await apiClient.get<DocumentSummaryWireResponse[]>(
+      `/api/folders/${folderId}/documents`,
+    );
     return (response.data as DocumentSummaryWireResponse[]).map(mapSummary);
+  }
+
+  async importDocuments(folderId: string, files: File[]): Promise<void> {
+    const formData = new FormData();
+    formData.append('folder_id', folderId);
+    files.forEach((file) => formData.append('files', file));
+    const token = getAccessToken();
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
+    const res = await fetch(`${baseUrl}/api/documents/import`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(
+        body?.message ?? `Import failed with status ${res.status}`,
+      );
+    }
   }
 }
 
