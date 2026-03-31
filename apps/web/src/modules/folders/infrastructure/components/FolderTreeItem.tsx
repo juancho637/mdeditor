@@ -58,14 +58,14 @@ export function FolderTreeItem({
         onClick={() => {
           onSelect(node.id);
           if (hasChildren) onToggle(node.id);
-          onDocumentSelect?.();
+          if (!hasChildren) onDocumentSelect?.();
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             onSelect(node.id);
             if (hasChildren) onToggle(node.id);
-            onDocumentSelect?.();
+            if (!hasChildren) onDocumentSelect?.();
           }
         }}
         onContextMenu={(e) => {

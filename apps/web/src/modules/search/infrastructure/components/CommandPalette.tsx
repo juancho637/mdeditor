@@ -28,7 +28,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/50"
+      className="fixed inset-0 z-[60] flex items-start justify-center pt-[20vh] bg-black/50"
       onClick={closeSearch}
     >
       <div
