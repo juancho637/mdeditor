@@ -9,6 +9,8 @@ import { FolderBreadcrumbs } from '@/modules/folders/infrastructure/components/F
 import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-folder.viewmodel';
 import { ThemeToggle } from '@/modules/theme/infrastructure/components/ThemeToggle';
 import { useThemeStore } from '@/modules/theme/infrastructure/state/theme.state';
+import { CommandPalette } from '@/modules/search/infrastructure/components/CommandPalette';
+import { useSearchViewModel } from '@/modules/search/infrastructure/hooks/use-search.viewmodel';
 
 export default function DashboardLayout({
   children,
@@ -21,16 +23,35 @@ export default function DashboardLayout({
   const isSettingsPage = pathname.startsWith('/dashboard/settings');
 
   const {
-    tree, selectedFolder, expandedIds, sidebarCollapsed,
-    selectFolder, createFolder, renameFolder, deleteFolder,
-    toggleExpanded, toggleSidebar,
+    tree,
+    selectedFolder,
+    expandedIds,
+    sidebarCollapsed,
+    selectFolder,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    toggleExpanded,
+    toggleSidebar,
   } = useFolderViewModel();
 
   const initTheme = useThemeStore((s) => s.initTheme);
+  const { openSearch } = useSearchViewModel();
 
   useEffect(() => {
     initTheme();
   }, [initTheme]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        openSearch();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [openSearch]);
 
   const handleLogout = async () => {
     await logout();
@@ -83,10 +104,9 @@ export default function DashboardLayout({
             onCreate={createFolder}
           />
         )}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

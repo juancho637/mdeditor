@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/common/components/ui/button';
 import type { FolderTreeNode } from '../../domain/types/folder-tree-node.type';
 import { FolderTreeItem } from './FolderTreeItem';
+import { useSearchViewModel } from '@/modules/search/infrastructure/hooks/use-search.viewmodel';
 
 interface FolderSidebarProps {
   tree: FolderTreeNode[];
@@ -19,11 +20,20 @@ interface FolderSidebarProps {
 }
 
 export function FolderSidebar({
-  tree, selectedId, expandedIds, collapsed,
-  onSelect, onToggle, onToggleSidebar, onRename, onDelete, onCreate,
+  tree,
+  selectedId,
+  expandedIds,
+  collapsed,
+  onSelect,
+  onToggle,
+  onToggleSidebar,
+  onRename,
+  onDelete,
+  onCreate,
 }: FolderSidebarProps) {
   const [creatingRoot, setCreatingRoot] = useState(false);
   const [rootName, setRootName] = useState('');
+  const { openSearch } = useSearchViewModel();
 
   if (collapsed) {
     return (
@@ -46,6 +56,13 @@ export function FolderSidebar({
           Carpetas
         </span>
         <div className="flex gap-1">
+          <button
+            onClick={openSearch}
+            className="text-xs text-foreground-secondary hover:text-foreground px-1"
+            title="Buscar documentos (Ctrl+K)"
+          >
+            🔍
+          </button>
           <button
             onClick={() => setCreatingRoot(true)}
             className="text-xs text-foreground-secondary hover:text-foreground px-1"
@@ -82,15 +99,21 @@ export function FolderSidebar({
               value={rootName}
               onChange={(e) => setRootName(e.target.value)}
               autoFocus
-              onBlur={() => { if (!rootName.trim()) setCreatingRoot(false); }}
-              onKeyDown={(e) => { if (e.key === 'Escape') setCreatingRoot(false); }}
+              onBlur={() => {
+                if (!rootName.trim()) setCreatingRoot(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setCreatingRoot(false);
+              }}
             />
           </form>
         )}
 
         {tree.length === 0 && !creatingRoot && (
           <div className="px-3 py-4 text-center">
-            <p className="text-sm text-foreground-secondary mb-2">No hay carpetas</p>
+            <p className="text-sm text-foreground-secondary mb-2">
+              No hay carpetas
+            </p>
             <Button
               variant="outline"
               size="sm"
