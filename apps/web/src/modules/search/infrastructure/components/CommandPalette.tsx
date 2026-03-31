@@ -10,7 +10,6 @@ export function CommandPalette() {
   const { isOpen, query, results, isLoading, closeSearch, search } =
     useSearchViewModel();
   const { loadDocument } = useDocumentViewModel();
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) closeSearch();
@@ -18,6 +17,19 @@ export function CommandPalette() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeSearch]);
+
+  // Focus input when palette opens, after Sheet close animation + Radix focus-restore
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.querySelector<HTMLInputElement>('[cmdk-input]')?.focus();
+        });
+      });
+    }, 320);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -28,7 +40,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/50"
+      className="fixed inset-0 z-[60] flex items-start justify-center pt-[20vh] bg-black/50"
       onClick={closeSearch}
     >
       <div
@@ -43,7 +55,6 @@ export function CommandPalette() {
               onValueChange={search}
               placeholder="Buscar documentos..."
               className="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-foreground-secondary"
-              autoFocus
             />
             {query && (
               <button

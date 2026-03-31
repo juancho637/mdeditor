@@ -12,6 +12,13 @@ import { PresenceIndicator } from '@/modules/collaboration/infrastructure/compon
 import { ConnectionStatusBanner } from '@/modules/collaboration/infrastructure/components/ConnectionStatusBanner';
 import { ConnectionIndicator } from '@/modules/collaboration/infrastructure/components/ConnectionIndicator';
 import { useSyncScroll } from '../hooks/use-sync-scroll';
+import { useIsMobile } from '@/common/hooks/use-is-mobile';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/common/components/ui/tabs';
 import { ClipboardList } from 'lucide-react';
 import { ActivityPanel } from '@/modules/history/infrastructure/components/ActivityPanel';
 import { useHistoryStore } from '@/modules/history/infrastructure/state/history.state';
@@ -118,6 +125,8 @@ export function DocumentEditor({
   const effectiveSaveStatus = isCollaborative ? collabSaveStatus : saveStatus;
 
   contentRef.current = content;
+
+  const isMobile = useIsMobile();
 
   const { setEditorScroller, setPreviewScroller } = useSyncScroll({
     enabled: mode === EditorMode.HYBRID && !readOnly,
@@ -359,7 +368,9 @@ export function DocumentEditor({
         <ConnectionStatusBanner connectionStatus={connectionStatus} />
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div
+        className={`flex flex-1 overflow-hidden${showToolbar ? ' pb-11 md:pb-0' : ''}`}
+      >
         <div className="flex-1 overflow-hidden transition-opacity duration-200">
           {mode === EditorMode.EDITOR && !readOnly && (
             <CodeMirrorEditor
@@ -379,7 +390,43 @@ export function DocumentEditor({
             </div>
           )}
 
-          {mode === EditorMode.HYBRID && !readOnly && (
+          {mode === EditorMode.HYBRID && !readOnly && isMobile && (
+            <Tabs defaultValue="editor" className="flex flex-col h-full">
+              <TabsList
+                className="mx-2 mt-2 shrink-0"
+                data-testid="hybrid-tabs-mobile"
+              >
+                <TabsTrigger value="editor" data-testid="hybrid-tab-editor">
+                  Editor
+                </TabsTrigger>
+                <TabsTrigger value="preview" data-testid="hybrid-tab-preview">
+                  Preview
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent
+                value="editor"
+                className="flex-1 overflow-hidden mt-0 pb-11"
+              >
+                <CodeMirrorEditor
+                  content={content}
+                  readOnly={readOnly}
+                  onChange={handleChange}
+                  onEditorReady={handleEditorReady}
+                  yText={collabState?.yText}
+                  undoManager={collabState?.undoManager}
+                  awareness={collabState?.awareness}
+                />
+              </TabsContent>
+              <TabsContent
+                value="preview"
+                className="flex-1 overflow-y-auto mt-0"
+              >
+                <MarkdownPreview content={previewContent} />
+              </TabsContent>
+            </Tabs>
+          )}
+
+          {mode === EditorMode.HYBRID && !readOnly && !isMobile && (
             <SplitView
               editorContent={
                 <CodeMirrorEditor

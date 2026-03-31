@@ -6,6 +6,56 @@ import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/u
 import { PermissionLevel } from '@/modules/permissions/domain/types/permission-level.enum';
 import { DocumentEditor } from '@/modules/documents/infrastructure/components/DocumentEditor';
 import { Button } from '@/common/components/ui/button';
+import { useSwipeLeft } from '@/common/hooks/use-swipe-left';
+import type { DocumentSummary } from '@/modules/documents/domain/types/document-summary.type';
+
+interface DocumentRowProps {
+  doc: DocumentSummary;
+  onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+function DocumentRow({ doc, onOpen, onDelete }: DocumentRowProps) {
+  const { isSwiped, reset, handlers } = useSwipeLeft();
+
+  return (
+    <div className="relative flex items-center overflow-hidden" {...handlers}>
+      <div
+        className={`flex items-center justify-between px-4 py-3 hover:bg-muted w-full transition-transform duration-200 ${isSwiped ? '-translate-x-16' : 'translate-x-0'}`}
+      >
+        <button
+          className="text-left flex-1"
+          onClick={() => {
+            reset();
+            onOpen(doc.id);
+          }}
+        >
+          <p className="text-sm font-medium">📄 {doc.title}</p>
+          <p className="text-xs text-foreground-secondary">
+            {new Date(doc.updatedAt).toLocaleDateString('es')}
+          </p>
+        </button>
+        <button
+          className="hidden md:block text-xs text-destructive hover:text-destructive px-2"
+          onClick={() => onDelete(doc.id)}
+        >
+          Eliminar
+        </button>
+      </div>
+      {/* Swipe-to-delete action — mobile only */}
+      <button
+        className={`absolute right-0 h-full w-16 bg-destructive text-white text-xs font-medium flex items-center justify-center transition-opacity duration-200 ${isSwiped ? 'opacity-100' : 'invisible pointer-events-none'}`}
+        onClick={() => onDelete(doc.id)}
+        aria-label={`Eliminar ${doc.title}`}
+        aria-hidden={!isSwiped}
+        tabIndex={isSwiped ? 0 : -1}
+        data-testid={`delete-swipe-${doc.id}`}
+      >
+        Eliminar
+      </button>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { selectedFolder, loadTree } = useFolderViewModel();
@@ -49,8 +99,8 @@ export default function DashboardPage() {
 
   if (selectedFolder) {
     return (
-      <div className="p-6" style={{ minHeight: 'calc(100vh - 48px)' }}>
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-4 sm:p-6" style={{ minHeight: 'calc(100vh - 48px)' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h2 className="text-lg font-medium">{selectedFolder.name}</h2>
           <div className="flex items-center gap-2">
             <input
@@ -128,26 +178,12 @@ export default function DashboardPage() {
         {folderDocuments.length > 0 ? (
           <div className="border border-border rounded-md divide-y divide-border">
             {folderDocuments.map((doc) => (
-              <div
+              <DocumentRow
                 key={doc.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-muted"
-              >
-                <button
-                  className="text-left flex-1"
-                  onClick={() => loadDocument(doc.id)}
-                >
-                  <p className="text-sm font-medium">📄 {doc.title}</p>
-                  <p className="text-xs text-foreground-secondary">
-                    {new Date(doc.updatedAt).toLocaleDateString('es')}
-                  </p>
-                </button>
-                <button
-                  className="text-xs text-destructive hover:text-destructive px-2"
-                  onClick={() => deleteDocument(doc.id, selectedFolder.id)}
-                >
-                  Eliminar
-                </button>
-              </div>
+                doc={doc}
+                onOpen={loadDocument}
+                onDelete={(id) => deleteDocument(id, selectedFolder.id)}
+              />
             ))}
           </div>
         ) : !creatingDoc ? (
