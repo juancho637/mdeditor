@@ -92,33 +92,38 @@ export default function DashboardLayout({
       </a>
 
       <header className="h-12 border-b border-border bg-background flex items-center justify-between px-4 shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Botón hamburguesa — solo visible en móvil */}
           {!isSettingsPage && (
             <button
               onClick={openMobileSidebar}
-              className="lg:hidden text-foreground-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+              className="lg:hidden shrink-0 text-foreground-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
               aria-label="Abrir navegación"
               data-testid="mobile-menu-btn"
             >
               <Menu className="w-5 h-5" />
             </button>
           )}
-          <Link href="/dashboard" className="font-semibold text-foreground">
+          <Link
+            href="/dashboard"
+            className="font-semibold text-foreground shrink-0"
+          >
             markdown
           </Link>
           {selectedFolder && !isSettingsPage && (
-            <FolderBreadcrumbs
-              path={selectedFolder.path}
-              onNavigate={selectFolder}
-            />
+            <span className="hidden sm:flex min-w-0">
+              <FolderBreadcrumbs
+                path={selectedFolder.path}
+                onNavigate={selectFolder}
+              />
+            </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <ThemeToggle />
           <Link
             href="/dashboard/settings/users"
-            className="text-sm text-foreground-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="hidden sm:block text-sm text-foreground-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
           >
             Configuración
           </Link>
@@ -149,7 +154,8 @@ export default function DashboardLayout({
           >
             <SheetContent
               side="left"
-              className="p-0 w-[280px] sm:max-w-[280px]"
+              className="p-0 w-[260px] sm:max-w-[260px] top-12 shadow-none"
+              overlayClassName="top-12"
               hideClose
             >
               <SheetTitle className="sr-only">Navegación</SheetTitle>
@@ -161,6 +167,7 @@ export default function DashboardLayout({
                 collapsed={false}
                 onToggleSidebar={closeMobileSidebar}
                 onDocumentSelect={closeMobileSidebar}
+                asideClassName="w-full h-full border-r-0"
               />
             </SheetContent>
           </Sheet>

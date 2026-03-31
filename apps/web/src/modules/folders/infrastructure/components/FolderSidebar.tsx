@@ -18,6 +18,7 @@ interface FolderSidebarProps {
   onDelete: (id: string) => Promise<boolean>;
   onCreate: (name: string, parentId: string | null) => Promise<boolean>;
   onDocumentSelect?: () => void;
+  asideClassName?: string;
 }
 
 export function FolderSidebar({
@@ -32,6 +33,7 @@ export function FolderSidebar({
   onDelete,
   onCreate,
   onDocumentSelect,
+  asideClassName,
 }: FolderSidebarProps) {
   const [creatingRoot, setCreatingRoot] = useState(false);
   const [rootName, setRootName] = useState('');
@@ -53,7 +55,7 @@ export function FolderSidebar({
 
   return (
     <aside
-      className="w-[260px] border-r border-border bg-secondary flex flex-col shrink-0"
+      className={`w-[260px] border-r border-border bg-secondary flex flex-col shrink-0${asideClassName ? ` ${asideClassName}` : ''}`}
       role="navigation"
       aria-label="Carpetas"
     >

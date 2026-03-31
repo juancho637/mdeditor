@@ -99,8 +99,8 @@ export default function DashboardPage() {
 
   if (selectedFolder) {
     return (
-      <div className="p-6" style={{ minHeight: 'calc(100vh - 48px)' }}>
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-4 sm:p-6" style={{ minHeight: 'calc(100vh - 48px)' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h2 className="text-lg font-medium">{selectedFolder.name}</h2>
           <div className="flex items-center gap-2">
             <input
