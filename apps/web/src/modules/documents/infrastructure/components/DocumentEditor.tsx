@@ -19,7 +19,13 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@/common/components/ui/tabs';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, MoreVertical, Share2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/common/components/ui/dropdown-menu';
 import { ActivityPanel } from '@/modules/history/infrastructure/components/ActivityPanel';
 import { useHistoryStore } from '@/modules/history/infrastructure/state/history.state';
 import { SharePanel } from './SharePanel';
@@ -288,103 +294,181 @@ export function DocumentEditor({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-medium">{document.title}</h2>
-          <div
-            className="flex gap-1 bg-muted rounded-md p-0.5"
-            data-testid="mode-tabs"
-          >
+      <div className="border-b border-border">
+        {/* Fila principal: título + acciones */}
+        <div className="flex items-center justify-between px-4 py-2 gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <h2 className="text-lg font-medium truncate min-w-0">
+              {document.title}
+            </h2>
+            {/* Tabs modo — solo desktop */}
+            <div
+              className="hidden lg:flex gap-1 bg-muted rounded-md p-0.5 shrink-0"
+              data-testid="mode-tabs"
+            >
+              {!readOnly && (
+                <>
+                  <button
+                    onClick={() => handleModeChange(EditorMode.EDITOR)}
+                    className={modeTabClass(EditorMode.EDITOR)}
+                    data-testid="mode-editor"
+                  >
+                    Editor
+                  </button>
+                  <button
+                    onClick={() => handleModeChange(EditorMode.HYBRID)}
+                    className={modeTabClass(EditorMode.HYBRID)}
+                    data-testid="mode-hybrid"
+                  >
+                    Híbrido
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => handleModeChange(EditorMode.PREVIEW)}
+                className={modeTabClass(EditorMode.PREVIEW)}
+                data-testid="mode-preview"
+              >
+                Preview
+              </button>
+            </div>
+          </div>
+          <div className="relative flex items-center gap-2 shrink-0">
+            {isCollaborative && connectedUsers.length > 0 && (
+              <PresenceIndicator users={connectedUsers} />
+            )}
+            {isCollaborationActive && (
+              <ConnectionIndicator connectionStatus={connectionStatus} />
+            )}
+            <span className="text-xs text-foreground-secondary hidden sm:inline">
+              {saveStatusLabel}
+            </span>
             {!readOnly && (
               <>
                 <button
-                  onClick={() => handleModeChange(EditorMode.EDITOR)}
-                  className={modeTabClass(EditorMode.EDITOR)}
-                  data-testid="mode-editor"
+                  onClick={() => setShareOpen((v) => !v)}
+                  className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors hidden sm:inline"
+                  title="Compartir documento"
+                  data-testid="share-document-btn"
                 >
-                  Editor
+                  Compartir
                 </button>
-                <button
-                  onClick={() => handleModeChange(EditorMode.HYBRID)}
-                  className={modeTabClass(EditorMode.HYBRID)}
-                  data-testid="mode-hybrid"
-                >
-                  Híbrido
-                </button>
+                {shareOpen && (
+                  <SharePanel
+                    documentId={document.id}
+                    onClose={() => setShareOpen(false)}
+                    onCreateShare={createShare}
+                    onGetShare={getShare}
+                    onRevokeShare={revokeShare}
+                  />
+                )}
               </>
             )}
+            {/* Desktop: botones individuales */}
             <button
-              onClick={() => handleModeChange(EditorMode.PREVIEW)}
-              className={modeTabClass(EditorMode.PREVIEW)}
-              data-testid="mode-preview"
+              onClick={() => {
+                const exportContent = isCollaborationActive
+                  ? previewContent
+                  : content;
+                const blob = new Blob([exportContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = globalThis.document.createElement('a');
+                a.href = url;
+                a.download = `${document.title}.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors hidden sm:inline"
+              title="Exportar como .md"
+              data-testid="export-document"
             >
-              Preview
+              ↓ .md
             </button>
+            <button
+              onClick={togglePanel}
+              className={`p-1.5 rounded-md transition-colors hidden sm:flex ${
+                isPanelOpen
+                  ? 'bg-muted text-foreground'
+                  : 'text-foreground-secondary hover:text-foreground hover:bg-muted'
+              }`}
+              aria-label="Panel de actividad"
+              data-testid="activity-panel-toggle"
+            >
+              <ClipboardList className="w-4 h-4" />
+            </button>
+            {/* Mobile: menú overflow con compartir + export + historial */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="p-1.5 rounded-md text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors sm:hidden"
+                aria-label="Más opciones"
+                data-testid="mobile-more-menu"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!readOnly && (
+                  <DropdownMenuItem
+                    onClick={() => setShareOpen((v) => !v)}
+                    data-testid="mobile-share-document-btn"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartir
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={() => {
+                    const exportContent = isCollaborationActive
+                      ? previewContent
+                      : content;
+                    const blob = new Blob([exportContent], {
+                      type: 'text/plain',
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = globalThis.document.createElement('a');
+                    a.href = url;
+                    a.download = `${document.title}.md`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  data-testid="mobile-export-document"
+                >
+                  ↓ Exportar .md
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={togglePanel}
+                  data-testid="mobile-activity-panel-toggle"
+                >
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  Historial
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {isCollaborative && connectedUsers.length > 0 && (
-            <PresenceIndicator users={connectedUsers} />
-          )}
-          {isCollaborationActive && (
-            <ConnectionIndicator connectionStatus={connectionStatus} />
-          )}
-          <span className="text-xs text-foreground-secondary">
-            {saveStatusLabel}
-          </span>
-          {!readOnly && (
-            <div className="relative">
+        {/* Segunda fila: tabs modo — solo mobile */}
+        {!readOnly && (
+          <div className="flex lg:hidden justify-center py-1.5">
+            <div
+              className="flex gap-1 bg-muted rounded-md p-0.5"
+              data-testid="mode-tabs-mobile"
+            >
               <button
-                onClick={() => setShareOpen((v) => !v)}
-                className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
-                title="Compartir documento"
-                data-testid="share-document-btn"
+                onClick={() => handleModeChange(EditorMode.EDITOR)}
+                className={modeTabClass(EditorMode.EDITOR)}
+                data-testid="mode-editor"
               >
-                Compartir
+                Editor
               </button>
-              {shareOpen && (
-                <SharePanel
-                  documentId={document.id}
-                  onClose={() => setShareOpen(false)}
-                  onCreateShare={createShare}
-                  onGetShare={getShare}
-                  onRevokeShare={revokeShare}
-                />
-              )}
+              <button
+                onClick={() => handleModeChange(EditorMode.PREVIEW)}
+                className={modeTabClass(EditorMode.PREVIEW)}
+                data-testid="mode-preview"
+              >
+                Preview
+              </button>
             </div>
-          )}
-          <button
-            onClick={() => {
-              const exportContent = isCollaborationActive
-                ? previewContent
-                : content;
-              const blob = new Blob([exportContent], { type: 'text/plain' });
-              const url = URL.createObjectURL(blob);
-              const a = globalThis.document.createElement('a');
-              a.href = url;
-              a.download = `${document.title}.md`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
-            title="Exportar como .md"
-            data-testid="export-document"
-          >
-            ↓ .md
-          </button>
-          <button
-            onClick={togglePanel}
-            className={`p-1.5 rounded-md transition-colors ${
-              isPanelOpen
-                ? 'bg-muted text-foreground'
-                : 'text-foreground-secondary hover:text-foreground hover:bg-muted'
-            }`}
-            aria-label="Panel de actividad"
-            data-testid="activity-panel-toggle"
-          >
-            <ClipboardList className="w-4 h-4" />
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {showToolbar && <MarkdownToolbar editorView={editorView} />}
