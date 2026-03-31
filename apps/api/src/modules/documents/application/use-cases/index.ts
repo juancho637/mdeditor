@@ -10,4 +10,5 @@ export * from './move-document.use-case';
 export * from './persist-snapshot.use-case';
 export * from './read-document-content.use-case';
 export * from './replace-document-content.use-case';
+export * from './search-documents.use-case';
 export * from './update-document.use-case';
