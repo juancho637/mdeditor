@@ -1,6 +1,6 @@
 # Story 8.1: Búsqueda Global de Contenido
 
-Status: review
+Status: done
 
 ## Story
 
