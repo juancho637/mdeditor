@@ -3,14 +3,12 @@
 import { useEffect } from 'react';
 import { Command } from 'cmdk';
 import { useSearchViewModel } from '../hooks/use-search.viewmodel';
-import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-folder.viewmodel';
 import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/use-document.viewmodel';
 import type { SearchResult } from '../../domain/types/search-result.type';
 
 export function CommandPalette() {
   const { isOpen, query, results, isLoading, closeSearch, search } =
     useSearchViewModel();
-  const { selectFolder } = useFolderViewModel();
   const { loadDocument } = useDocumentViewModel();
 
   useEffect(() => {
@@ -24,7 +22,6 @@ export function CommandPalette() {
   if (!isOpen) return null;
 
   const handleSelect = (result: SearchResult) => {
-    selectFolder(result.folderId);
     loadDocument(result.id);
     closeSearch();
   };
