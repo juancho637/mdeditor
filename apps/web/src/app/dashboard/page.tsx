@@ -79,12 +79,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const docId = new URLSearchParams(window.location.search).get('doc');
-    if (docId) loadDocument(docId);
+    if (docId?.trim()) loadDocument(docId.trim());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedFolder) {
-      setCurrentDocument(null);
+      const docIdParam = new URLSearchParams(window.location.search).get('doc');
+      if (!docIdParam?.trim()) setCurrentDocument(null);
       loadFolderDocuments(selectedFolder.id);
     }
   }, [selectedFolder, loadFolderDocuments, setCurrentDocument]);

@@ -74,7 +74,10 @@ export function SignInForm({ redirectTo }: SignInFormProps = {}) {
         password,
       });
       if (success) {
-        router.push(redirectTo ?? '/dashboard');
+        const safeRedirect = redirectTo?.startsWith('/')
+          ? redirectTo
+          : '/dashboard';
+        router.push(safeRedirect);
       }
     },
     [email, password, signIn, router],
