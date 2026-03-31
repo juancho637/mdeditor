@@ -114,17 +114,14 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       const folderId = await createFolder(adminToken, 'HybridFolder');
       await createDocument(adminToken, 'HybridDoc', folderId);
 
-      // 375px: clearly mobile — hamburger shown, tabs rendered
-      await page.setViewportSize({ width: 375, height: 812 });
+      // Navigate at desktop viewport so mode-hybrid button is accessible
       await loginAs(page, 'admin@test.com', 'password123');
-
-      // Open sidebar, select folder
-      await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'HybridFolder' }).click();
       await page.getByText('HybridDoc').click();
-
-      // Switch to hybrid mode
       await page.getByTestId('mode-hybrid').click();
+
+      // Shrink to mobile — hybrid-tabs-mobile should now be visible
+      await page.setViewportSize({ width: 375, height: 812 });
 
       // Mobile Tabs should be visible
       await expect(page.getByTestId('hybrid-tabs-mobile')).toBeVisible();
@@ -139,13 +136,14 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       const folderId = await createFolder(adminToken, 'TabSwitchFolder');
       await createDocument(adminToken, 'TabSwitchDoc', folderId);
 
-      await page.setViewportSize({ width: 375, height: 812 });
+      // Navigate at desktop viewport so mode-hybrid button is accessible
       await loginAs(page, 'admin@test.com', 'password123');
-
-      await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'TabSwitchFolder' }).click();
       await page.getByText('TabSwitchDoc').click();
       await page.getByTestId('mode-hybrid').click();
+
+      // Shrink to mobile
+      await page.setViewportSize({ width: 375, height: 812 });
 
       // Both tabs should be present in the tab list
       const tabList = page.getByTestId('hybrid-tabs-mobile');
@@ -194,7 +192,7 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'ToolbarFolder' }).click();
       await page.getByText('ToolbarDoc').click();
-      await page.getByTestId('mode-editor').click();
+      await page.getByTestId('mode-editor-mobile').click();
 
       await expect(page.getByTestId('markdown-toolbar')).toBeVisible();
     });
@@ -212,7 +210,7 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'TouchTargetFolder' }).click();
       await page.getByText('TouchTargetDoc').click();
-      await page.getByTestId('mode-editor').click();
+      await page.getByTestId('mode-editor-mobile').click();
 
       const boldBtn = page.getByTestId('toolbar-bold');
       await boldBtn.waitFor();
@@ -234,7 +232,7 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'NoToolbarFolder' }).click();
       await page.getByText('NoToolbarDoc').click();
-      await page.getByTestId('mode-preview').click();
+      await page.getByTestId('mode-preview-mobile').click();
 
       await expect(page.getByTestId('markdown-toolbar')).not.toBeVisible();
     });
