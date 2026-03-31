@@ -78,6 +78,11 @@ export default function DashboardPage() {
   const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const docId = new URLSearchParams(window.location.search).get('doc');
+    if (docId) loadDocument(docId);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (selectedFolder) {
       setCurrentDocument(null);
       loadFolderDocuments(selectedFolder.id);
