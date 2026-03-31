@@ -2,8 +2,25 @@ import { apiClient } from '@/common/adapters/api-client';
 import { getAccessToken } from '@/common/helpers/token-storage.utils';
 import type { DocumentRepository } from '../../domain/repositories/document-repository';
 import type { Document } from '../../domain/types/document.type';
+import type { DocumentShare } from '../../domain/types/document-share.type';
 import type { DocumentSummary } from '../../domain/types/document-summary.type';
 import { PermissionLevel } from '@/modules/permissions/domain/types/permission-level.enum';
+
+interface DocumentShareWireResponse {
+  share_token: string;
+  document_id: string;
+  created_at: string;
+  share_url: string;
+}
+
+function mapShare(wire: DocumentShareWireResponse): DocumentShare {
+  return {
+    shareToken: wire.share_token,
+    documentId: wire.document_id,
+    createdAt: wire.created_at,
+    shareUrl: wire.share_url,
+  };
+}
 
 interface DocumentWireResponse {
   id: string;
@@ -94,6 +111,28 @@ export class DocumentV1Repository implements DocumentRepository {
       `/api/folders/${folderId}/documents`,
     );
     return (response.data as DocumentSummaryWireResponse[]).map(mapSummary);
+  }
+
+  async createShare(documentId: string): Promise<DocumentShare> {
+    const response = await apiClient.post<DocumentShareWireResponse>(
+      `/api/documents/${documentId}/share`,
+    );
+    return mapShare(response.data as DocumentShareWireResponse);
+  }
+
+  async getShare(documentId: string): Promise<DocumentShare | null> {
+    try {
+      const response = await apiClient.get<DocumentShareWireResponse>(
+        `/api/documents/${documentId}/share`,
+      );
+      return mapShare(response.data as DocumentShareWireResponse);
+    } catch {
+      return null;
+    }
+  }
+
+  async revokeShare(documentId: string): Promise<void> {
+    await apiClient.delete(`/api/documents/${documentId}/share`);
   }
 
   async importDocuments(folderId: string, files: File[]): Promise<void> {

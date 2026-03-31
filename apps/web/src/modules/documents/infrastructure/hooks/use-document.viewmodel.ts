@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { useDocumentStore } from '../state/document.state';
 import { documentRepository } from '../repositories/document-v1.repository';
+import type { DocumentShare } from '../../domain/types/document-share.type';
 
 function extractError(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'response' in err) {
@@ -162,6 +163,38 @@ export function useDocumentViewModel() {
     [loadFolderDocuments, setLoading, setError],
   );
 
+  const createShare = useCallback(
+    async (documentId: string): Promise<DocumentShare | null> => {
+      try {
+        return await documentRepository.createShare(documentId);
+      } catch (err) {
+        setError(extractError(err, 'Error al generar link público'));
+        return null;
+      }
+    },
+    [setError],
+  );
+
+  const getShare = useCallback(
+    async (documentId: string): Promise<DocumentShare | null> => {
+      return documentRepository.getShare(documentId);
+    },
+    [],
+  );
+
+  const revokeShare = useCallback(
+    async (documentId: string): Promise<boolean> => {
+      try {
+        await documentRepository.revokeShare(documentId);
+        return true;
+      } catch (err) {
+        setError(extractError(err, 'Error al revocar link público'));
+        return false;
+      }
+    },
+    [setError],
+  );
+
   return {
     currentDocument,
     folderDocuments,
@@ -177,5 +210,8 @@ export function useDocumentViewModel() {
     deleteDocument,
     moveDocument,
     importDocuments,
+    createShare,
+    getShare,
+    revokeShare,
   };
 }

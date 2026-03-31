@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = ['/setup', '/sign-in'];
-const PUBLIC_PREFIXES = ['/invite'];
+const PUBLIC_PREFIXES = ['/invite', '/p'];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api:3000';
 
@@ -86,7 +86,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
