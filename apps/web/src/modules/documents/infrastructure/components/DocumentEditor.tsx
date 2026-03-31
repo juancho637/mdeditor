@@ -94,9 +94,15 @@ export function DocumentEditor({
   onSave,
 }: DocumentEditorProps) {
   const [content, setContent] = useState(document.contentMarkdown);
-  const [mode, setMode] = useState<EditorMode>(() =>
-    readOnly ? EditorMode.PREVIEW : getStoredMode(),
-  );
+  const isMobileInit =
+    typeof window !== 'undefined' && window.innerWidth < 1024;
+  const [mode, setMode] = useState<EditorMode>(() => {
+    if (readOnly) return EditorMode.PREVIEW;
+    const stored = getStoredMode();
+    return isMobileInit && stored === EditorMode.HYBRID
+      ? EditorMode.EDITOR
+      : stored;
+  });
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef(content);
@@ -131,6 +137,13 @@ export function DocumentEditor({
   contentRef.current = content;
 
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (isMobile && mode === EditorMode.HYBRID) {
+      setMode(EditorMode.EDITOR);
+      storeMode(EditorMode.EDITOR);
+    }
+  }, [isMobile, mode]);
 
   const { setEditorScroller, setPreviewScroller } = useSyncScroll({
     enabled: mode === EditorMode.HYBRID && !readOnly,
@@ -288,11 +301,13 @@ export function DocumentEditor({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-medium">{document.title}</h2>
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <h2 className="text-lg font-medium truncate min-w-0">
+            {document.title}
+          </h2>
           <div
-            className="flex gap-1 bg-muted rounded-md p-0.5"
+            className="flex gap-1 bg-muted rounded-md p-0.5 shrink-0"
             data-testid="mode-tabs"
           >
             {!readOnly && (
@@ -304,13 +319,15 @@ export function DocumentEditor({
                 >
                   Editor
                 </button>
-                <button
-                  onClick={() => handleModeChange(EditorMode.HYBRID)}
-                  className={modeTabClass(EditorMode.HYBRID)}
-                  data-testid="mode-hybrid"
-                >
-                  Híbrido
-                </button>
+                {!isMobile && (
+                  <button
+                    onClick={() => handleModeChange(EditorMode.HYBRID)}
+                    className={modeTabClass(EditorMode.HYBRID)}
+                    data-testid="mode-hybrid"
+                  >
+                    Híbrido
+                  </button>
+                )}
               </>
             )}
             <button
@@ -322,14 +339,14 @@ export function DocumentEditor({
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           {isCollaborative && connectedUsers.length > 0 && (
             <PresenceIndicator users={connectedUsers} />
           )}
           {isCollaborationActive && (
             <ConnectionIndicator connectionStatus={connectionStatus} />
           )}
-          <span className="text-xs text-foreground-secondary">
+          <span className="text-xs text-foreground-secondary hidden sm:inline">
             {saveStatusLabel}
           </span>
           {!readOnly && (
@@ -366,7 +383,7 @@ export function DocumentEditor({
               a.click();
               URL.revokeObjectURL(url);
             }}
-            className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors"
+            className="text-xs text-foreground-secondary hover:text-foreground px-2 py-1 rounded-md hover:bg-muted transition-colors hidden sm:inline"
             title="Exportar como .md"
             data-testid="export-document"
           >
@@ -374,7 +391,7 @@ export function DocumentEditor({
           </button>
           <button
             onClick={togglePanel}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-1.5 rounded-md transition-colors hidden sm:flex ${
               isPanelOpen
                 ? 'bg-muted text-foreground'
                 : 'text-foreground-secondary hover:text-foreground hover:bg-muted'
