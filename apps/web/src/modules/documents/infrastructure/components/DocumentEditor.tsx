@@ -65,8 +65,8 @@ enum EditorMode {
 
 const EDITOR_MODE_STORAGE_KEY = 'editor-mode-preference';
 
-function getStoredMode(): EditorMode {
-  if (typeof window === 'undefined') return EditorMode.HYBRID;
+function getStoredMode(): EditorMode | null {
+  if (typeof window === 'undefined') return null;
   const stored = localStorage.getItem(EDITOR_MODE_STORAGE_KEY);
   if (
     stored === EditorMode.EDITOR ||
@@ -75,7 +75,7 @@ function getStoredMode(): EditorMode {
   ) {
     return stored;
   }
-  return EditorMode.HYBRID;
+  return null;
 }
 
 function storeMode(mode: EditorMode): void {
@@ -100,9 +100,17 @@ export function DocumentEditor({
   onSave,
 }: DocumentEditorProps) {
   const [content, setContent] = useState(document.contentMarkdown);
-  const [mode, setMode] = useState<EditorMode>(() =>
-    readOnly ? EditorMode.PREVIEW : getStoredMode(),
-  );
+  const [mode, setMode] = useState<EditorMode>(() => {
+    if (readOnly) return EditorMode.PREVIEW;
+    const stored = getStoredMode();
+    if (stored) return stored;
+    // No stored preference: default to Preview on mobile, Hybrid on desktop
+    const isMobileNow =
+      typeof window !== 'undefined'
+        ? window.matchMedia('(max-width: 1023px)').matches
+        : false;
+    return isMobileNow ? EditorMode.PREVIEW : EditorMode.HYBRID;
+  });
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef(content);
@@ -458,13 +466,6 @@ export function DocumentEditor({
                 data-testid="mode-editor-mobile"
               >
                 Editor
-              </button>
-              <button
-                onClick={() => handleModeChange(EditorMode.HYBRID)}
-                className={modeTabClass(EditorMode.HYBRID)}
-                data-testid="mode-hybrid-mobile"
-              >
-                Híbrido
               </button>
               <button
                 onClick={() => handleModeChange(EditorMode.PREVIEW)}
