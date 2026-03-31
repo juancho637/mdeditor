@@ -25,7 +25,11 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
-export function SignInForm() {
+interface SignInFormProps {
+  redirectTo?: string;
+}
+
+export function SignInForm({ redirectTo }: SignInFormProps = {}) {
   const router = useRouter();
   const { signIn, isLoading, error } = useAuthViewModel();
 
@@ -70,7 +74,10 @@ export function SignInForm() {
         password,
       });
       if (success) {
-        router.push('/dashboard');
+        const safeRedirect = redirectTo?.startsWith('/')
+          ? redirectTo
+          : '/dashboard';
+        router.push(safeRedirect);
       }
     },
     [email, password, signIn, router],
