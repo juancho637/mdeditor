@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFolderViewModel } from '@/modules/folders/infrastructure/hooks/use-folder.viewmodel';
 import { useDocumentViewModel } from '@/modules/documents/infrastructure/hooks/use-document.viewmodel';
 import { PermissionLevel } from '@/modules/permissions/domain/types/permission-level.enum';
@@ -10,12 +10,22 @@ import { Button } from '@/common/components/ui/button';
 export default function DashboardPage() {
   const { selectedFolder, loadTree } = useFolderViewModel();
   const {
-    currentDocument, folderDocuments, saveStatus,
-    setCurrentDocument, loadDocument, loadFolderDocuments, createDocument, saveContent, deleteDocument,
+    currentDocument,
+    folderDocuments,
+    saveStatus,
+    isLoading,
+    setCurrentDocument,
+    loadDocument,
+    loadFolderDocuments,
+    createDocument,
+    saveContent,
+    deleteDocument,
+    importDocuments,
   } = useDocumentViewModel();
 
   const [creatingDoc, setCreatingDoc] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (selectedFolder) {
@@ -42,13 +52,40 @@ export default function DashboardPage() {
       <div className="p-6" style={{ minHeight: 'calc(100vh - 48px)' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium">{selectedFolder.name}</h2>
-          <Button
-            size="sm"
-            onClick={() => setCreatingDoc(true)}
-            style={{ borderRadius: 'var(--radius-btn)' }}
-          >
-            Nuevo documento
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".md"
+              multiple
+              className="hidden"
+              data-testid="import-file-input"
+              onChange={async (e) => {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  await importDocuments(selectedFolder.id, Array.from(files));
+                }
+                if (importInputRef.current) importInputRef.current.value = '';
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => importInputRef.current?.click()}
+              style={{ borderRadius: 'var(--radius-btn)' }}
+              data-testid="import-documents-btn"
+            >
+              Importar .md
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setCreatingDoc(true)}
+              style={{ borderRadius: 'var(--radius-btn)' }}
+            >
+              Nuevo documento
+            </Button>
+          </div>
         </div>
 
         {creatingDoc && (
@@ -70,10 +107,19 @@ export default function DashboardPage() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               autoFocus
-              onKeyDown={(e) => { if (e.key === 'Escape') setCreatingDoc(false); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setCreatingDoc(false);
+              }}
             />
-            <Button type="submit" size="sm">Crear</Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setCreatingDoc(false)}>
+            <Button type="submit" size="sm">
+              Crear
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCreatingDoc(false)}
+            >
               Cancelar
             </Button>
           </form>
@@ -117,7 +163,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 48px)' }}>
+    <div
+      className="flex items-center justify-center"
+      style={{ minHeight: 'calc(100vh - 48px)' }}
+    >
       <div className="text-center">
         <p className="text-4xl mb-2">📄</p>
         <h2 className="text-lg font-medium mb-1">Bienvenido a markdown</h2>
