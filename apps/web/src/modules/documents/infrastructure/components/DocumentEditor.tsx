@@ -321,7 +321,10 @@ export function DocumentEditor({
           </span>
           <button
             onClick={() => {
-              const blob = new Blob([content], { type: 'text/plain' });
+              const exportContent = isCollaborationActive
+                ? previewContent
+                : content;
+              const blob = new Blob([exportContent], { type: 'text/plain' });
               const url = URL.createObjectURL(blob);
               const a = globalThis.document.createElement('a');
               a.href = url;

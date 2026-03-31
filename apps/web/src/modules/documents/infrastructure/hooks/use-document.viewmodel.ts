@@ -162,19 +162,6 @@ export function useDocumentViewModel() {
     [loadFolderDocuments, setLoading, setError],
   );
 
-  const exportDocument = useCallback(
-    (title: string, contentMarkdown: string) => {
-      const blob = new Blob([contentMarkdown], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title}.md`;
-      a.click();
-      URL.revokeObjectURL(url);
-    },
-    [],
-  );
-
   return {
     currentDocument,
     folderDocuments,
@@ -190,6 +177,5 @@ export function useDocumentViewModel() {
     deleteDocument,
     moveDocument,
     importDocuments,
-    exportDocument,
   };
 }
