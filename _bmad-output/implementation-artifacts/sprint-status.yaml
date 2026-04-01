@@ -39,7 +39,7 @@ last_updated: 2026-03-31 # story 8-4 created
 project: markdown
 project_key: NOKEY
 tracking_system: file-system
-story_location: "{project-root}/_bmad-output/implementation-artifacts"
+story_location: '{project-root}/_bmad-output/implementation-artifacts'
 
 development_status:
   # Epic 1: Autenticación y Configuración del Workspace
@@ -94,7 +94,7 @@ development_status:
   epic-7-retrospective: optional
 
   # Epic 8: Búsqueda, Import/Export y Experiencia Responsive
-  epic-8: in-progress
+  epic-8: done
   8-1-busqueda-global-de-contenido: done
   8-2-import-y-export-de-documentos-markdown: done
   8-3-experiencia-responsive-completa: done
