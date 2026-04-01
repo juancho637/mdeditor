@@ -146,6 +146,28 @@ export function DocumentEditor({
 
   const isMobile = useIsMobile();
 
+  // Track virtual keyboard height on mobile using visualViewport API (iOS Safari fix)
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  useEffect(() => {
+    if (!isMobile) {
+      setKeyboardOffset(0);
+      return;
+    }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      setKeyboardOffset(
+        Math.max(0, window.innerHeight - vv.height - vv.offsetTop),
+      );
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, [isMobile]);
+
   const { setEditorScroller, setPreviewScroller } = useSyncScroll({
     enabled: mode === EditorMode.HYBRID && !readOnly,
     editorView,
@@ -486,14 +508,24 @@ export function DocumentEditor({
         )}
       </div>
 
-      {showToolbar && <MarkdownToolbar editorView={editorView} />}
+      {showToolbar && (
+        <MarkdownToolbar
+          editorView={editorView}
+          keyboardOffset={keyboardOffset}
+        />
+      )}
 
       {isCollaborationActive && (
         <ConnectionStatusBanner connectionStatus={connectionStatus} />
       )}
 
       <div
-        className={`flex flex-1 overflow-hidden${showToolbar ? ' pb-11 md:pb-0' : ''}`}
+        className="flex flex-1 overflow-hidden"
+        style={
+          showToolbar && isMobile
+            ? { paddingBottom: 44 + keyboardOffset }
+            : undefined
+        }
       >
         <div className="flex-1 overflow-hidden transition-opacity duration-200">
           {mode === EditorMode.EDITOR && !readOnly && (
