@@ -7,6 +7,8 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { SignInForm } from '@/modules/auth/infrastructure/components/SignInForm';
 import { getAccessToken } from '@/common/helpers/token-storage.utils';
+import { ThemeToggle } from '@/modules/theme/infrastructure/components/ThemeToggle';
+import { useThemeStore } from '@/modules/theme/infrastructure/state/theme.state';
 
 type PageState = 'loading' | 'loaded' | 'not-found';
 
@@ -24,6 +26,11 @@ export default function PublicDocumentPage() {
   const [state, setState] = useState<PageState>('loading');
   const [doc, setDoc] = useState<PublicDoc | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const initTheme = useThemeStore((s) => s.initTheme);
+
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
 
   useEffect(() => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -62,14 +69,17 @@ export default function PublicDocumentPage() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="border-b border-border px-6 py-3 flex items-center justify-between">
         <span className="font-semibold text-sm">markdown</span>
-        {state === 'loaded' && !isAuthenticated && (
-          <button
-            className="text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
-            onClick={() => setShowLogin((v) => !v)}
-          >
-            {showLogin ? 'Cancelar' : 'Iniciar sesión'}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          {state === 'loaded' && !isAuthenticated && (
+            <button
+              className="text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
+              onClick={() => setShowLogin((v) => !v)}
+            >
+              {showLogin ? 'Cancelar' : 'Iniciar sesión'}
+            </button>
+          )}
+        </div>
       </header>
 
       {showLogin && doc && (
