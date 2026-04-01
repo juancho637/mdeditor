@@ -133,6 +133,7 @@ const TOOLBAR_GROUPS: ToolbarButtonConfig[][] = [
 
 interface MarkdownToolbarProps {
   editorView: EditorView | null;
+  keyboardOffset?: number;
 }
 
 const BUTTON_CLASS =
@@ -198,11 +199,15 @@ function ToolbarBtn({
   );
 }
 
-export function MarkdownToolbar({ editorView }: MarkdownToolbarProps) {
+export function MarkdownToolbar({
+  editorView,
+  keyboardOffset = 0,
+}: MarkdownToolbarProps) {
   return (
     <TooltipProvider delayDuration={300}>
       <div
-        className="bg-secondary border-border flex items-center px-2 gap-1 overflow-x-auto fixed bottom-0 left-0 right-0 z-40 h-11 border-t md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto md:h-10 md:border-b md:border-t-0"
+        className="bg-secondary border-border flex items-center px-2 gap-1 overflow-x-auto fixed left-0 right-0 z-40 h-11 border-t md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto md:h-10 md:border-b md:border-t-0"
+        style={{ bottom: keyboardOffset }}
         data-testid="markdown-toolbar"
         role="toolbar"
         aria-label="Markdown formatting"

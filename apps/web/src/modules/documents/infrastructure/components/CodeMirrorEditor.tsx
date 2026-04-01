@@ -14,7 +14,11 @@ import {
 } from '@codemirror/language';
 import { useThemeStore } from '@/modules/theme/infrastructure/state/theme.state';
 import { Theme } from '@/modules/theme/domain';
-import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
+import {
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightActiveLine,
+} from '@codemirror/view';
 import { wrapSelection, executeToolbarAction } from './toolbar/toolbar-actions';
 import { ToolbarAction } from '../../domain/enums/toolbar-actions.enum';
 import type * as Y from 'yjs';
@@ -25,7 +29,10 @@ const markdownKeymap = [
   { key: 'Mod-b', run: (view: EditorView) => wrapSelection(view, '**', '**') },
   { key: 'Mod-i', run: (view: EditorView) => wrapSelection(view, '*', '*') },
   { key: 'Mod-e', run: (view: EditorView) => wrapSelection(view, '`', '`') },
-  { key: 'Mod-Shift-s', run: (view: EditorView) => wrapSelection(view, '~~', '~~') },
+  {
+    key: 'Mod-Shift-s',
+    run: (view: EditorView) => wrapSelection(view, '~~', '~~'),
+  },
   {
     key: 'Mod-k',
     run: (view: EditorView) => {
@@ -87,7 +94,16 @@ interface CodeMirrorEditorProps {
   awareness?: any;
 }
 
-export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, onScrollerReady, yText, undoManager, awareness }: CodeMirrorEditorProps) {
+export function CodeMirrorEditor({
+  content,
+  readOnly,
+  onChange,
+  onEditorReady,
+  onScrollerReady,
+  yText,
+  undoManager,
+  awareness,
+}: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -127,7 +143,9 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
         const { yCollab } = await import('y-codemirror.next');
         if (cancelled) return;
         baseExtensions.push(
-          yCollab(yText, awareness ?? null, { undoManager: undoManager || false }),
+          yCollab(yText, awareness ?? null, {
+            undoManager: undoManager || false,
+          }),
         );
         // Workaround: y-codemirror.next@0.3.5 never clears cursor on blur
         // (dead code: `cursor != null && hasFocus` is always false when hasFocus is false)
@@ -143,7 +161,9 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
         baseExtensions.push(keymap.of([...defaultKeymap, ...markdownKeymap]));
       } else {
         baseExtensions.push(history());
-        baseExtensions.push(keymap.of([...defaultKeymap, ...historyKeymap, ...markdownKeymap]));
+        baseExtensions.push(
+          keymap.of([...defaultKeymap, ...historyKeymap, ...markdownKeymap]),
+        );
         baseExtensions.push(
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
@@ -186,7 +206,7 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
       onEditorReadyRef.current?.(null);
       onScrollerReadyRef.current?.(null);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readOnly, isCollaborative, yText]);
 
   // Reconfigure syntax highlighting when theme changes
@@ -196,7 +216,9 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
     if (!view || view.destroyed) return;
     const isDark = resolvedTheme === Theme.DARK;
     view.dispatch({
-      effects: highlightCompartmentRef.current.reconfigure(getHighlightExtension(isDark)),
+      effects: highlightCompartmentRef.current.reconfigure(
+        getHighlightExtension(isDark),
+      ),
     });
   }, [resolvedTheme]);
 
@@ -220,6 +242,10 @@ export function CodeMirrorEditor({ content, readOnly, onChange, onEditorReady, o
       ref={containerRef}
       className="flex-1 overflow-hidden"
       style={{ height: '100%' }}
+      // Suppress iOS browser autocorrect / autocomplete on the editor
+      autoCorrect="off"
+      autoCapitalize="off"
+      spellCheck={false}
     />
   );
 }
