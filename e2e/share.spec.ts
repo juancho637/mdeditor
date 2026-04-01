@@ -459,5 +459,61 @@ test.describe('Story 8-4: Compartir Documento Público', () => {
       // Header mínimo con nombre de la plataforma
       await expect(page.locator('header')).toContainText('markdown');
     });
+
+    test('Dark mode: theme toggle visible en página pública', async ({
+      page,
+    }) => {
+      const adminToken = await resetAndSeedUsers();
+      const folderId = await createFolder(adminToken, 'Carpeta Dark');
+      const docId = await createDocument(adminToken, 'Doc Dark', folderId);
+
+      const createRes = await createShare(adminToken, docId);
+      const { data } = await createRes.json();
+
+      await page.goto(`/p/${data.share_token}`);
+
+      await expect(page.getByTestId('theme-toggle')).toBeVisible();
+    });
+
+    test('Dark mode: activar dark mode aplica clase dark en html', async ({
+      page,
+    }) => {
+      const adminToken = await resetAndSeedUsers();
+      const folderId = await createFolder(adminToken, 'Carpeta Dark2');
+      const docId = await createDocument(adminToken, 'Doc Dark2', folderId);
+
+      const createRes = await createShare(adminToken, docId);
+      const { data } = await createRes.json();
+
+      await page.goto(`/p/${data.share_token}`);
+
+      // Clic en toggle activa dark mode
+      await page.getByTestId('theme-toggle').click();
+      await expect(page.locator('html')).toHaveClass(/dark/);
+
+      // Segundo clic vuelve a light
+      await page.getByTestId('theme-toggle').click();
+      await expect(page.locator('html')).not.toHaveClass(/dark/);
+    });
+
+    test('Dark mode: preferencia persiste al recargar la página pública', async ({
+      page,
+    }) => {
+      const adminToken = await resetAndSeedUsers();
+      const folderId = await createFolder(adminToken, 'Carpeta Dark3');
+      const docId = await createDocument(adminToken, 'Doc Dark3', folderId);
+
+      const createRes = await createShare(adminToken, docId);
+      const { data } = await createRes.json();
+      const shareUrl = `/p/${data.share_token}`;
+
+      await page.goto(shareUrl);
+      await page.getByTestId('theme-toggle').click();
+      await expect(page.locator('html')).toHaveClass(/dark/);
+
+      // Recargar — debe mantener dark mode
+      await page.reload();
+      await expect(page.locator('html')).toHaveClass(/dark/);
+    });
   });
 });
