@@ -107,7 +107,7 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
   // AC#2, AC#5 — Hybrid mode: Tabs on mobile/tablet portrait (< 1024px)
   // -------------------------------------------------------------------------
   test.describe('UI: Hybrid mode — Tabs on mobile', () => {
-    test('AC#2: hybrid mode shows Editor/Preview tabs on mobile (< 1024px)', async ({
+    test('AC#2: switching to Hybrid at desktop then resizing to mobile falls back to Preview', async ({
       page,
     }) => {
       const adminToken = await resetAndSeedUsers();
@@ -120,41 +120,38 @@ test.describe('Story 8-3: Experiencia Responsive Completa', () => {
       await page.getByText('HybridDoc').click();
       await page.getByTestId('mode-hybrid').click();
 
-      // Shrink to mobile — hybrid-tabs-mobile should now be visible
+      // Shrink to mobile — should automatically switch to Preview
       await page.setViewportSize({ width: 375, height: 812 });
 
-      // Mobile Tabs should be visible
-      await expect(page.getByTestId('hybrid-tabs-mobile')).toBeVisible();
-      await expect(page.getByTestId('hybrid-tab-editor')).toBeVisible();
-      await expect(page.getByTestId('hybrid-tab-preview')).toBeVisible();
+      // Mode tabs should show Editor + Preview (no Hybrid)
+      await expect(page.getByTestId('mode-tabs-mobile')).toBeVisible();
+      await expect(page.getByTestId('mode-preview-mobile')).toBeVisible();
+      await expect(page.getByTestId('mode-editor-mobile')).toBeVisible();
+      // hybrid-tabs-mobile must NOT be visible
+      await expect(page.getByTestId('hybrid-tabs-mobile')).not.toBeVisible();
     });
 
-    test('AC#2: switching tabs in hybrid mode shows editor/preview on mobile', async ({
+    test('AC#2: mobile Editor/Preview tabs switch content correctly', async ({
       page,
     }) => {
       const adminToken = await resetAndSeedUsers();
       const folderId = await createFolder(adminToken, 'TabSwitchFolder');
       await createDocument(adminToken, 'TabSwitchDoc', folderId);
 
-      // Navigate at desktop viewport so mode-hybrid button is accessible
       await loginAs(page, 'admin@test.com', 'password123');
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.getByTestId('mobile-menu-btn').click();
       await page.getByRole('treeitem', { name: 'TabSwitchFolder' }).click();
       await page.getByText('TabSwitchDoc').click();
-      await page.getByTestId('mode-hybrid').click();
 
-      // Shrink to mobile
-      await page.setViewportSize({ width: 375, height: 812 });
+      // Default on mobile is Preview — mode-tabs-mobile shows Editor + Preview
+      await expect(page.getByTestId('mode-tabs-mobile')).toBeVisible();
+      await expect(page.getByTestId('mode-preview-mobile')).toBeVisible();
 
-      // Both tabs should be present in the tab list
-      const tabList = page.getByTestId('hybrid-tabs-mobile');
-      await expect(tabList.getByTestId('hybrid-tab-editor')).toBeVisible();
-      await expect(tabList.getByTestId('hybrid-tab-preview')).toBeVisible();
-
-      // Click Preview tab — tab trigger should now be selected
-      await page.getByTestId('hybrid-tab-preview').click();
-      await expect(page.getByTestId('hybrid-tab-preview')).toHaveAttribute(
-        'data-state',
-        'active',
+      // Switch to Editor
+      await page.getByTestId('mode-editor-mobile').click();
+      await expect(page.getByTestId('mode-editor-mobile')).toHaveClass(
+        /bg-background/,
       );
     });
 

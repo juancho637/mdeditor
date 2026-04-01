@@ -102,13 +102,13 @@ export function DocumentEditor({
   const [content, setContent] = useState(document.contentMarkdown);
   const [mode, setMode] = useState<EditorMode>(() => {
     if (readOnly) return EditorMode.PREVIEW;
-    const stored = getStoredMode();
-    if (stored) return stored;
-    // No stored preference: default to Preview on mobile, Hybrid on desktop
     const isMobileNow =
       typeof window !== 'undefined'
         ? window.matchMedia('(max-width: 1023px)').matches
         : false;
+    const stored = getStoredMode();
+    // On mobile, never use Hybrid — override to Preview
+    if (stored && !(stored === EditorMode.HYBRID && isMobileNow)) return stored;
     return isMobileNow ? EditorMode.PREVIEW : EditorMode.HYBRID;
   });
   const [editorView, setEditorView] = useState<EditorView | null>(null);
@@ -183,6 +183,13 @@ export function DocumentEditor({
     },
     [readOnly],
   );
+
+  // When viewport shrinks to mobile while in Hybrid mode, switch to Preview
+  useEffect(() => {
+    if (isMobile && mode === EditorMode.HYBRID) {
+      handleModeChange(EditorMode.PREVIEW);
+    }
+  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (mode === EditorMode.PREVIEW || mode === EditorMode.HYBRID) {
